@@ -38,6 +38,11 @@ private int parsePage(String value) {
     }
 }
 
+private boolean isAllowedSearchType(String searchType) {
+    return "loginId".equals(searchType) || "nickname".equals(searchType)
+        || "phone".equals(searchType) || "region".equals(searchType);
+}
+
 private String encodeParam(String value) {
     try {
         return URLEncoder.encode(value == null ? "" : value, "UTF-8");
@@ -46,12 +51,9 @@ private String encodeParam(String value) {
     }
 }
 
-private String buildListQuery(String loginIdSearch, String nicknameSearch, String phoneSearch,
-        String regionSearch, String status, int page) {
-    return "loginIdSearch=" + encodeParam(loginIdSearch)
-        + "&nicknameSearch=" + encodeParam(nicknameSearch)
-        + "&phoneSearch=" + encodeParam(phoneSearch)
-        + "&regionSearch=" + encodeParam(regionSearch)
+private String buildListQuery(String searchType, String keyword, String status, int page) {
+    return "searchType=" + encodeParam(searchType)
+        + "&keyword=" + encodeParam(keyword)
         + "&status=" + encodeParam(status)
         + "&page=" + page;
 }
@@ -59,10 +61,28 @@ private String buildListQuery(String loginIdSearch, String nicknameSearch, Strin
 <%
 request.setCharacterEncoding("UTF-8");
 
-String loginIdSearch = request.getParameter("loginIdSearch") == null ? "" : request.getParameter("loginIdSearch").trim();
-String nicknameSearch = request.getParameter("nicknameSearch") == null ? "" : request.getParameter("nicknameSearch").trim();
-String phoneSearch = request.getParameter("phoneSearch") == null ? "" : request.getParameter("phoneSearch").trim();
-String regionSearch = request.getParameter("regionSearch") == null ? "" : request.getParameter("regionSearch").trim();
+String searchType = request.getParameter("searchType") == null ? "loginId" : request.getParameter("searchType").trim();
+if (!isAllowedSearchType(searchType)) {
+    searchType = "loginId";
+}
+String keyword = request.getParameter("keyword") == null ? "" : request.getParameter("keyword").trim();
+String loginIdSearch = "";
+String nicknameSearch = "";
+String phoneSearch = "";
+String regionSearch = "";
+
+if (!keyword.isEmpty()) {
+    if ("nickname".equals(searchType)) {
+        nicknameSearch = keyword;
+    } else if ("phone".equals(searchType)) {
+        phoneSearch = keyword;
+    } else if ("region".equals(searchType)) {
+        regionSearch = keyword;
+    } else {
+        loginIdSearch = keyword;
+    }
+}
+
 String statusFilter = request.getParameter("status") == null ? "ALL" : request.getParameter("status").trim().toUpperCase();
 if (!"ALL".equals(statusFilter) && !"ACTIVE".equals(statusFilter)
         && !"STOPPED".equals(statusFilter) && !"WITHDRAWN".equals(statusFilter)) {
@@ -96,7 +116,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원 관리 | 동네마켓</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-2">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-3">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
@@ -120,20 +140,17 @@ try {
 
     <form class="admin-filter" action="<%= contextPath %>/admin/adminMemberList.jsp" method="get">
         <div class="field">
-            <label for="loginIdSearch">아이디</label>
-            <input id="loginIdSearch" type="search" name="loginIdSearch" value="<%= escapeHtml(loginIdSearch) %>" placeholder="아이디">
+            <label for="searchType">검색 기준</label>
+            <select id="searchType" name="searchType">
+                <option value="loginId" <%= selected(searchType, "loginId") %>>아이디</option>
+                <option value="nickname" <%= selected(searchType, "nickname") %>>닉네임</option>
+                <option value="phone" <%= selected(searchType, "phone") %>>연락처</option>
+                <option value="region" <%= selected(searchType, "region") %>>동네</option>
+            </select>
         </div>
         <div class="field">
-            <label for="nicknameSearch">닉네임</label>
-            <input id="nicknameSearch" type="search" name="nicknameSearch" value="<%= escapeHtml(nicknameSearch) %>" placeholder="닉네임">
-        </div>
-        <div class="field">
-            <label for="phoneSearch">연락처</label>
-            <input id="phoneSearch" type="search" name="phoneSearch" value="<%= escapeHtml(phoneSearch) %>" placeholder="연락처">
-        </div>
-        <div class="field">
-            <label for="regionSearch">동네</label>
-            <input id="regionSearch" type="search" name="regionSearch" value="<%= escapeHtml(regionSearch) %>" placeholder="동네">
+            <label for="keyword">검색어</label>
+            <input id="keyword" type="search" name="keyword" value="<%= escapeHtml(keyword) %>" placeholder="검색어를 입력하세요">
         </div>
         <div class="field">
             <label for="status">상태</label>
@@ -178,7 +195,7 @@ try {
                         <% for (MemberDTO member : members) { %>
                             <tr>
                                 <td>
-                                    <a class="table-link" href="<%= contextPath %>/admin/adminMemberDetail.jsp?loginId=<%= encodeParam(member.getLoginId()) %>&<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber) %>">
+                                    <a class="table-link" href="<%= contextPath %>/admin/adminMemberDetail.jsp?loginId=<%= encodeParam(member.getLoginId()) %>&<%= buildListQuery(searchType, keyword, statusFilter, pageNumber) %>">
                                         <%= escapeHtml(member.getLoginId()) %>
                                     </a>
                                 </td>
@@ -190,10 +207,8 @@ try {
                                 <td>
                                     <form class="inline-form" action="<%= contextPath %>/admin/adminMemberStatusProcess.jsp" method="post">
                                         <input type="hidden" name="loginId" value="<%= escapeHtml(member.getLoginId()) %>">
-                                        <input type="hidden" name="loginIdSearch" value="<%= escapeHtml(loginIdSearch) %>">
-                                        <input type="hidden" name="nicknameSearch" value="<%= escapeHtml(nicknameSearch) %>">
-                                        <input type="hidden" name="phoneSearch" value="<%= escapeHtml(phoneSearch) %>">
-                                        <input type="hidden" name="regionSearch" value="<%= escapeHtml(regionSearch) %>">
+                                        <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
+                                        <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
                                         <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
                                         <input type="hidden" name="page" value="<%= pageNumber %>">
                                         <select name="status" aria-label="회원 상태">
@@ -214,13 +229,13 @@ try {
         <% if (totalPages > 1) { %>
             <nav class="pagination" aria-label="회원 목록 페이지">
                 <% if (pageNumber > 1) { %>
-                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber - 1) %>">이전</a>
+                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(searchType, keyword, statusFilter, pageNumber - 1) %>">이전</a>
                 <% } %>
                 <% for (int i = 1; i <= totalPages; i++) { %>
-                    <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, i) %>"><%= i %></a>
+                    <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(searchType, keyword, statusFilter, i) %>"><%= i %></a>
                 <% } %>
                 <% if (pageNumber < totalPages) { %>
-                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber + 1) %>">다음</a>
+                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(searchType, keyword, statusFilter, pageNumber + 1) %>">다음</a>
                 <% } %>
             </nav>
         <% } %>
