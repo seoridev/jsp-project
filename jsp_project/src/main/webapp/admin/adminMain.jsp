@@ -48,10 +48,6 @@ try {
             <span>이용 제한</span>
             <strong><%= stats.getStoppedCount() %></strong>
         </div>
-        <div>
-            <span>오늘 가입</span>
-            <strong><%= stats.getTodayJoinCount() %></strong>
-        </div>
     </section>
 
     <nav class="admin-menu" aria-label="관리 메뉴">
@@ -59,13 +55,13 @@ try {
             <strong>회원 관리</strong>
             <span>회원 검색, 상세 확인, 상태 변경을 처리합니다.</span>
         </a>
-        <a href="<%= contextPath %>/admin/adminMemberList.jsp?status=STOPPED">
-            <strong>제한 회원</strong>
-            <span>이용 제한 상태인 회원만 빠르게 확인합니다.</span>
+        <a href="<%= contextPath %>/admin/adminMain.jsp">
+            <strong>상품 관리</strong>
+            <span>상품 상태 확인과 관리 기능을 추가할 예정입니다.</span>
         </a>
-        <a href="<%= contextPath %>/admin/adminMemberList.jsp?status=WITHDRAWN">
-            <strong>탈퇴 처리 회원</strong>
-            <span>탈퇴 처리된 회원 목록을 검토합니다.</span>
+        <a href="<%= contextPath %>/admin/adminMain.jsp">
+            <strong>신고 관리</strong>
+            <span>신고 목록 확인과 처리 기능을 추가할 예정입니다.</span>
         </a>
     </nav>
 </main>
