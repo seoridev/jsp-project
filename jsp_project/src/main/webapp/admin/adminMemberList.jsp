@@ -46,8 +46,12 @@ private String encodeParam(String value) {
     }
 }
 
-private String buildListQuery(String keyword, String status, int page) {
-    return "keyword=" + encodeParam(keyword)
+private String buildListQuery(String loginIdSearch, String nicknameSearch, String phoneSearch,
+        String regionSearch, String status, int page) {
+    return "loginIdSearch=" + encodeParam(loginIdSearch)
+        + "&nicknameSearch=" + encodeParam(nicknameSearch)
+        + "&phoneSearch=" + encodeParam(phoneSearch)
+        + "&regionSearch=" + encodeParam(regionSearch)
         + "&status=" + encodeParam(status)
         + "&page=" + page;
 }
@@ -55,7 +59,10 @@ private String buildListQuery(String keyword, String status, int page) {
 <%
 request.setCharacterEncoding("UTF-8");
 
-String keyword = request.getParameter("keyword") == null ? "" : request.getParameter("keyword").trim();
+String loginIdSearch = request.getParameter("loginIdSearch") == null ? "" : request.getParameter("loginIdSearch").trim();
+String nicknameSearch = request.getParameter("nicknameSearch") == null ? "" : request.getParameter("nicknameSearch").trim();
+String phoneSearch = request.getParameter("phoneSearch") == null ? "" : request.getParameter("phoneSearch").trim();
+String regionSearch = request.getParameter("regionSearch") == null ? "" : request.getParameter("regionSearch").trim();
 String statusFilter = request.getParameter("status") == null ? "ALL" : request.getParameter("status").trim().toUpperCase();
 if (!"ALL".equals(statusFilter) && !"ACTIVE".equals(statusFilter)
         && !"STOPPED".equals(statusFilter) && !"WITHDRAWN".equals(statusFilter)) {
@@ -73,12 +80,12 @@ SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 MemberDAO memberDAO = new MemberDAO();
 
 try {
-    totalCount = memberDAO.countMembers(keyword, statusFilter);
+    totalCount = memberDAO.countMembers(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter);
     totalPages = Math.max((int) Math.ceil(totalCount / (double) pageSize), 1);
     if (pageNumber > totalPages) {
         pageNumber = totalPages;
     }
-    members = memberDAO.searchMembers(keyword, statusFilter, pageNumber, pageSize);
+    members = memberDAO.searchMembers(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber, pageSize);
 } catch (Exception e) {
     listError = "회원 목록을 불러오지 못했습니다.";
 }
@@ -113,8 +120,20 @@ try {
 
     <form class="admin-filter" action="<%= contextPath %>/admin/adminMemberList.jsp" method="get">
         <div class="field">
-            <label for="keyword">검색어</label>
-            <input id="keyword" type="search" name="keyword" value="<%= escapeHtml(keyword) %>" placeholder="아이디, 닉네임, 연락처, 동네">
+            <label for="loginIdSearch">아이디</label>
+            <input id="loginIdSearch" type="search" name="loginIdSearch" value="<%= escapeHtml(loginIdSearch) %>" placeholder="아이디">
+        </div>
+        <div class="field">
+            <label for="nicknameSearch">닉네임</label>
+            <input id="nicknameSearch" type="search" name="nicknameSearch" value="<%= escapeHtml(nicknameSearch) %>" placeholder="닉네임">
+        </div>
+        <div class="field">
+            <label for="phoneSearch">연락처</label>
+            <input id="phoneSearch" type="search" name="phoneSearch" value="<%= escapeHtml(phoneSearch) %>" placeholder="연락처">
+        </div>
+        <div class="field">
+            <label for="regionSearch">동네</label>
+            <input id="regionSearch" type="search" name="regionSearch" value="<%= escapeHtml(regionSearch) %>" placeholder="동네">
         </div>
         <div class="field">
             <label for="status">상태</label>
@@ -159,7 +178,7 @@ try {
                         <% for (MemberDTO member : members) { %>
                             <tr>
                                 <td>
-                                    <a class="table-link" href="<%= contextPath %>/admin/adminMemberDetail.jsp?loginId=<%= encodeParam(member.getLoginId()) %>&<%= buildListQuery(keyword, statusFilter, pageNumber) %>">
+                                    <a class="table-link" href="<%= contextPath %>/admin/adminMemberDetail.jsp?loginId=<%= encodeParam(member.getLoginId()) %>&<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber) %>">
                                         <%= escapeHtml(member.getLoginId()) %>
                                     </a>
                                 </td>
@@ -171,7 +190,10 @@ try {
                                 <td>
                                     <form class="inline-form" action="<%= contextPath %>/admin/adminMemberStatusProcess.jsp" method="post">
                                         <input type="hidden" name="loginId" value="<%= escapeHtml(member.getLoginId()) %>">
-                                        <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
+                                        <input type="hidden" name="loginIdSearch" value="<%= escapeHtml(loginIdSearch) %>">
+                                        <input type="hidden" name="nicknameSearch" value="<%= escapeHtml(nicknameSearch) %>">
+                                        <input type="hidden" name="phoneSearch" value="<%= escapeHtml(phoneSearch) %>">
+                                        <input type="hidden" name="regionSearch" value="<%= escapeHtml(regionSearch) %>">
                                         <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
                                         <input type="hidden" name="page" value="<%= pageNumber %>">
                                         <select name="status" aria-label="회원 상태">
@@ -192,13 +214,13 @@ try {
         <% if (totalPages > 1) { %>
             <nav class="pagination" aria-label="회원 목록 페이지">
                 <% if (pageNumber > 1) { %>
-                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(keyword, statusFilter, pageNumber - 1) %>">이전</a>
+                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber - 1) %>">이전</a>
                 <% } %>
                 <% for (int i = 1; i <= totalPages; i++) { %>
-                    <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(keyword, statusFilter, i) %>"><%= i %></a>
+                    <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, i) %>"><%= i %></a>
                 <% } %>
                 <% if (pageNumber < totalPages) { %>
-                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(keyword, statusFilter, pageNumber + 1) %>">다음</a>
+                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber + 1) %>">다음</a>
                 <% } %>
             </nav>
         <% } %>

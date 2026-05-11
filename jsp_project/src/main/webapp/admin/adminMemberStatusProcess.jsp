@@ -15,8 +15,12 @@ private String encodeParam(String value) {
     }
 }
 
-private String buildListQuery(String keyword, String status, String page) {
-    return "keyword=" + encodeParam(keyword)
+private String buildListQuery(String loginIdSearch, String nicknameSearch, String phoneSearch,
+        String regionSearch, String status, String page) {
+    return "loginIdSearch=" + encodeParam(loginIdSearch)
+        + "&nicknameSearch=" + encodeParam(nicknameSearch)
+        + "&phoneSearch=" + encodeParam(phoneSearch)
+        + "&regionSearch=" + encodeParam(regionSearch)
         + "&status=" + encodeParam(status == null || status.isEmpty() ? "ALL" : status)
         + "&page=" + encodeParam(page == null || page.isEmpty() ? "1" : page);
 }
@@ -26,12 +30,15 @@ request.setCharacterEncoding("UTF-8");
 
 String loginId = request.getParameter("loginId");
 String status = request.getParameter("status");
-String keyword = request.getParameter("keyword");
+String loginIdSearch = request.getParameter("loginIdSearch");
+String nicknameSearch = request.getParameter("nicknameSearch");
+String phoneSearch = request.getParameter("phoneSearch");
+String regionSearch = request.getParameter("regionSearch");
 String statusFilter = request.getParameter("statusFilter");
 String pageNumber = request.getParameter("page");
 String origin = request.getParameter("origin");
 String contextPath = request.getContextPath();
-String listQuery = buildListQuery(keyword, statusFilter, pageNumber);
+String listQuery = buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber);
 
 String redirectUrl = contextPath + "/admin/adminMemberList.jsp?" + listQuery;
 if ("detail".equals(origin) && loginId != null && !loginId.trim().isEmpty()) {

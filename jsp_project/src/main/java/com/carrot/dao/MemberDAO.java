@@ -244,10 +244,10 @@ public class MemberDAO {
         }
     }
 
-    public int countMembers(String keyword, String status) throws SQLException {
+    public int countMembers(String loginId, String nickname, String phone, String region, String status) throws SQLException {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM member");
         List<String> params = new ArrayList<>();
-        appendMemberFilters(sql, params, keyword, status);
+        appendMemberFilters(sql, params, loginId, nickname, phone, region, status);
 
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -265,7 +265,8 @@ public class MemberDAO {
         }
     }
 
-    public List<MemberDTO> searchMembers(String keyword, String status, int page, int pageSize) throws SQLException {
+    public List<MemberDTO> searchMembers(String loginId, String nickname, String phone, String region,
+            String status, int page, int pageSize) throws SQLException {
         int safePage = Math.max(page, 1);
         int safePageSize = Math.max(pageSize, 1);
         int offset = (safePage - 1) * safePageSize;
@@ -275,7 +276,7 @@ public class MemberDAO {
                 + "profile_text, manner_score, status, created_at, updated_at FROM member"
         );
         List<String> params = new ArrayList<>();
-        appendMemberFilters(sql, params, keyword, status);
+        appendMemberFilters(sql, params, loginId, nickname, phone, region, status);
         sql.append(" ORDER BY created_at DESC NULLS LAST, login_id ASC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
         Connection conn = null;
@@ -355,7 +356,8 @@ public class MemberDAO {
         return member;
     }
 
-    private void appendMemberFilters(StringBuilder sql, List<String> params, String keyword, String status) {
+    private void appendMemberFilters(StringBuilder sql, List<String> params, String loginId,
+            String nickname, String phone, String region, String status) {
         List<String> conditions = new ArrayList<>();
 
         if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
@@ -367,15 +369,10 @@ public class MemberDAO {
             params.add(status.trim().toUpperCase());
         }
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String likeKeyword = "%" + keyword.trim().toLowerCase() + "%";
-            conditions.add("(LOWER(login_id) LIKE ? OR LOWER(nickname) LIKE ? "
-                + "OR LOWER(phone) LIKE ? OR LOWER(region) LIKE ?)");
-            params.add(likeKeyword);
-            params.add(likeKeyword);
-            params.add(likeKeyword);
-            params.add(likeKeyword);
-        }
+        appendLikeFilter(conditions, params, "login_id", loginId);
+        appendLikeFilter(conditions, params, "nickname", nickname);
+        appendLikeFilter(conditions, params, "phone", phone);
+        appendLikeFilter(conditions, params, "region", region);
 
         if (!conditions.isEmpty()) {
             sql.append(" WHERE ");
@@ -386,6 +383,15 @@ public class MemberDAO {
                 sql.append(conditions.get(i));
             }
         }
+    }
+
+    private void appendLikeFilter(List<String> conditions, List<String> params, String columnName, String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return;
+        }
+
+        conditions.add("LOWER(" + columnName + ") LIKE ?");
+        params.add("%" + value.trim().toLowerCase() + "%");
     }
 
     private int bindStringParams(PreparedStatement pstmt, List<String> params) throws SQLException {

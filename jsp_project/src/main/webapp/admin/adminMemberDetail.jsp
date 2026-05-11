@@ -33,8 +33,12 @@ private String encodeParam(String value) {
     }
 }
 
-private String buildListQuery(String keyword, String status, String page) {
-    return "keyword=" + encodeParam(keyword)
+private String buildListQuery(String loginIdSearch, String nicknameSearch, String phoneSearch,
+        String regionSearch, String status, String page) {
+    return "loginIdSearch=" + encodeParam(loginIdSearch)
+        + "&nicknameSearch=" + encodeParam(nicknameSearch)
+        + "&phoneSearch=" + encodeParam(phoneSearch)
+        + "&regionSearch=" + encodeParam(regionSearch)
         + "&status=" + encodeParam(status == null || status.isEmpty() ? "ALL" : status)
         + "&page=" + encodeParam(page == null || page.isEmpty() ? "1" : page);
 }
@@ -43,7 +47,10 @@ private String buildListQuery(String keyword, String status, String page) {
 request.setCharacterEncoding("UTF-8");
 
 String loginIdParam = request.getParameter("loginId") == null ? "" : request.getParameter("loginId").trim();
-String keyword = request.getParameter("keyword") == null ? "" : request.getParameter("keyword").trim();
+String loginIdSearch = request.getParameter("loginIdSearch") == null ? "" : request.getParameter("loginIdSearch").trim();
+String nicknameSearch = request.getParameter("nicknameSearch") == null ? "" : request.getParameter("nicknameSearch").trim();
+String phoneSearch = request.getParameter("phoneSearch") == null ? "" : request.getParameter("phoneSearch").trim();
+String regionSearch = request.getParameter("regionSearch") == null ? "" : request.getParameter("regionSearch").trim();
 String statusFilter = request.getParameter("status") == null ? "ALL" : request.getParameter("status").trim().toUpperCase();
 String pageNumber = request.getParameter("page") == null ? "1" : request.getParameter("page").trim();
 String result = request.getParameter("result");
@@ -81,7 +88,7 @@ if (loginIdParam.isEmpty()) {
             <h1>회원 상세</h1>
         </div>
         <div class="admin-actions">
-            <a class="button" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(keyword, statusFilter, pageNumber) %>">목록</a>
+            <a class="button" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(loginIdSearch, nicknameSearch, phoneSearch, regionSearch, statusFilter, pageNumber) %>">목록</a>
             <a class="button" href="<%= contextPath %>/admin/adminMain.jsp">대시보드</a>
         </div>
     </div>
@@ -105,7 +112,10 @@ if (loginIdParam.isEmpty()) {
                 <form class="inline-form detail-status-form" action="<%= contextPath %>/admin/adminMemberStatusProcess.jsp" method="post">
                     <input type="hidden" name="origin" value="detail">
                     <input type="hidden" name="loginId" value="<%= escapeHtml(member.getLoginId()) %>">
-                    <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
+                    <input type="hidden" name="loginIdSearch" value="<%= escapeHtml(loginIdSearch) %>">
+                    <input type="hidden" name="nicknameSearch" value="<%= escapeHtml(nicknameSearch) %>">
+                    <input type="hidden" name="phoneSearch" value="<%= escapeHtml(phoneSearch) %>">
+                    <input type="hidden" name="regionSearch" value="<%= escapeHtml(regionSearch) %>">
                     <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
                     <input type="hidden" name="page" value="<%= escapeHtml(pageNumber) %>">
                     <select name="status" aria-label="회원 상태">

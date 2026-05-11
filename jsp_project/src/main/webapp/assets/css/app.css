@@ -384,7 +384,7 @@ button.primary {
 
 .admin-filter {
     display: grid;
-    grid-template-columns: minmax(220px, 1fr) 180px auto auto;
+    grid-template-columns: repeat(5, minmax(120px, 1fr)) auto auto;
     align-items: end;
     gap: 10px;
     margin-bottom: 16px;
