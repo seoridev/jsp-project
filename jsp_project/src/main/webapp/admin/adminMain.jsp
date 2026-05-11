@@ -57,11 +57,11 @@ try {
         </a>
         <a href="<%= contextPath %>/admin/adminMain.jsp">
             <strong>상품 관리</strong>
-            <span>상품 상태 확인과 관리 기능을 추가할 예정입니다.</span>
+            <span>상품의 상태를 확인하고 변경합니다.</span>
         </a>
         <a href="<%= contextPath %>/admin/adminMain.jsp">
             <strong>신고 관리</strong>
-            <span>신고 목록 확인과 처리 기능을 추가할 예정입니다.</span>
+            <span>신고 상태를 확인하고 변경합니다.</span>
         </a>
     </nav>
 </main>
