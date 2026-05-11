@@ -13,6 +13,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MemberDAO {
+    public static class MemberStats {
+        private int totalCount;
+        private int activeCount;
+        private int stoppedCount;
+        private int withdrawnCount;
+        private int todayJoinCount;
+
+        public int getTotalCount() {
+            return totalCount;
+        }
+
+        public int getActiveCount() {
+            return activeCount;
+        }
+
+        public int getStoppedCount() {
+            return stoppedCount;
+        }
+
+        public int getWithdrawnCount() {
+            return withdrawnCount;
+        }
+
+        public int getTodayJoinCount() {
+            return todayJoinCount;
+        }
+    }
+
     public boolean insertMember(MemberDTO member) throws SQLException {
         String sql = "INSERT INTO member "
             + "(login_id, password, nickname, phone, region, status, created_at) "
@@ -167,6 +195,112 @@ public class MemberDAO {
         }
     }
 
+    public MemberStats getMemberStats() throws SQLException {
+        String sql = "SELECT COUNT(*) AS total_count, "
+            + "SUM(CASE WHEN status = 'ACTIVE' OR status IS NULL THEN 1 ELSE 0 END) AS active_count, "
+            + "SUM(CASE WHEN status = 'STOPPED' THEN 1 ELSE 0 END) AS stopped_count, "
+            + "SUM(CASE WHEN status = 'WITHDRAWN' THEN 1 ELSE 0 END) AS withdrawn_count, "
+            + "SUM(CASE WHEN created_at >= TRUNC(SYSDATE) THEN 1 ELSE 0 END) AS today_join_count "
+            + "FROM member";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            MemberStats stats = new MemberStats();
+            if (rs.next()) {
+                stats.totalCount = rs.getInt("total_count");
+                stats.activeCount = rs.getInt("active_count");
+                stats.stoppedCount = rs.getInt("stopped_count");
+                stats.withdrawnCount = rs.getInt("withdrawn_count");
+                stats.todayJoinCount = rs.getInt("today_join_count");
+            }
+            return stats;
+        } catch (SQLException e) {
+            if (e.getErrorCode() != 904) {
+                throw e;
+            }
+
+            MemberStats stats = new MemberStats();
+            List<MemberDTO> members = getAllMembers();
+            stats.totalCount = members.size();
+            for (MemberDTO member : members) {
+                String status = member.getStatus();
+                if ("STOPPED".equalsIgnoreCase(status)) {
+                    stats.stoppedCount++;
+                } else if ("WITHDRAWN".equalsIgnoreCase(status)) {
+                    stats.withdrawnCount++;
+                } else {
+                    stats.activeCount++;
+                }
+            }
+            return stats;
+        } finally {
+            DBUtil.close(rs, pstmt, conn);
+        }
+    }
+
+    public int countMembers(String keyword, String status) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM member");
+        List<String> params = new ArrayList<>();
+        appendMemberFilters(sql, params, keyword, status);
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql.toString());
+            bindStringParams(pstmt, params);
+            rs = pstmt.executeQuery();
+
+            return rs.next() ? rs.getInt(1) : 0;
+        } finally {
+            DBUtil.close(rs, pstmt, conn);
+        }
+    }
+
+    public List<MemberDTO> searchMembers(String keyword, String status, int page, int pageSize) throws SQLException {
+        int safePage = Math.max(page, 1);
+        int safePageSize = Math.max(pageSize, 1);
+        int offset = (safePage - 1) * safePageSize;
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT login_id, password, nickname, phone, region, "
+                + "profile_text, manner_score, status, created_at, updated_at FROM member"
+        );
+        List<String> params = new ArrayList<>();
+        appendMemberFilters(sql, params, keyword, status);
+        sql.append(" ORDER BY created_at DESC NULLS LAST, login_id ASC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<MemberDTO> members = new ArrayList<>();
+
+        try {
+            conn = DBUtil.getConnection();
+            pstmt = conn.prepareStatement(sql.toString());
+            int paramIndex = bindStringParams(pstmt, params);
+            pstmt.setInt(paramIndex++, offset);
+            pstmt.setInt(paramIndex, safePageSize);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                members.add(mapMember(rs));
+            }
+
+            return members;
+        } finally {
+            DBUtil.close(rs, pstmt, conn);
+        }
+    }
+
     private boolean executeInsert(MemberDTO member, String sql) throws SQLException {
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -219,6 +353,47 @@ public class MemberDAO {
         member.setCreatedAt(getOptionalTimestamp(rs, "created_at"));
         member.setUpdatedAt(getOptionalTimestamp(rs, "updated_at"));
         return member;
+    }
+
+    private void appendMemberFilters(StringBuilder sql, List<String> params, String keyword, String status) {
+        List<String> conditions = new ArrayList<>();
+
+        if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
+            if ("ACTIVE".equalsIgnoreCase(status)) {
+                conditions.add("(status = ? OR status IS NULL)");
+            } else {
+                conditions.add("status = ?");
+            }
+            params.add(status.trim().toUpperCase());
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String likeKeyword = "%" + keyword.trim().toLowerCase() + "%";
+            conditions.add("(LOWER(login_id) LIKE ? OR LOWER(nickname) LIKE ? "
+                + "OR LOWER(phone) LIKE ? OR LOWER(region) LIKE ?)");
+            params.add(likeKeyword);
+            params.add(likeKeyword);
+            params.add(likeKeyword);
+            params.add(likeKeyword);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ");
+            for (int i = 0; i < conditions.size(); i++) {
+                if (i > 0) {
+                    sql.append(" AND ");
+                }
+                sql.append(conditions.get(i));
+            }
+        }
+    }
+
+    private int bindStringParams(PreparedStatement pstmt, List<String> params) throws SQLException {
+        int index = 1;
+        for (String param : params) {
+            pstmt.setString(index++, param);
+        }
+        return index;
     }
 
     private String sha256(String value) {
