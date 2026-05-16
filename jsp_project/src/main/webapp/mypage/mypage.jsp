@@ -2,6 +2,7 @@
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.MemberDAO" %>
+<%@ page import="com.carrot.dao.FavoriteDAO" %>
 <%@ page import="com.carrot.dao.ProductDAO" %>
 <%@ page import="com.carrot.dto.MemberDTO" %>
 <%@ page import="com.carrot.dto.ProductDTO" %>
@@ -10,6 +11,7 @@
     String currentLoginId = (String) session.getAttribute("loginId");
     MemberDTO member = new MemberDAO().getMemberByLoginId(currentLoginId);
     List<ProductDTO> products = new ProductDAO().getProductsBySellerId(currentLoginId);
+    int favoriteCount = new FavoriteDAO().countFavoritesByMemberId(currentLoginId);
     int saleCount = 0;
     int soldCount = 0;
     for (ProductDTO product : products) {
@@ -40,12 +42,14 @@
         <div class="admin-actions">
             <a class="button primary" href="<%= contextPath %>/mypage/profileEdit.jsp">내 정보 수정</a>
             <a class="button" href="<%= contextPath %>/mypage/myProductList.jsp">내 상품</a>
+            <a class="button" href="<%= contextPath %>/favorite/favoriteList.jsp">관심 상품</a>
         </div>
     </div>
 
     <section class="admin-summary">
         <div><span>판매중 상품</span><strong><%= saleCount %></strong></div>
         <div><span>거래완료</span><strong><%= soldCount %></strong></div>
+        <div><span>관심 상품</span><strong><%= favoriteCount %></strong></div>
         <div><span>매너 점수</span><strong><%= member == null ? "36.5" : scoreFormat.format(member.getMannerScore()) %></strong></div>
     </section>
 

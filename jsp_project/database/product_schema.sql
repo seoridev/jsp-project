@@ -49,6 +49,21 @@ CREATE TABLE product_image (
 CREATE SEQUENCE seq_product START WITH 51 INCREMENT BY 1 NOCACHE NOCYCLE;
 CREATE SEQUENCE seq_image START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
 
+CREATE TABLE favorite (
+    favorite_id NUMBER NOT NULL,
+    member_id VARCHAR2(20 BYTE) NOT NULL,
+    product_id NUMBER NOT NULL,
+    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
+    CONSTRAINT favorite_pk PRIMARY KEY (favorite_id),
+    CONSTRAINT uq_favorite_member_product UNIQUE (member_id, product_id),
+    CONSTRAINT fk_favorite_member FOREIGN KEY (member_id)
+        REFERENCES member (login_id) ON DELETE CASCADE,
+    CONSTRAINT fk_favorite_product FOREIGN KEY (product_id)
+        REFERENCES product (product_id) ON DELETE CASCADE
+);
+
+CREATE SEQUENCE seq_favorite START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
 INSERT INTO category (category_id, category_name, is_active) VALUES (10, '디지털기기', 'Y');
 INSERT INTO category (category_id, category_name, is_active) VALUES (20, '생활가전', 'Y');
 INSERT INTO category (category_id, category_name, is_active) VALUES (30, '가구/인테리어', 'Y');

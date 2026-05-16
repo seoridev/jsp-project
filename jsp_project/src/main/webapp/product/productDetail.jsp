@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.carrot.dao.FavoriteDAO" %>
 <%@ page import="com.carrot.dao.ProductDAO" %>
 <%@ page import="com.carrot.dao.ProductImageDAO" %>
 <%@ page import="com.carrot.dto.ProductDTO" %>
@@ -44,6 +45,7 @@
     long productId = parseProductId(request.getParameter("id"));
     ProductDAO productDAO = new ProductDAO();
     ProductImageDAO imageDAO = new ProductImageDAO();
+    FavoriteDAO favoriteDAO = new FavoriteDAO();
 
     if (productId > 0) {
         productDAO.increaseViewCount(productId);
@@ -56,6 +58,10 @@
     }
 
     List<ProductImageDTO> images = imageDAO.selectImagesByProductId(productId);
+    String detailLoginId = (String) session.getAttribute("loginId");
+    boolean detailLoggedIn = detailLoginId != null;
+    boolean favorite = detailLoggedIn && !detailLoginId.equals(product.getSellerId()) && favoriteDAO.isFavorite(detailLoginId, productId);
+    int favoriteCount = favoriteDAO.countFavoritesByProductId(productId);
     DecimalFormat priceFormat = new DecimalFormat("#,###");
 %>
 <!DOCTYPE html>
@@ -109,6 +115,7 @@
         <div class="product-meta-info">
             <span>판매자: <strong><%= escapeHtml(product.getSellerNickname() == null ? product.getSellerId() : product.getSellerNickname()) %></strong></span>
             <span>조회수: <%= product.getViewCount() %></span>
+            <span>관심: <%= favoriteCount %></span>
         </div>
     </div>
 
@@ -136,6 +143,15 @@
     <% if ("success".equals(request.getParameter("report"))) { %>
         <p class="message success">신고가 접수되었습니다.</p>
     <% } %>
+    <% if ("insert".equals(request.getParameter("favorite"))) { %>
+        <p class="message success">관심 상품에 등록했습니다.</p>
+    <% } else if ("delete".equals(request.getParameter("favorite"))) { %>
+        <p class="message success">관심 상품에서 해제했습니다.</p>
+    <% } else if ("own".equals(request.getParameter("favorite"))) { %>
+        <p class="message error">내가 등록한 상품은 관심 상품으로 등록할 수 없습니다.</p>
+    <% } else if ("fail".equals(request.getParameter("favorite"))) { %>
+        <p class="message error">관심 상품 처리에 실패했습니다.</p>
+    <% } %>
 
     <div class="product-button-group">
         <a href="<%= contextPath %>/product/productList.jsp" class="product-btn product-btn-list">목록으로</a>
@@ -146,7 +162,15 @@
                 <button type="submit" class="product-btn product-btn-delete">삭제하기</button>
             </form>
         <% } else if (loggedIn) { %>
+            <form action="<%= contextPath %>/favorite/favoriteProcess.jsp" method="post">
+                <input type="hidden" name="productId" value="<%= product.getProductId() %>">
+                <button type="submit" class="product-btn product-btn-favorite <%= favorite ? "is-active" : "" %>">
+                    <%= favorite ? "관심 해제" : "관심 등록" %>
+                </button>
+            </form>
             <a href="<%= contextPath %>/report/report.jsp?targetType=PRODUCT&targetId=<%= product.getProductId() %>" class="product-btn product-btn-delete">신고하기</a>
+        <% } else { %>
+            <a href="<%= contextPath %>/member/login.jsp?error=loginRequired" class="product-btn product-btn-favorite">관심 등록</a>
         <% } %>
     </div>
 </main>

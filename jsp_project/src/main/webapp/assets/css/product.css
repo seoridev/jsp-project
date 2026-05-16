@@ -357,6 +357,10 @@ body.product-page {
     gap: 10px;
 }
 
+.product-button-group form {
+    margin: 0;
+}
+
 .product-btn {
     display: inline-flex;
     align-items: center;
@@ -385,6 +389,17 @@ body.product-page {
 .product-btn-delete,
 .product-btn-submit {
     background: #ff5a5f;
+    color: #fff;
+}
+
+.product-btn-favorite {
+    border: 1px solid #ff6f0f;
+    background: #fff7ed;
+    color: #d95c00;
+}
+
+.product-btn-favorite.is-active {
+    background: #ff6f0f;
     color: #fff;
 }
 
