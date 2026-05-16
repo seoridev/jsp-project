@@ -26,6 +26,19 @@
         }
         return "판매중";
     }
+
+    private String detailStatusClass(String status) {
+        if ("RESERVED".equalsIgnoreCase(status)) {
+            return "product-status-reserved";
+        }
+        if ("SOLD".equalsIgnoreCase(status)) {
+            return "product-status-sold";
+        }
+        if ("HIDDEN".equalsIgnoreCase(status)) {
+            return "product-status-hidden";
+        }
+        return "product-status-sale";
+    }
 %>
 <%
     long productId = parseProductId(request.getParameter("id"));
@@ -52,66 +65,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= escapeHtml(product.getTitle()) %> - 동네마켓</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/product.css?v=external-ui-1">
 </head>
-<body>
+<body class="product-page">
 <%@ include file="../common/header.jsp" %>
-<main class="admin-shell">
-    <section class="detail-panel">
-        <div class="detail-header">
-            <div>
-                <span class="status-badge"><%= detailStatusText(product.getStatus()) %></span>
-                <h2><%= escapeHtml(product.getTitle()) %></h2>
-                <p><%= escapeHtml(product.getRegion()) %> · 조회 <%= product.getViewCount() %></p>
-            </div>
-            <div class="admin-actions">
-                <a class="button" href="<%= contextPath %>/product/productList.jsp">목록</a>
-                <% if (loggedIn && loginId.equals(product.getSellerId())) { %>
-                    <a class="button" href="<%= contextPath %>/product/productEdit.jsp?id=<%= product.getProductId() %>">수정</a>
-                    <form class="inline-form" action="<%= contextPath %>/product/productDeleteProcess.jsp" method="post" onsubmit="return confirm('이 상품을 삭제 상태로 변경할까요?');">
-                        <input type="hidden" name="id" value="<%= product.getProductId() %>">
-                        <button type="submit">삭제</button>
-                    </form>
-                <% } %>
-            </div>
-        </div>
-
-        <% if (!images.isEmpty()) { %>
-            <div class="detail-grid">
-                <% for (ProductImageDTO image : images) { %>
-                    <div>
-                        <dt><%= "Y".equals(image.getIsMain()) ? "대표 이미지" : "상품 이미지" %></dt>
-                        <dd>
-                            <img src="<%= contextPath + image.getImagePath() + image.getSaveName() %>" alt="상품 이미지" style="max-width: 100%; border-radius: 8px;">
-                        </dd>
+<main class="product-detail-container">
+    <div class="product-image-section">
+        <% if (images != null && !images.isEmpty()) {
+            ProductImageDTO mainImage = images.get(0);
+            for (ProductImageDTO image : images) {
+                if ("Y".equals(image.getIsMain())) {
+                    mainImage = image;
+                    break;
+                }
+            }
+            String mainImagePath = contextPath + mainImage.getImagePath() + mainImage.getSaveName();
+        %>
+            <img src="<%= mainImagePath %>" id="currentImg" class="product-main-img" alt="상품 이미지">
+            <div class="product-thumb-container">
+                <% for (ProductImageDTO image : images) {
+                    String fullPath = contextPath + image.getImagePath() + image.getSaveName();
+                    boolean isMain = "Y".equals(image.getIsMain());
+                %>
+                    <div class="product-detail-thumb-wrapper">
+                        <% if (isMain) { %>
+                            <span class="product-detail-main-badge">대표</span>
+                        <% } %>
+                        <img src="<%= fullPath %>"
+                             class="product-thumb-img <%= isMain ? "active-thumb" : "" %>"
+                             alt="상품 썸네일"
+                             onclick="changeDetailImage(this, '<%= fullPath %>')">
                     </div>
                 <% } %>
             </div>
+        <% } else { %>
+            <div class="product-no-image">등록된 이미지가 없습니다.</div>
         <% } %>
+    </div>
 
-        <dl class="detail-grid">
-            <div>
-                <dt>가격</dt>
-                <dd><strong><%= priceFormat.format(product.getPrice()) %>원</strong></dd>
-            </div>
-            <div>
-                <dt>카테고리</dt>
-                <dd><%= escapeHtml(product.getCategoryName()) %></dd>
-            </div>
-            <div>
-                <dt>판매자</dt>
-                <dd><%= escapeHtml(product.getSellerNickname() == null ? product.getSellerId() : product.getSellerNickname()) %></dd>
-            </div>
-            <div>
-                <dt>상품 상태</dt>
-                <dd><%= detailStatusText(product.getStatus()) %></dd>
-            </div>
-            <div>
-                <dt>설명</dt>
-                <dd><%= escapeHtml(product.getContent()).replace("\n", "<br>") %></dd>
-            </div>
-        </dl>
-    </section>
+    <div class="product-detail-header">
+        <div class="product-category"><%= escapeHtml(product.getCategoryName()) %></div>
+        <h1 class="product-detail-title"><%= escapeHtml(product.getTitle()) %></h1>
+        <div class="product-meta-info">
+            <span>판매자: <strong><%= escapeHtml(product.getSellerNickname() == null ? product.getSellerId() : product.getSellerNickname()) %></strong></span>
+            <span>조회수: <%= product.getViewCount() %></span>
+        </div>
+    </div>
+
+    <div class="product-info-box">
+        <div class="product-info-item">
+            <span class="product-label">판매 가격</span>
+            <span class="product-value product-price-value"><%= priceFormat.format(product.getPrice()) %>원</span>
+        </div>
+        <div class="product-info-item">
+            <span class="product-label">거래 희망 지역</span>
+            <span class="product-value"><%= escapeHtml(product.getRegion()) %></span>
+        </div>
+        <div class="product-info-item">
+            <span class="product-label">판매 상태</span>
+            <span class="product-value">
+                <span class="product-status-badge <%= detailStatusClass(product.getStatus()) %>">
+                    <%= detailStatusText(product.getStatus()) %>
+                </span>
+            </span>
+        </div>
+    </div>
+
+    <div class="product-content-section"><%= escapeHtml(product.getContent()) %></div>
+
+    <div class="product-button-group">
+        <a href="<%= contextPath %>/product/productList.jsp" class="product-btn product-btn-list">목록으로</a>
+        <% if (loggedIn && loginId.equals(product.getSellerId())) { %>
+            <a href="<%= contextPath %>/product/productEdit.jsp?id=<%= product.getProductId() %>" class="product-btn product-btn-edit">수정하기</a>
+            <form action="<%= contextPath %>/product/productDeleteProcess.jsp" method="post" onsubmit="return confirm('정말로 이 게시글을 삭제하시겠습니까?');">
+                <input type="hidden" name="id" value="<%= product.getProductId() %>">
+                <button type="submit" class="product-btn product-btn-delete">삭제하기</button>
+            </form>
+        <% } %>
+    </div>
 </main>
 <%@ include file="../common/footer.jsp" %>
+<script>
+function changeDetailImage(element, imgUrl) {
+    document.getElementById("currentImg").src = imgUrl;
+    document.querySelectorAll(".product-thumb-img").forEach((thumb) => {
+        thumb.classList.remove("active-thumb");
+    });
+    element.classList.add("active-thumb");
+}
+</script>
 </body>
 </html>
