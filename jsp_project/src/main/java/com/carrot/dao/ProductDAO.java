@@ -258,6 +258,21 @@ public class ProductDAO extends BaseDAO {
         return false;
     }
 
+    public boolean updateProductStatusForAdmin(long productId, String status) {
+        String sql = "UPDATE product SET status = ?, updated_at = SYSTIMESTAMP WHERE product_id = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+            pstmt.setLong(2, productId);
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
     // ===== 공통 조회/매핑 =====
 
     // 상품 시퀀스 번호를 먼저 확보해서 이미지 저장과 같은 요청 흐름에서 재사용

@@ -133,6 +133,10 @@
 
     <div class="product-content-section"><%= escapeHtml(product.getContent()) %></div>
 
+    <% if ("success".equals(request.getParameter("report"))) { %>
+        <p class="message success">신고가 접수되었습니다.</p>
+    <% } %>
+
     <div class="product-button-group">
         <a href="<%= contextPath %>/product/productList.jsp" class="product-btn product-btn-list">목록으로</a>
         <% if (loggedIn && loginId.equals(product.getSellerId())) { %>
@@ -141,6 +145,8 @@
                 <input type="hidden" name="id" value="<%= product.getProductId() %>">
                 <button type="submit" class="product-btn product-btn-delete">삭제하기</button>
             </form>
+        <% } else if (loggedIn) { %>
+            <a href="<%= contextPath %>/report/report.jsp?targetType=PRODUCT&targetId=<%= product.getProductId() %>" class="product-btn product-btn-delete">신고하기</a>
         <% } %>
     </div>
 </main>

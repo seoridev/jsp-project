@@ -1,0 +1,16 @@
+CREATE SEQUENCE seq_report START WITH 1 INCREMENT BY 1 NOCACHE;
+
+CREATE TABLE report (
+    report_id NUMBER PRIMARY KEY,
+    reporter_id VARCHAR2(20) NOT NULL,
+    target_type VARCHAR2(20) NOT NULL,
+    target_id NUMBER NOT NULL,
+    reason VARCHAR2(100) NOT NULL,
+    detail CLOB,
+    status VARCHAR2(20) DEFAULT 'WAITING' NOT NULL,
+    created_at TIMESTAMP DEFAULT SYSTIMESTAMP,
+    processed_at TIMESTAMP,
+    CONSTRAINT fk_report_reporter FOREIGN KEY (reporter_id) REFERENCES member(login_id),
+    CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT')),
+    CONSTRAINT chk_report_status CHECK (status IN ('WAITING', 'DONE', 'REJECTED'))
+);

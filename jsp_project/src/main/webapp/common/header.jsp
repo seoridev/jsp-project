@@ -34,6 +34,7 @@
         <a href="<%= contextPath %>/index.jsp">홈</a>
         <a href="<%= contextPath %>/product/productList.jsp">상품 목록</a>
         <% if (loggedIn) { %>
+            <a href="<%= contextPath %>/mypage/mypage.jsp">마이페이지</a>
             <a href="<%= contextPath %>/member/logout.jsp">로그아웃</a>
         <% } else { %>
             <a href="<%= contextPath %>/member/login.jsp">로그인</a>
