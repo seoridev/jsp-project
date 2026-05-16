@@ -228,6 +228,38 @@ button.primary {
     border-color: #ff6f0f;
 }
 
+.inline-check {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+}
+
+.inline-check button {
+    min-width: 92px;
+    padding: 0 12px;
+}
+
+.inline-check button:disabled {
+    cursor: progress;
+    opacity: 0.72;
+}
+
+.field-message {
+    min-height: 18px;
+    margin: -2px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.field-message.is-error {
+    color: #a7351a;
+}
+
+.field-message.is-success {
+    color: #23723a;
+}
+
 /* 연락처 앞자리와 뒷자리를 한 줄에 맞추는 회원가입 전용 입력 */
 .phone-row {
     display: grid;
