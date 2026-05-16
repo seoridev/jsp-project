@@ -6,6 +6,7 @@
 
     <display-name>jsp_project</display-name>
 
+    <!-- JSP 파일은 전부 UTF-8로 읽고 응답하도록 기본값을 맞춤 -->
     <jsp-config>
         <jsp-property-group>
             <url-pattern>*.jsp</url-pattern>
@@ -14,6 +15,7 @@
         </jsp-property-group>
     </jsp-config>
 
+    <!-- 도메인 루트로 들어오면 메인 화면부터 열림 -->
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>

@@ -19,6 +19,7 @@ a {
     text-decoration: none;
 }
 
+/* 모든 화면에서 같이 쓰는 상단 영역 */
 .site-header {
     display: flex;
     align-items: center;
@@ -81,6 +82,7 @@ button.primary {
     color: #fff;
 }
 
+/* 메인 화면: 소개 영역과 로그인 상태 패널 */
 .page-shell {
     width: min(1120px, calc(100% - 32px));
     margin: 0 auto;
@@ -145,6 +147,7 @@ button.primary {
     padding: 28px;
 }
 
+/* 로그인/회원가입처럼 폭이 좁은 입력 화면 */
 .status-panel h2 {
     margin: 0 0 12px;
     font-size: 24px;
@@ -225,6 +228,7 @@ button.primary {
     border-color: #ff6f0f;
 }
 
+/* 연락처 앞자리와 뒷자리를 한 줄에 맞추는 회원가입 전용 입력 */
 .phone-row {
     display: grid;
     grid-template-columns: 96px minmax(0, 1fr);
@@ -293,6 +297,7 @@ button.primary {
     font-weight: 800;
 }
 
+/* 모든 화면에서 같이 쓰는 하단 문구 */
 .site-footer {
     width: min(1120px, calc(100% - 32px));
     margin: 0 auto;
@@ -301,6 +306,7 @@ button.primary {
     font-size: 13px;
 }
 
+/* 관리자 대시보드와 회원 관리 화면 */
 .admin-shell {
     width: min(1120px, calc(100% - 32px));
     margin: 0 auto;
@@ -394,6 +400,7 @@ button.primary {
     background: #fff;
 }
 
+/* 회원 목록 표는 모바일에서도 깨지지 않게 가로 스크롤을 허용 */
 .admin-list-meta {
     display: flex;
     align-items: center;
@@ -561,6 +568,7 @@ button.primary {
     justify-content: flex-end;
 }
 
+/* 회원 상세 정보는 항목별로 읽기 편하게 2열로 배치 */
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -595,6 +603,7 @@ button.primary {
     word-break: break-word;
 }
 
+/* 좁은 화면에서는 주요 레이아웃을 한 줄 흐름으로 내려 읽게 변경 */
 @media (max-width: 760px) {
     .site-header {
         align-items: flex-start;
