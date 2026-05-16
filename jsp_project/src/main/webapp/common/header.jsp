@@ -32,6 +32,7 @@
     </a>
     <nav class="top-nav" aria-label="주요 메뉴">
         <a href="<%= contextPath %>/index.jsp">홈</a>
+        <a href="<%= contextPath %>/product/productList.jsp">상품 목록</a>
         <% if (loggedIn) { %>
             <a href="<%= contextPath %>/member/logout.jsp">로그아웃</a>
         <% } else { %>
