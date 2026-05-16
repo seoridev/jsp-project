@@ -6,7 +6,7 @@
 	String message = "입력한 내용을 확인한 뒤 다시 시도해 주세요.";
 
 	if ("empty".equals(error)) {
-	    message = "아이디, 비밀번호, 닉네임, 동네는 반드시 입력해야 합니다.";
+	    message = "아이디, 비밀번호, 닉네임, 연락처, 동네는 반드시 입력해야 합니다.";
 	} else if ("idRule".equals(error)) {
 	    message = "아이디는 4~20자의 영문, 숫자만 사용할 수 있습니다.";
 	} else if ("passwordRule".equals(error)) {

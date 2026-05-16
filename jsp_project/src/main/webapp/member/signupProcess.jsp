@@ -39,7 +39,7 @@
 	String contextPath = request.getContextPath();
 
 	//필수값을 먼저 확인해서 아래 검증 흐름 정리
-	if (isBlank(loginId) || isBlank(password) || isBlank(passwordConfirm) || isBlank(nickname) || isBlank(region)) {
+	if (isBlank(loginId) || isBlank(password) || isBlank(passwordConfirm) || isBlank(nickname) || isBlank(phone) || isBlank(region)) {
 	    response.sendRedirect(contextPath + "/member/signupFail.jsp?error=empty");
 	    return;
 	}

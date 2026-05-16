@@ -205,6 +205,10 @@ button.primary {
     font-weight: 800;
 }
 
+.field.is-invalid label {
+    color: #a7351a;
+}
+
 .field small {
     color: #7a7066;
     font-size: 12px;
@@ -228,15 +232,31 @@ button.primary {
     border-color: #ff6f0f;
 }
 
+.field.is-invalid input,
+.field.is-invalid select {
+    border-color: #d93025;
+    background: #fffafa;
+}
+
+.field.is-invalid input:focus,
+.field.is-invalid select:focus {
+    outline-color: rgba(217, 48, 37, 0.18);
+    border-color: #d93025;
+}
+
 .inline-check {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 92px;
+    align-items: center;
     gap: 8px;
+    width: 100%;
 }
 
 .inline-check button {
+    width: 92px;
     min-width: 92px;
     padding: 0 12px;
+    white-space: nowrap;
 }
 
 .inline-check button:disabled {
@@ -663,6 +683,17 @@ button.primary {
 
     .auth-panel {
         padding: 26px 20px;
+    }
+
+    .inline-check {
+        grid-template-columns: minmax(0, 1fr) 88px;
+    }
+
+    .inline-check button {
+        width: 88px;
+        min-width: 88px;
+        padding: 0 10px;
+        font-size: 13px;
     }
 
     .admin-heading {
