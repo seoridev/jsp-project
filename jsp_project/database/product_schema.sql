@@ -1,5 +1,6 @@
 -- 상품 기능 DB 스키마
 -- 앱 접속 계정(C##userjsp)에서 실행하는 기준입니다.
+-- member 테이블은 먼저 생성되어 있어야 합니다.
 
 CREATE TABLE category (
     category_id NUMBER NOT NULL,
@@ -11,7 +12,7 @@ CREATE TABLE category (
 
 CREATE TABLE product (
     product_id NUMBER NOT NULL,
-    seller_id VARCHAR2(20 BYTE),
+    seller_id VARCHAR2(20 BYTE) NOT NULL,
     category_id NUMBER NOT NULL,
     title VARCHAR2(150 BYTE) NOT NULL,
     content CLOB NOT NULL,
@@ -24,7 +25,11 @@ CREATE TABLE product (
     updated_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
     CONSTRAINT product_pk PRIMARY KEY (product_id),
     CONSTRAINT chk_product_status CHECK (status IN ('SALE', 'RESERVED', 'SOLD', 'HIDDEN')),
-    CONSTRAINT chk_product_deleted CHECK (is_deleted IN ('Y', 'N'))
+    CONSTRAINT chk_product_deleted CHECK (is_deleted IN ('Y', 'N')),
+    CONSTRAINT fk_product_seller FOREIGN KEY (seller_id)
+        REFERENCES member (login_id),
+    CONSTRAINT fk_product_category FOREIGN KEY (category_id)
+        REFERENCES category (category_id)
 );
 
 CREATE TABLE product_image (
@@ -52,6 +57,19 @@ INSERT INTO category (category_id, category_name, is_active) VALUES (50, '의류
 INSERT INTO category (category_id, category_name, is_active) VALUES (60, '취미/게임', 'Y');
 INSERT INTO category (category_id, category_name, is_active) VALUES (70, '도서/티켓', 'Y');
 INSERT INTO category (category_id, category_name, is_active) VALUES (80, '기타 중고물품', 'Y');
+
+-- 샘플 판매자 계정입니다. 초기 비밀번호는 Password1 입니다.
+INSERT INTO member (login_id, password, nickname, phone, region, status, created_at)
+VALUES ('user01', '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
+        '시흥거래러', '010-1111-0001', '경기도 시흥시', 'ACTIVE', SYSTIMESTAMP);
+
+INSERT INTO member (login_id, password, nickname, phone, region, status, created_at)
+VALUES ('user02', '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
+        '강남정리왕', '010-1111-0002', '서울특별시 강남구', 'ACTIVE', SYSTIMESTAMP);
+
+INSERT INTO member (login_id, password, nickname, phone, region, status, created_at)
+VALUES ('user03', '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
+        '남동게임상점', '010-1111-0003', '인천광역시 남동구', 'ACTIVE', SYSTIMESTAMP);
 
 INSERT INTO product
     (product_id, seller_id, category_id, title, content, price, region, status, view_count, is_deleted, created_at, updated_at)
