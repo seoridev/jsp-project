@@ -32,9 +32,6 @@
 	            <% } else { %>
 	                <h2>로그인이 필요합니다.</h2>
 	                <p>동네 이웃과 거래하려면 먼저 계정에 로그인해 주세요.</p>
-	                <% if ("success".equals(request.getParameter("logout"))) { %>
-	                    <div class="message success">정상적으로 로그아웃되었습니다.</div>
-	                <% } %>
 	                <div class="hero-actions">
 	                    <a class="button primary" href="<%= contextPath %>/member/login.jsp">로그인</a>
 	                    <a class="button" href="<%= contextPath %>/member/signup.jsp">회원가입</a>

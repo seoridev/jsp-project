@@ -2,5 +2,5 @@
 <%
 	//회원 로그아웃은 세션 전체 비움
 	session.invalidate();
-	response.sendRedirect(request.getContextPath() + "/index.jsp?logout=success");
+	response.sendRedirect(request.getContextPath() + "/index.jsp");
 %>
