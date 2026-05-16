@@ -19,8 +19,14 @@
 	    message = "동네는 2자 이상 입력해 주세요.";
 	} else if ("password".equals(error)) {
 	    message = "비밀번호와 비밀번호 확인 값이 서로 다릅니다.";
-	} else if ("duplicate".equals(error)) {
+	} else if ("duplicate".equals(error) || "duplicateId".equals(error)) {
 	    message = "이미 사용 중인 아이디입니다. 다른 아이디로 가입해 주세요.";
+	} else if ("duplicateNickname".equals(error)) {
+	    message = "이미 사용 중인 닉네임입니다. 다른 닉네임으로 가입해 주세요.";
+	} else if ("duplicatePhone".equals(error)) {
+	    message = "이미 사용 중인 연락처입니다. 다른 연락처로 가입해 주세요.";
+	} else if ("duplicateUnique".equals(error)) {
+	    message = "이미 사용 중인 아이디, 닉네임 또는 연락처입니다. 다시 확인해 주세요.";
 	} else if ("db".equals(error)) {
 	    message = "지금은 가입을 완료할 수 없습니다. 잠시 후 다시 시도해 주세요.";
 	} else if ("fail".equals(error)) {

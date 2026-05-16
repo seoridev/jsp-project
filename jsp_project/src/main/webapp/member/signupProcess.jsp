@@ -91,9 +91,19 @@
 	MemberDAO memberDAO = new MemberDAO();
 
 	try {
-	    //저장 전 아이디 중복 먼저 확인
+	    //저장 전 아이디와 닉네임 중복 먼저 확인
 	    if (memberDAO.isDuplicateLoginId(member.getLoginId())) {
-	        response.sendRedirect(contextPath + "/member/signupFail.jsp?error=duplicate");
+	        response.sendRedirect(contextPath + "/member/signupFail.jsp?error=duplicateId");
+	        return;
+	    }
+
+	    if (memberDAO.isDuplicateNickname(member.getNickname())) {
+	        response.sendRedirect(contextPath + "/member/signupFail.jsp?error=duplicateNickname");
+	        return;
+	    }
+
+	    if (!phone.isEmpty() && memberDAO.isDuplicatePhone(member.getPhone())) {
+	        response.sendRedirect(contextPath + "/member/signupFail.jsp?error=duplicatePhone");
 	        return;
 	    }
 
@@ -105,7 +115,7 @@
 	    }
 	} catch (SQLException e) {
 	    if (e.getErrorCode() == 1) {
-	        response.sendRedirect(contextPath + "/member/signupFail.jsp?error=duplicate");
+	        response.sendRedirect(contextPath + "/member/signupFail.jsp?error=duplicateUnique");
 	    } else {
 	        response.sendRedirect(contextPath + "/member/signupFail.jsp?error=db");
 	    }

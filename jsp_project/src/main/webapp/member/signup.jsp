@@ -16,8 +16,14 @@
 	    errorMessage = "연락처 뒷자리는 숫자 8자리로 입력해 주세요.";
 	} else if ("regionRule".equals(error)) {
 	    errorMessage = "동네는 2자 이상 입력해 주세요.";
-	} else if ("duplicate".equals(error)) {
+	} else if ("duplicate".equals(error) || "duplicateId".equals(error)) {
 	    errorMessage = "이미 사용 중인 아이디입니다.";
+	} else if ("duplicateNickname".equals(error)) {
+	    errorMessage = "이미 사용 중인 닉네임입니다.";
+	} else if ("duplicatePhone".equals(error)) {
+	    errorMessage = "이미 사용 중인 연락처입니다.";
+	} else if ("duplicateUnique".equals(error)) {
+	    errorMessage = "이미 사용 중인 아이디, 닉네임 또는 연락처입니다.";
 	} else if ("password".equals(error)) {
 	    errorMessage = "비밀번호와 비밀번호 확인이 일치하지 않습니다.";
 	} else if ("db".equals(error)) {
@@ -49,24 +55,34 @@
 	        <form class="form-grid" action="<%= contextPath %>/member/signupProcess.jsp" method="post" id="signupForm" novalidate>
 	            <div class="field">
 	                <label for="loginId">아이디</label>
-	                <input type="text" id="loginId" name="loginId" minlength="4" maxlength="20" required>
+	                <div class="inline-check">
+	                    <input type="text" id="loginId" name="loginId" minlength="4" maxlength="20" autocomplete="username" required>
+	                    <button type="button" id="checkLoginIdButton">중복 확인</button>
+	                </div>
 	                <small>4~20자의 영문, 숫자만 사용할 수 있습니다.</small>
+	                <p class="field-message" id="loginIdMessage" aria-live="polite"></p>
 	            </div>
 
 	            <div class="field">
 	                <label for="password">비밀번호</label>
-	                <input type="password" id="password" name="password" minlength="8" maxlength="20" required>
+	                <input type="password" id="password" name="password" minlength="8" maxlength="20" autocomplete="new-password" required>
 	                <small>8~20자, 영문과 숫자를 모두 포함해 주세요.</small>
+	                <p class="field-message" id="passwordMessage" aria-live="polite"></p>
 	            </div>
 
 	            <div class="field">
 	                <label for="passwordConfirm">비밀번호 확인</label>
-	                <input type="password" id="passwordConfirm" name="passwordConfirm" minlength="8" maxlength="20" required>
+	                <input type="password" id="passwordConfirm" name="passwordConfirm" minlength="8" maxlength="20" autocomplete="new-password" required>
+	                <p class="field-message" id="passwordConfirmMessage" aria-live="polite"></p>
 	            </div>
 
 	            <div class="field">
 	                <label for="nickname">닉네임</label>
-	                <input type="text" id="nickname" name="nickname" minlength="2" maxlength="20" required>
+	                <div class="inline-check">
+	                    <input type="text" id="nickname" name="nickname" minlength="2" maxlength="20" required>
+	                    <button type="button" id="checkNicknameButton">중복 확인</button>
+	                </div>
+	                <p class="field-message" id="nicknameMessage" aria-live="polite"></p>
 	            </div>
 
 	            <div class="field">
@@ -83,6 +99,7 @@
 	                    <input type="text" id="phoneTail" name="phoneTail" inputmode="numeric" maxlength="9" placeholder="0000-0000">
 	                </div>
 	                <input type="hidden" id="phone" name="phone">
+	                <p class="field-message" id="phoneMessage" aria-live="polite"></p>
 	            </div>
 
 	            <div class="field">
@@ -105,15 +122,165 @@ const loginId = document.getElementById("loginId");
 const password = document.getElementById("password");
 const passwordConfirm = document.getElementById("passwordConfirm");
 const nickname = document.getElementById("nickname");
+const checkLoginIdButton = document.getElementById("checkLoginIdButton");
+const checkNicknameButton = document.getElementById("checkNicknameButton");
 const phonePrefix = document.getElementById("phonePrefix");
 const phoneTail = document.getElementById("phoneTail");
 const phone = document.getElementById("phone");
 const region = document.getElementById("region");
 const signupError = document.getElementById("signupError");
+const loginIdMessage = document.getElementById("loginIdMessage");
+const passwordMessage = document.getElementById("passwordMessage");
+const passwordConfirmMessage = document.getElementById("passwordConfirmMessage");
+const nicknameMessage = document.getElementById("nicknameMessage");
+const phoneMessage = document.getElementById("phoneMessage");
+const contextPath = "<%= request.getContextPath() %>";
+const duplicateState = {
+    loginId: { value: "", checked: false, available: false },
+    nickname: { value: "", checked: false, available: false },
+    phone: { value: "", checked: false, available: true }
+};
 
 function showSignupError(message) {
     signupError.textContent = message;
     signupError.hidden = message === "";
+}
+
+function setFieldMessage(element, message, type) {
+    element.textContent = message;
+    element.className = "field-message";
+    if (message !== "") {
+        element.classList.add(type === "success" ? "is-success" : "is-error");
+    }
+}
+
+function validateLoginIdRule() {
+    if (!/^[A-Za-z0-9]{4,20}$/.test(loginId.value.trim())) {
+        return "아이디는 4~20자의 영문, 숫자만 사용할 수 있습니다.";
+    }
+
+    return "";
+}
+
+function validatePasswordRule() {
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,20}$/.test(password.value)) {
+        return "비밀번호는 8~20자이며 영문과 숫자를 모두 포함해야 합니다.";
+    }
+
+    return "";
+}
+
+function validatePasswordConfirmRule() {
+    if (passwordConfirm.value === "") {
+        return "비밀번호 확인을 입력해 주세요.";
+    }
+
+    if (password.value !== passwordConfirm.value) {
+        return "비밀번호 확인이 일치하지 않습니다.";
+    }
+
+    return "";
+}
+
+function validateNicknameRule() {
+    const trimmedNickname = nickname.value.trim();
+    if (trimmedNickname.length < 2 || trimmedNickname.length > 20) {
+        return "닉네임은 2~20자로 입력해 주세요.";
+    }
+
+    return "";
+}
+
+function validatePhoneRule() {
+    updatePhoneValue();
+
+    if (phoneTail.value.trim() !== "" && !/^[0-9]{4}-[0-9]{4}$/.test(phoneTail.value.trim())) {
+        return "연락처 뒷자리는 숫자 8자리로 입력해 주세요.";
+    }
+
+    return "";
+}
+
+function resetDuplicateState(type) {
+    duplicateState[type] = {
+        value: "",
+        checked: false,
+        available: type === "phone"
+    };
+}
+
+async function checkDuplicate(type) {
+    const duplicateFields = {
+        loginId: {
+            messageElement: loginIdMessage,
+            button: checkLoginIdButton,
+            validate: validateLoginIdRule,
+            getValue: () => loginId.value.trim()
+        },
+        nickname: {
+            messageElement: nicknameMessage,
+            button: checkNicknameButton,
+            validate: validateNicknameRule,
+            getValue: () => nickname.value.trim()
+        },
+        phone: {
+            messageElement: phoneMessage,
+            button: null,
+            validate: validatePhoneRule,
+            getValue: () => phone.value.trim()
+        }
+    };
+    const field = duplicateFields[type];
+    const ruleMessage = field.validate();
+    const value = field.getValue();
+
+    if (type === "phone" && value === "") {
+        resetDuplicateState(type);
+        setFieldMessage(field.messageElement, "", "success");
+        return true;
+    }
+
+    if (ruleMessage !== "") {
+        setFieldMessage(field.messageElement, ruleMessage, "error");
+        resetDuplicateState(type);
+        return false;
+    }
+
+    if (duplicateState[type].checked && duplicateState[type].value === value) {
+        return duplicateState[type].available;
+    }
+
+    if (field.button !== null) {
+        field.button.disabled = true;
+    }
+    setFieldMessage(field.messageElement, "중복 확인 중입니다.", "success");
+
+    try {
+        const response = await fetch(contextPath + "/member/checkDuplicate.jsp?type="
+            + encodeURIComponent(type) + "&value=" + encodeURIComponent(value), {
+            headers: { "Accept": "application/json" }
+        });
+        const result = await response.json();
+
+        if (field.getValue() !== value) {
+            resetDuplicateState(type);
+            setFieldMessage(field.messageElement, "", "error");
+            return false;
+        }
+
+        const available = result.valid === true && result.duplicate === false;
+        duplicateState[type] = { value, checked: true, available };
+        setFieldMessage(field.messageElement, result.message || "", available ? "success" : "error");
+        return available;
+    } catch (error) {
+        resetDuplicateState(type);
+        setFieldMessage(field.messageElement, "중복 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.", "error");
+        return false;
+    } finally {
+        if (field.button !== null) {
+            field.button.disabled = false;
+        }
+    }
 }
 
 //뒷자리 8자리를 0000-0000 형태로 맞춤
@@ -134,24 +301,34 @@ function updatePhoneValue() {
 function validateSignup() {
     updatePhoneValue();
 
-    if (!/^[A-Za-z0-9]{4,20}$/.test(loginId.value.trim())) {
-        return "아이디는 4~20자의 영문, 숫자만 사용할 수 있습니다.";
+    let message = validateLoginIdRule();
+    if (message !== "") {
+        setFieldMessage(loginIdMessage, message, "error");
+        return message;
     }
 
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,20}$/.test(password.value)) {
-        return "비밀번호는 8~20자이며 영문과 숫자를 모두 포함해야 합니다.";
+    message = validatePasswordRule();
+    if (message !== "") {
+        setFieldMessage(passwordMessage, message, "error");
+        return message;
     }
 
-    if (password.value !== passwordConfirm.value) {
-        return "비밀번호 확인이 일치하지 않습니다.";
+    message = validatePasswordConfirmRule();
+    if (message !== "") {
+        setFieldMessage(passwordConfirmMessage, message, "error");
+        return message;
     }
 
-    if (nickname.value.trim().length < 2 || nickname.value.trim().length > 20) {
-        return "닉네임은 2~20자로 입력해 주세요.";
+    message = validateNicknameRule();
+    if (message !== "") {
+        setFieldMessage(nicknameMessage, message, "error");
+        return message;
     }
 
-    if (phoneTail.value.trim() !== "" && !/^[0-9]{4}-[0-9]{4}$/.test(phoneTail.value.trim())) {
-        return "연락처 뒷자리는 숫자 8자리로 입력해 주세요.";
+    message = validatePhoneRule();
+    if (message !== "") {
+        setFieldMessage(phoneMessage, message, "error");
+        return message;
     }
 
     if (region.value.trim().length < 2) {
@@ -164,20 +341,107 @@ function validateSignup() {
 phoneTail.addEventListener("input", () => {
     phoneTail.value = formatPhoneTail(phoneTail.value);
     updatePhoneValue();
+    resetDuplicateState("phone");
+    setFieldMessage(phoneMessage, "", "error");
 });
 
-phonePrefix.addEventListener("change", updatePhoneValue);
-
-[loginId, password, passwordConfirm, nickname, phoneTail, region].forEach((input) => {
-    input.addEventListener("input", () => showSignupError(""));
+phonePrefix.addEventListener("change", () => {
+    updatePhoneValue();
+    resetDuplicateState("phone");
+    setFieldMessage(phoneMessage, "", "error");
 });
 
-signupForm.addEventListener("submit", (event) => {
+loginId.addEventListener("input", () => {
+    showSignupError("");
+    resetDuplicateState("loginId");
+    setFieldMessage(loginIdMessage, "", "error");
+});
+
+nickname.addEventListener("input", () => {
+    showSignupError("");
+    resetDuplicateState("nickname");
+    setFieldMessage(nicknameMessage, "", "error");
+});
+
+password.addEventListener("input", () => {
+    showSignupError("");
+    setFieldMessage(passwordMessage, "", "error");
+    setFieldMessage(passwordConfirmMessage, "", "error");
+});
+
+passwordConfirm.addEventListener("input", () => {
+    showSignupError("");
+    setFieldMessage(passwordConfirmMessage, "", "error");
+});
+
+phoneTail.addEventListener("input", () => showSignupError(""));
+region.addEventListener("input", () => showSignupError(""));
+
+loginId.addEventListener("blur", () => {
+    if (loginId.value.trim() !== "") {
+        checkDuplicate("loginId");
+    }
+});
+
+password.addEventListener("blur", () => {
+    const message = validatePasswordRule();
+    setFieldMessage(passwordMessage, message, message === "" ? "success" : "error");
+
+    if (passwordConfirm.value !== "") {
+        const confirmMessage = validatePasswordConfirmRule();
+        setFieldMessage(passwordConfirmMessage, confirmMessage, confirmMessage === "" ? "success" : "error");
+    }
+});
+
+passwordConfirm.addEventListener("blur", () => {
+    const message = validatePasswordConfirmRule();
+    setFieldMessage(passwordConfirmMessage, message, message === "" ? "success" : "error");
+});
+
+nickname.addEventListener("blur", () => {
+    if (nickname.value.trim() !== "") {
+        checkDuplicate("nickname");
+    }
+});
+
+phoneTail.addEventListener("blur", () => {
+    if (phoneTail.value.trim() !== "") {
+        checkDuplicate("phone");
+    }
+});
+
+checkLoginIdButton.addEventListener("click", () => checkDuplicate("loginId"));
+checkNicknameButton.addEventListener("click", () => checkDuplicate("nickname"));
+
+signupForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showSignupError("");
+
     const message = validateSignup();
     if (message !== "") {
-        event.preventDefault();
         showSignupError(message);
+        return;
     }
+
+    if (!await checkDuplicate("loginId")) {
+        showSignupError("아이디 중복 확인을 완료해 주세요.");
+        loginId.focus();
+        return;
+    }
+
+    if (!await checkDuplicate("nickname")) {
+        showSignupError("닉네임 중복 확인을 완료해 주세요.");
+        nickname.focus();
+        return;
+    }
+
+    if (!await checkDuplicate("phone")) {
+        showSignupError("연락처를 다시 확인해 주세요.");
+        phoneTail.focus();
+        return;
+    }
+
+    signupForm.submit();
 });
 </script>
 </body>

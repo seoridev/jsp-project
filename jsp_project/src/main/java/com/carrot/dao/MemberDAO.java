@@ -80,22 +80,17 @@ public class MemberDAO extends BaseDAO {
 
     // 아이디 중복 확인
     public boolean isDuplicateLoginId(String loginId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM member WHERE login_id = ?";
+        return isDuplicateValue("login_id", loginId);
+    }
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, loginId);
+    // 닉네임 중복 확인
+    public boolean isDuplicateNickname(String nickname) throws SQLException {
+        return isDuplicateValue("nickname", nickname);
+    }
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() && rs.getInt(1) > 0;
-            }
-        } catch (SQLException e) {
-            throw e;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
+    // 연락처 중복 확인
+    public boolean isDuplicatePhone(String phone) throws SQLException {
+        return isDuplicateValue("phone", phone);
     }
 
     // 회원 아이디로 조회
@@ -428,6 +423,30 @@ public class MemberDAO extends BaseDAO {
 
         conditions.add("LOWER(" + columnName + ") LIKE ?");
         params.add("%" + value.trim().toLowerCase() + "%");
+    }
+
+    // 가입 중복 확인 공통 처리
+    private boolean isDuplicateValue(String columnName, String value) throws SQLException {
+        if (value == null || value.trim().isEmpty()) {
+            return false;
+        }
+
+        String sql = "SELECT COUNT(*) FROM member WHERE LOWER(TRIM(" + columnName + ")) = LOWER(?)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, value.trim());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
     // 문자열 파라미터 바인딩
