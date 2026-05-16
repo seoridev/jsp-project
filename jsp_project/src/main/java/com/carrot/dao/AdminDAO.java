@@ -1,7 +1,5 @@
 package com.carrot.dao;
 
-import com.carrot.dto.AdminDTO;
-
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.sql.Connection;
@@ -9,9 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-//관리자 계정 조회와 로그인 검증을 맡는 DAO
+import com.carrot.dto.AdminDTO;
+
+// 관리자 계정 조회와 로그인 검증
 public class AdminDAO extends BaseDAO {
-    //입력한 비밀번호를 DB 값과 비교해서 로그인 가능 여부 확인
+    // 관리자 로그인
     public AdminDTO login(String loginId, String password) throws SQLException {
         AdminDTO admin = getAdminByLoginId(loginId);
 
@@ -22,7 +22,6 @@ public class AdminDAO extends BaseDAO {
         String savedPassword = admin.getPassword();
         String hashedPassword = sha256(password);
 
-        //기존 평문 비밀번호 데이터도 로그인되도록 해시와 평문을 둘 다 비교
         if (!hashedPassword.equals(savedPassword) && !password.equals(savedPassword)) {
             return null;
         }
@@ -30,40 +29,41 @@ public class AdminDAO extends BaseDAO {
         return admin;
     }
 
-    //아이디로 관리자 정보를 한 건만 조회
-    public AdminDTO getAdminByLoginId(String loginId) throws SQLException {
+    // 관리자 아이디로 조회
+    public AdminDTO getAdminByLoginId(String loginId) {
         String sql = "SELECT login_id, password, name, created_at FROM admin WHERE login_id = ?";
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
 
-        try {
-            conn = getConnection();
-            pstmt = conn.prepareStatement(sql);
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, loginId);
-            rs = pstmt.executeQuery();
 
-            if (!rs.next()) {
-                return null;
-            }
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
 
-            AdminDTO admin = new AdminDTO();
-            admin.setLoginId(rs.getString("login_id"));
-            admin.setPassword(rs.getString("password"));
-            admin.setName(rs.getString("name"));
-            try {
-                //created_at 컬럼이 문제될 때도 로그인 자체는 막지 않음
-                admin.setCreatedAt(rs.getTimestamp("created_at"));
-            } catch (SQLException ignored) {
-                admin.setCreatedAt(null);
+                AdminDTO admin = AdminDTO.builder()
+                    .loginId(rs.getString("login_id"))
+                    .password(rs.getString("password"))
+                    .name(rs.getString("name"))
+                    .build();
+
+                try {
+                    admin.setCreatedAt(rs.getTimestamp("created_at"));
+                } catch (SQLException ignored) {
+                    admin.setCreatedAt(null);
+                }
+
+                return admin;
             }
-            return admin;
-        } finally {
-            close(rs, pstmt, conn);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        return null;
     }
 
-    //DB에는 비밀번호를 SHA-256 문자열로 맞춰 저장하고 비교
+    // 비밀번호 해시 처리
     private String sha256(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
