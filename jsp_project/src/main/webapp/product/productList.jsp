@@ -21,7 +21,23 @@
         if ("SOLD".equalsIgnoreCase(status)) {
             return "거래완료";
         }
+        if ("HIDDEN".equalsIgnoreCase(status)) {
+            return "숨김";
+        }
         return "판매중";
+    }
+
+    private String productStatusClass(String status) {
+        if ("RESERVED".equalsIgnoreCase(status)) {
+            return "product-status-reserved";
+        }
+        if ("SOLD".equalsIgnoreCase(status)) {
+            return "product-status-sold";
+        }
+        if ("HIDDEN".equalsIgnoreCase(status)) {
+            return "product-status-hidden";
+        }
+        return "product-status-sale";
     }
 %>
 <%
@@ -43,65 +59,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>상품 목록 - 동네마켓</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/product.css?v=external-ui-1">
 </head>
-<body>
+<body class="product-page">
 <%@ include file="../common/header.jsp" %>
-<main class="admin-shell">
-    <section class="admin-heading">
-        <div>
-            <p class="eyebrow">우리 동네 중고거래</p>
-            <h1>상품 목록</h1>
-        </div>
-        <div class="admin-actions">
-            <% if (loggedIn) { %>
-                <a class="button primary" href="<%= contextPath %>/product/productWrite.jsp">상품 등록</a>
-            <% } else { %>
-                <a class="button primary" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 등록</a>
-            <% } %>
-        </div>
-    </section>
+<main class="product-container">
+    <div class="product-title-row">
+        <h2>중고거래 물품 목록</h2>
+        <% if (loggedIn) { %>
+            <a class="product-btn-write" href="<%= contextPath %>/product/productWrite.jsp">+ 물품 등록하기</a>
+        <% } else { %>
+            <a class="product-btn-write" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 등록</a>
+        <% } %>
+    </div>
 
-    <form class="admin-filter" action="<%= contextPath %>/product/productList.jsp" method="get">
-        <div class="field">
-            <label for="type">검색 범위</label>
-            <select id="type" name="type">
+    <div class="product-search-bar">
+        <form class="product-search-form" action="<%= contextPath %>/product/productList.jsp" method="get">
+            <select name="type" aria-label="검색 범위">
                 <option value="all" <%= type == null || "all".equals(type) ? "selected" : "" %>>제목+내용</option>
                 <option value="title" <%= "title".equals(type) ? "selected" : "" %>>제목</option>
                 <option value="content" <%= "content".equals(type) ? "selected" : "" %>>내용</option>
             </select>
-        </div>
-        <div class="field">
-            <label for="keyword">검색어</label>
-            <input id="keyword" name="keyword" value="<%= escapeHtml(keyword) %>" placeholder="찾고 싶은 상품">
-        </div>
-        <div class="field">
-            <label for="categoryId">카테고리</label>
-            <select id="categoryId" name="categoryId">
-                <option value="">전체</option>
+            <input type="text" name="keyword" value="<%= escapeHtml(keyword) %>" placeholder="검색어">
+            <select name="categoryId" aria-label="카테고리">
+                <option value="">전체 카테고리</option>
                 <% for (CategoryDTO category : categories) { %>
                     <option value="<%= category.getCategoryId() %>" <%= categoryId != null && categoryId == category.getCategoryId() ? "selected" : "" %>>
                         <%= escapeHtml(category.getCategoryName()) %>
                     </option>
                 <% } %>
             </select>
-        </div>
-        <div class="field">
-            <label for="region">지역</label>
-            <input id="region" name="region" value="<%= escapeHtml(region) %>" placeholder="예: 강남구">
-        </div>
-        <button class="primary" type="submit">검색</button>
-    </form>
-
-    <div class="admin-list-meta">
-        <span>총 <strong><%= products.size() %></strong>개 상품</span>
-        <a class="table-link" href="<%= contextPath %>/product/productList.jsp">조건 초기화</a>
+            <input type="text" name="region" value="<%= escapeHtml(region) %>" placeholder="지역">
+            <button type="submit" class="product-btn-search">검색</button>
+            <a class="product-reset-link" href="<%= contextPath %>/product/productList.jsp">초기화</a>
+        </form>
     </div>
 
-    <div class="admin-table-wrap">
-        <table class="admin-table">
+    <div class="product-list-meta">
+        <span>총 <strong><%= products.size() %></strong>개 상품</span>
+    </div>
+
+    <div class="product-table-wrap">
+        <table class="product-table">
             <thead>
                 <tr>
-                    <th>상품명</th>
+                    <th>제목</th>
                     <th>가격</th>
                     <th>지역</th>
                     <th>카테고리</th>
@@ -110,23 +112,27 @@
                 </tr>
             </thead>
             <tbody>
-                <% if (products.isEmpty()) { %>
+                <% if (products == null || products.isEmpty()) { %>
                     <tr>
-                        <td class="empty-cell" colspan="6">등록된 상품이 없습니다.</td>
+                        <td class="product-empty" colspan="6">등록된 물품이 없습니다.</td>
                     </tr>
                 <% } else {
                     for (ProductDTO product : products) {
                 %>
                     <tr>
                         <td>
-                            <a class="table-link" href="<%= contextPath %>/product/productDetail.jsp?id=<%= product.getProductId() %>">
+                            <a href="<%= contextPath %>/product/productDetail.jsp?id=<%= product.getProductId() %>">
                                 <%= escapeHtml(product.getTitle()) %>
                             </a>
                         </td>
-                        <td><strong><%= priceFormat.format(product.getPrice()) %>원</strong></td>
-                        <td><%= escapeHtml(product.getRegion()) %></td>
+                        <td class="product-price"><%= priceFormat.format(product.getPrice()) %>원</td>
+                        <td class="product-region"><%= escapeHtml(product.getRegion()) %></td>
                         <td><%= escapeHtml(product.getCategoryName()) %></td>
-                        <td><span class="status-badge"><%= productStatusText(product.getStatus()) %></span></td>
+                        <td>
+                            <span class="product-status-badge <%= productStatusClass(product.getStatus()) %>">
+                                <%= productStatusText(product.getStatus()) %>
+                            </span>
+                        </td>
                         <td><%= product.getViewCount() %></td>
                     </tr>
                 <%  }
