@@ -36,7 +36,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입 | 동네마켓</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=phone-row-2">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=signup-style-1">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
