@@ -1,0 +1,458 @@
+-- 내 로컬 DB(C##userjsp) 기준 동기화 SQL
+-- 상대방은 WEB 계정으로 접속한 뒤 실행하세요.
+-- 기존 CATEGORY, PRODUCT, PRODUCT_IMAGE 테이블은 유지하고,
+-- 누락된 테이블/시퀀스/제약조건/샘플 데이터를 현재 DB 상태에 맞춰 추가합니다.
+--
+-- Windows sqlplus에서 한글이 깨지면 실행 전에 아래 환경변수를 먼저 설정하세요.
+-- PowerShell: $env:NLS_LANG='KOREAN_KOREA.AL32UTF8'
+-- CMD: set NLS_LANG=KOREAN_KOREA.AL32UTF8
+
+SET DEFINE OFF;
+
+--------------------------------------------------------
+-- 1. 누락 테이블 생성
+--------------------------------------------------------
+
+BEGIN
+    EXECUTE IMMEDIATE q'[
+        CREATE TABLE member (
+            login_id VARCHAR2(50 BYTE) NOT NULL,
+            password VARCHAR2(255 BYTE) NOT NULL,
+            nickname VARCHAR2(50 BYTE) NOT NULL,
+            phone VARCHAR2(20 BYTE),
+            region VARCHAR2(100 BYTE) NOT NULL,
+            profile_text VARCHAR2(255 BYTE),
+            manner_score NUMBER(3,1) DEFAULT 36.5,
+            status VARCHAR2(20 BYTE) DEFAULT 'ACTIVE',
+            created_at TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP(6),
+            CONSTRAINT pk_member PRIMARY KEY (login_id),
+            CONSTRAINT uq_member_phone UNIQUE (phone),
+            CONSTRAINT chk_member_status CHECK (status IN ('ACTIVE','STOPPED','WITHDRAWN'))
+        )
+    ]';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN
+            RAISE;
+        END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE q'[
+        CREATE TABLE admin (
+            login_id VARCHAR2(50 BYTE),
+            password VARCHAR2(255 BYTE) NOT NULL,
+            name VARCHAR2(50 BYTE) NOT NULL,
+            created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
+            CONSTRAINT admin_pk PRIMARY KEY (login_id)
+        )
+    ]';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN
+            RAISE;
+        END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE q'[
+        CREATE TABLE report (
+            report_id NUMBER,
+            reporter_id VARCHAR2(20 BYTE) NOT NULL,
+            target_type VARCHAR2(20 BYTE) NOT NULL,
+            target_id NUMBER NOT NULL,
+            reason VARCHAR2(100 BYTE) NOT NULL,
+            detail CLOB,
+            status VARCHAR2(20 BYTE) DEFAULT 'WAITING' NOT NULL,
+            created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
+            processed_at TIMESTAMP(6),
+            CONSTRAINT report_pk PRIMARY KEY (report_id),
+            CONSTRAINT fk_report_reporter FOREIGN KEY (reporter_id) REFERENCES member(login_id),
+            CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT')),
+            CONSTRAINT chk_report_status CHECK (status IN ('WAITING', 'DONE', 'REJECTED'))
+        )
+    ]';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN
+            RAISE;
+        END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE q'[
+        CREATE TABLE favorite (
+            favorite_id NUMBER NOT NULL,
+            member_id VARCHAR2(20 BYTE) NOT NULL,
+            product_id NUMBER NOT NULL,
+            created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
+            CONSTRAINT favorite_pk PRIMARY KEY (favorite_id),
+            CONSTRAINT uq_favorite_member_product UNIQUE (member_id, product_id),
+            CONSTRAINT fk_favorite_member FOREIGN KEY (member_id) REFERENCES member(login_id) ON DELETE CASCADE,
+            CONSTRAINT fk_favorite_product FOREIGN KEY (product_id) REFERENCES product(product_id) ON DELETE CASCADE
+        )
+    ]';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN
+            RAISE;
+        END IF;
+END;
+/
+
+--------------------------------------------------------
+-- 2. 누락 시퀀스 생성
+-- 현재 내 DB 기준 다음 값:
+-- seq_product=53, seq_image=3, seq_report=2, seq_favorite=1
+--------------------------------------------------------
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_product START WITH 53 INCREMENT BY 1 NOCACHE NOCYCLE';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_image START WITH 3 INCREMENT BY 1 NOCACHE NOCYCLE';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_report START WITH 2 INCREMENT BY 1 NOCACHE NOCYCLE';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_favorite START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -955 THEN RAISE; END IF;
+END;
+/
+
+--------------------------------------------------------
+-- 3. 기존 상품 테이블 제약조건 보강
+--------------------------------------------------------
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE category ADD CONSTRAINT chk_category_active CHECK (is_active IN (''Y'', ''N''))';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -2264 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE product ADD CONSTRAINT chk_product_deleted CHECK (is_deleted IN (''Y'', ''N''))';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -2264 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE product_image ADD CONSTRAINT chk_product_image_main CHECK (is_main IN (''Y'', ''N''))';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -2264 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE product MODIFY (seller_id NOT NULL)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE != -1442 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE product ADD CONSTRAINT fk_product_seller FOREIGN KEY (seller_id) REFERENCES member(login_id)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-2264, -2275) THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+    EXECUTE IMMEDIATE 'ALTER TABLE product ADD CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES category(category_id)';
+EXCEPTION
+    WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-2264, -2275) THEN RAISE; END IF;
+END;
+/
+
+--------------------------------------------------------
+-- 4. 기준 데이터 동기화
+--------------------------------------------------------
+
+MERGE INTO member m
+USING (
+    SELECT 'aaa' login_id,
+           '9834876dcfb05cb167a5c24953eba58c4ac89b1adf57f28f2f9d09af107ee8f0' password,
+           'aaa' nickname,
+           '123412341234' phone,
+           'ddd' region,
+           CAST(NULL AS VARCHAR2(255)) profile_text,
+           36.5 manner_score,
+           'ACTIVE' status,
+           TO_TIMESTAMP('2026-05-03 23:41:51.000000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at,
+           TO_TIMESTAMP('2026-05-05 21:06:26.000000', 'YYYY-MM-DD HH24:MI:SS.FF6') updated_at
+    FROM dual
+    UNION ALL
+    SELECT 'aaa123',
+           'c82a6c7f5a58a915814334cda5a2ef88ab8cba922f49ec1623e2248ceabf7ddc',
+           'asd111',
+           '010-2165-1658',
+           '경기도 안양시 안양구 123-123',
+           NULL,
+           36.5,
+           'ACTIVE',
+           TO_TIMESTAMP('2026-05-16 18:34:14.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-16 20:39:08.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 'asdasd',
+           '53dd228c1c9b6a2d7e8d36f3bd3fe1afba03d9edeb9a03c10cef53f0c4445b3a',
+           '당근01',
+           '010-1234-1234',
+           '서울시 강남구 123-123',
+           NULL,
+           36.5,
+           'STOPPED',
+           TO_TIMESTAMP('2026-05-05 21:58:38.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-13 18:23:44.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 'user01',
+           '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
+           '시흥거래러',
+           '010-1111-0001',
+           '경기도 시흥시',
+           NULL,
+           36.5,
+           'ACTIVE',
+           TO_TIMESTAMP('2026-05-16 18:56:01.565000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 'user02',
+           '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
+           '강남정리왕',
+           '010-1111-0002',
+           '서울특별시 강남구',
+           NULL,
+           36.5,
+           'ACTIVE',
+           TO_TIMESTAMP('2026-05-16 18:56:01.573000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 'user03',
+           '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
+           '남동게임상점',
+           '010-1111-0003',
+           '인천광역시 남동구',
+           NULL,
+           36.5,
+           'ACTIVE',
+           TO_TIMESTAMP('2026-05-16 18:56:01.577000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+) s
+ON (m.login_id = s.login_id)
+WHEN MATCHED THEN UPDATE SET
+    m.password = s.password,
+    m.nickname = s.nickname,
+    m.phone = s.phone,
+    m.region = s.region,
+    m.profile_text = s.profile_text,
+    m.manner_score = s.manner_score,
+    m.status = s.status,
+    m.created_at = s.created_at,
+    m.updated_at = s.updated_at
+WHEN NOT MATCHED THEN INSERT
+    (login_id, password, nickname, phone, region, profile_text, manner_score, status, created_at, updated_at)
+    VALUES
+    (s.login_id, s.password, s.nickname, s.phone, s.region, s.profile_text, s.manner_score, s.status, s.created_at, s.updated_at);
+
+MERGE INTO admin a
+USING (
+    SELECT 'admin' login_id,
+           '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4' password,
+           '관리자' name,
+           TO_TIMESTAMP('2026-05-05 21:01:58.412000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at
+    FROM dual
+) s
+ON (a.login_id = s.login_id)
+WHEN MATCHED THEN UPDATE SET
+    a.password = s.password,
+    a.name = s.name,
+    a.created_at = s.created_at
+WHEN NOT MATCHED THEN INSERT
+    (login_id, password, name, created_at)
+    VALUES
+    (s.login_id, s.password, s.name, s.created_at);
+
+MERGE INTO category c
+USING (
+    SELECT 10 category_id, '디지털기기' category_name, 'Y' is_active FROM dual UNION ALL
+    SELECT 20, '생활가전', 'Y' FROM dual UNION ALL
+    SELECT 30, '가구/인테리어', 'Y' FROM dual UNION ALL
+    SELECT 40, '생활/주방', 'Y' FROM dual UNION ALL
+    SELECT 50, '의류/잡화', 'Y' FROM dual UNION ALL
+    SELECT 60, '취미/게임', 'Y' FROM dual UNION ALL
+    SELECT 70, '도서/티켓', 'Y' FROM dual UNION ALL
+    SELECT 80, '기타 중고물품', 'Y' FROM dual
+) s
+ON (c.category_id = s.category_id)
+WHEN MATCHED THEN UPDATE SET
+    c.category_name = s.category_name,
+    c.is_active = s.is_active
+WHEN NOT MATCHED THEN INSERT
+    (category_id, category_name, is_active)
+    VALUES
+    (s.category_id, s.category_name, s.is_active);
+
+MERGE INTO product p
+USING (
+    SELECT 47 product_id, 'user01' seller_id, 10 category_id, '아이폰 15 프로 256GB' title,
+           '샘플 상품 설명입니다.' content, 1100000 price, '경기도 시흥시' region, 'SALE' status,
+           5 view_count, 'N' is_deleted,
+           TO_TIMESTAMP('2026-05-12 19:58:44.356000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at,
+           TO_TIMESTAMP('2026-05-12 19:58:44.356000', 'YYYY-MM-DD HH24:MI:SS.FF6') updated_at
+    FROM dual
+    UNION ALL
+    SELECT 48, 'user02', 30, '원목 데스크 정리함',
+           '샘플 상품 설명입니다.', 15000, '서울특별시 강남구', 'RESERVED',
+           9, 'N',
+           TO_TIMESTAMP('2026-05-12 19:58:44.364000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-12 19:58:44.364000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 49, 'user03', 60, '닌텐도 스위치 OLED',
+           '샘플 상품 설명입니다.', 380000, '인천광역시 남동구', 'SOLD',
+           35, 'N',
+           TO_TIMESTAMP('2026-05-12 19:58:44.374000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-12 19:58:44.374000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 50, 'user01', 50, '나이키 에어포스',
+           '샘플 상품 설명입니다.', 85000, '경기도 안산시', 'HIDDEN',
+           12, 'N',
+           TO_TIMESTAMP('2026-05-12 19:58:44.380000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-12 19:58:44.380000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 51, 'aaa123', 20, 'aaa',
+           'ddddssdf', 5000, '경기도 안양시 안양구 123-123', 'SALE',
+           1, 'N',
+           TO_TIMESTAMP('2026-05-16 19:42:35.845000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-16 19:42:35.845000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 52, 'aaa123', 40, 'ㅁㅋㅁㅋ',
+           'xxxxx', 300000, '경기도 안양시 안양구 123-123', 'SALE',
+           3, 'N',
+           TO_TIMESTAMP('2026-05-16 19:53:03.667000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-16 19:53:03.667000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+) s
+ON (p.product_id = s.product_id)
+WHEN MATCHED THEN UPDATE SET
+    p.seller_id = s.seller_id,
+    p.category_id = s.category_id,
+    p.title = s.title,
+    p.content = s.content,
+    p.price = s.price,
+    p.region = s.region,
+    p.status = s.status,
+    p.view_count = s.view_count,
+    p.is_deleted = s.is_deleted,
+    p.created_at = s.created_at,
+    p.updated_at = s.updated_at
+WHEN NOT MATCHED THEN INSERT
+    (product_id, seller_id, category_id, title, content, price, region, status, view_count, is_deleted, created_at, updated_at)
+    VALUES
+    (s.product_id, s.seller_id, s.category_id, s.title, s.content, s.price, s.region, s.status, s.view_count, s.is_deleted, s.created_at, s.updated_at);
+
+MERGE INTO product_image pi
+USING (
+    SELECT 1 image_id, 51 product_id, '2025010621142591973.jpg' origin_name,
+           '2025010621142591973.jpg' save_name, '/upload/product/' image_path, 'Y' is_main,
+           TO_TIMESTAMP('2026-05-16 19:42:35.894000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at
+    FROM dual
+    UNION ALL
+    SELECT 2, 52, '2025010621142591973.jpg',
+           '20250106211425919731.jpg', '/upload/product/', 'Y',
+           TO_TIMESTAMP('2026-05-16 19:53:03.679000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+) s
+ON (pi.image_id = s.image_id)
+WHEN MATCHED THEN UPDATE SET
+    pi.product_id = s.product_id,
+    pi.origin_name = s.origin_name,
+    pi.save_name = s.save_name,
+    pi.image_path = s.image_path,
+    pi.is_main = s.is_main,
+    pi.created_at = s.created_at
+WHEN NOT MATCHED THEN INSERT
+    (image_id, product_id, origin_name, save_name, image_path, is_main, created_at)
+    VALUES
+    (s.image_id, s.product_id, s.origin_name, s.save_name, s.image_path, s.is_main, s.created_at);
+
+MERGE INTO report r
+USING (
+    SELECT 1 report_id, 'aaa123' reporter_id, 'PRODUCT' target_type, 49 target_id,
+           '거래 비매너' reason, '222' detail, 'DONE' status,
+           TO_TIMESTAMP('2026-05-16 20:39:29.390000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at,
+           TO_TIMESTAMP('2026-05-16 20:42:56.173000', 'YYYY-MM-DD HH24:MI:SS.FF6') processed_at
+    FROM dual
+) s
+ON (r.report_id = s.report_id)
+WHEN MATCHED THEN UPDATE SET
+    r.reporter_id = s.reporter_id,
+    r.target_type = s.target_type,
+    r.target_id = s.target_id,
+    r.reason = s.reason,
+    r.detail = s.detail,
+    r.status = s.status,
+    r.created_at = s.created_at,
+    r.processed_at = s.processed_at
+WHEN NOT MATCHED THEN INSERT
+    (report_id, reporter_id, target_type, target_id, reason, detail, status, created_at, processed_at)
+    VALUES
+    (s.report_id, s.reporter_id, s.target_type, s.target_id, s.reason, s.detail, s.status, s.created_at, s.processed_at);
+
+--------------------------------------------------------
+-- 5. 내 DB 기준 FAVORITE는 현재 0건입니다.
+-- 완전 동일 데이터가 목적이면 아래 DELETE를 유지하세요.
+--------------------------------------------------------
+
+DELETE FROM favorite;
+
+COMMIT;
+
+--------------------------------------------------------
+-- 선택 사항: 상대방 DB에 추가로 생긴 다른 데이터까지 지우고
+-- 정말 내 DB와 같은 행만 남기려면 아래 주석을 해제해서 실행하세요.
+-- 주의: 상대방의 추가 테스트 데이터가 삭제됩니다.
+--------------------------------------------------------
+-- DELETE FROM report WHERE report_id NOT IN (1);
+-- DELETE FROM product_image WHERE image_id NOT IN (1, 2);
+-- DELETE FROM product WHERE product_id NOT IN (47, 48, 49, 50, 51, 52);
+-- DELETE FROM member WHERE login_id NOT IN ('aaa', 'aaa123', 'asdasd', 'user01', 'user02', 'user03');
+-- DELETE FROM admin WHERE login_id NOT IN ('admin');
+-- COMMIT;
