@@ -1,188 +1,213 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.carrot.dao.FavoriteDAO" %>
-<%@ page import="com.carrot.dao.ProductDAO" %>
-<%@ page import="com.carrot.dao.ProductImageDAO" %>
-<%@ page import="com.carrot.dto.ProductDTO" %>
-<%@ page import="com.carrot.dto.ProductImageDTO" %>
-<%@ page import="java.text.DecimalFormat" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.carrot.dao.ProductDAO"%>
+<%@ page import="com.carrot.dao.ProductImageDAO"%>
+<%@ page import="com.carrot.dto.ProductDTO"%>
+<%@ page import="com.carrot.dto.ProductImageDTO"%>
 <%@ page import="java.util.List" %>
-<%!
-    private long parseProductId(String value) {
-        try {
-            return value == null ? 0 : Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
+<%@ page import="java.text.DecimalFormat" %>
+<%@ include file="../common/sessionCheck.jsp" %>
 
-    private String detailStatusText(String status) {
-        if ("RESERVED".equalsIgnoreCase(status)) {
-            return "예약중";
-        }
-        if ("SOLD".equalsIgnoreCase(status)) {
-            return "거래완료";
-        }
-        if ("HIDDEN".equalsIgnoreCase(status)) {
-            return "숨김";
-        }
-        return "판매중";
-    }
-
-    private String detailStatusClass(String status) {
-        if ("RESERVED".equalsIgnoreCase(status)) {
-            return "product-status-reserved";
-        }
-        if ("SOLD".equalsIgnoreCase(status)) {
-            return "product-status-sold";
-        }
-        if ("HIDDEN".equalsIgnoreCase(status)) {
-            return "product-status-hidden";
-        }
-        return "product-status-sale";
-    }
-%>
 <%
-    long productId = parseProductId(request.getParameter("id"));
-    ProductDAO productDAO = new ProductDAO();
-    ProductImageDAO imageDAO = new ProductImageDAO();
-    FavoriteDAO favoriteDAO = new FavoriteDAO();
-
-    if (productId > 0) {
-        productDAO.increaseViewCount(productId);
+    String idParam = request.getParameter("id");
+    
+	ProductDAO productDao = new ProductDAO();
+	ProductImageDAO productImageDao = new ProductImageDAO();
+	ProductDTO p = null;
+	List<ProductImageDTO> imageList = null;
+    
+    if (idParam != null) {
+        int productId = Integer.parseInt(idParam);
+        p = productDao.selectProductById(productId); // 상품 정보 조회
+        imageList = productImageDao.selectImagesByProductId(productId); // 이미지 리스트 조회
     }
 
-    ProductDTO product = productId > 0 ? productDAO.selectProductById(productId) : null;
-    if (product == null) {
-        response.sendRedirect(request.getContextPath() + "/product/productList.jsp?error=noProduct");
+    DecimalFormat df = new DecimalFormat("#,###");
+
+    if (p == null) {
+        out.println("<script>alert('존재하지 않는 상품입니다.'); history.back();</script>");
         return;
     }
-
-    List<ProductImageDTO> images = imageDAO.selectImagesByProductId(productId);
-    String detailLoginId = (String) session.getAttribute("loginId");
-    boolean detailLoggedIn = detailLoginId != null;
-    boolean favorite = detailLoggedIn && !detailLoginId.equals(product.getSellerId()) && favoriteDAO.isFavorite(detailLoginId, productId);
-    int favoriteCount = favoriteDAO.countFavoritesByProductId(productId);
-    DecimalFormat priceFormat = new DecimalFormat("#,###");
 %>
+
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= escapeHtml(product.getTitle()) %> - 동네마켓</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/product.css?v=external-ui-1">
+<meta charset="UTF-8">
+<title><%= p.getTitle() %> - 상세 정보</title>
+<link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+<style>
+    body { font-family: 'Malgun Gothic', sans-serif; background: #f9f9f9; padding: 40px; color: #333; line-height: 1.6; }
+	.detail-container { max-width: 800px; margin: auto; background: white; padding: 40px; border-radius: 12px; }    
+    
+    /* 이미지 슬라이드/리스트 영역 */
+    .image-section { width: 100%; margin-bottom: 30px; text-align: center; }
+    .main-img { width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
+    .thumb-container { display: flex; gap: 10px; justify-content: center; overflow-x: auto; }
+    .thumb-img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid transparent; }
+    .thumb-img:hover { border-color: #ff5a5f; }
+
+    .content-section { white-space: pre-wrap; padding: 20px 0; border-top: 1px solid #eee; }
+    
+    /* 상단 영역 */
+    .header { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+    .category { color: #ff5a5f; font-weight: bold; font-size: 0.9em; }
+    .title { font-size: 2em; margin: 10px 0; }
+    .meta-info { color: #888; font-size: 0.85em; display: flex; gap: 15px; }
+
+    /* 상품 정보 요약 박스 */
+    .info-box { background: #fff8f8; border-radius: 8px; padding: 20px; margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .info-item { display: flex; flex-direction: column; }
+    .label { font-size: 0.8em; color: #999; margin-bottom: 5px; }
+    .value { font-size: 1.1em; font-weight: 500; }
+    .price-value { color: #ff5a5f; font-size: 1.5em; font-weight: bold; }
+
+    /* 본문 내용 */
+    .content-section { min-height: 200px; white-space: pre-wrap; margin-bottom: 40px; padding: 10px; border-top: 1px solid #eee; padding-top: 30px; }
+
+    /* 버튼 영역 */
+    .button-group { display: flex; gap: 10px; justify-content: center; }
+    .btn { padding: 12px 25px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; text-decoration: none; }
+    .btn-list { background: #eee; color: #333; }
+    .btn-edit { background: #333; color: #white; }
+    .btn-delete { background: #ff5a5f; color: white; }
+    
+    /* 상태 배지 */
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8em; color: white; }
+    .badge-sale { background: #2ecc71; }
+    .badge-reserved { background: #f1c40f; }
+    .badge-sold { background: #95a5a6; }
+    
+    /* 기존 스타일 유지 및 대표 표시 스타일 추가 */
+    .image-section { width: 100%; margin-bottom: 30px; text-align: center; }
+    .main-img { width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; }
+    .thumb-container { display: flex; gap: 12px; justify-content: center; overflow-x: auto; padding: 5px; }
+    
+    /* 썸네일 감싸는 박스 */
+    .detail-thumb-wrapper { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+    
+    .thumb-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+    .thumb-img:hover { border-color: #ff5a5f; }
+    
+    /* 대표 이미지 썸네일에 줄 테두리 강조 */
+    .thumb-img.active-thumb { border-color: #ff5a5f; }
+
+    /* 상세페이지용 대표 배지 스타일 */
+    .detail-main-badge {
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        background: #ff5a5f;
+        color: white;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+</style>
 </head>
-<body class="product-page">
+<body>
 <%@ include file="../common/header.jsp" %>
-<main class="product-detail-container">
-    <div class="product-image-section">
-        <% if (images != null && !images.isEmpty()) {
-            ProductImageDTO mainImage = images.get(0);
-            for (ProductImageDTO image : images) {
-                if ("Y".equals(image.getIsMain())) {
-                    mainImage = image;
+
+<div class="detail-container">
+	<div class="image-section">
+        <% if (imageList != null && !imageList.isEmpty()) { 
+            ProductImageDTO mainImgDto = imageList.get(0);
+            for (ProductImageDTO img : imageList) {
+                if ("Y".equals(img.getIsMain())) {
+                    mainImgDto = img;
                     break;
                 }
             }
-            String mainImagePath = contextPath + mainImage.getImagePath() + mainImage.getSaveName();
+            String mainImgPath = request.getContextPath() + mainImgDto.getImagePath() + mainImgDto.getSaveName();
         %>
-            <img src="<%= mainImagePath %>" id="currentImg" class="product-main-img" alt="상품 이미지">
-            <div class="product-thumb-container">
-                <% for (ProductImageDTO image : images) {
-                    String fullPath = contextPath + image.getImagePath() + image.getSaveName();
-                    boolean isMain = "Y".equals(image.getIsMain());
+            <img src="<%= mainImgPath %>" id="currentImg" class="main-img" alt="상품이미지">
+            
+            <div class="thumb-container">
+                <% for (ProductImageDTO img : imageList) { 
+                    String fullPath = request.getContextPath() + img.getImagePath() + img.getSaveName();
+                    boolean isMain = "Y".equals(img.getIsMain());
                 %>
-                    <div class="product-detail-thumb-wrapper">
+                    <div class="detail-thumb-wrapper">
                         <% if (isMain) { %>
-                            <span class="product-detail-main-badge">대표</span>
+                            <span class="detail-main-badge">대표</span>
                         <% } %>
-                        <img src="<%= fullPath %>"
-                             class="product-thumb-img <%= isMain ? "active-thumb" : "" %>"
-                             alt="상품 썸네일"
+                        <img src="<%= fullPath %>" class="thumb-img <%= isMain ? "active-thumb" : "" %>" 
                              onclick="changeDetailImage(this, '<%= fullPath %>')">
                     </div>
                 <% } %>
             </div>
         <% } else { %>
-            <div class="product-no-image">등록된 이미지가 없습니다.</div>
+            <div style="width:100%; height:300px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#ccc;">
+                등록된 이미지가 없습니다.
+            </div>
         <% } %>
     </div>
-
-    <div class="product-detail-header">
-        <div class="product-category"><%= escapeHtml(product.getCategoryName()) %></div>
-        <h1 class="product-detail-title"><%= escapeHtml(product.getTitle()) %></h1>
-        <div class="product-meta-info">
-            <span>판매자: <strong><%= escapeHtml(product.getSellerNickname() == null ? product.getSellerId() : product.getSellerNickname()) %></strong></span>
-            <span>조회수: <%= product.getViewCount() %></span>
-            <span>관심: <%= favoriteCount %></span>
+    <div class="header">
+        <div class="category">카테고리 번호: <%= p.getCategoryId() %></div>
+        <h1 class="title"><%= p.getTitle() %></h1>
+        <div class="meta-info">
+            <span>판매자: <strong><%= p.getSellerId() %></strong></span>
+            <span>작성일: <%= p.getCreatedAt() %></span>
+            <span>조회수: <%= p.getViewCount() %></span>
         </div>
     </div>
 
-    <div class="product-info-box">
-        <div class="product-info-item">
-            <span class="product-label">판매 가격</span>
-            <span class="product-value product-price-value"><%= priceFormat.format(product.getPrice()) %>원</span>
+    <div class="info-box">
+        <div class="info-item">
+            <span class="label">판매 가격</span>
+            <span class="value price-value"><%= df.format(p.getPrice()) %>원</span>
         </div>
-        <div class="product-info-item">
-            <span class="product-label">거래 희망 지역</span>
-            <span class="product-value"><%= escapeHtml(product.getRegion()) %></span>
+        <div class="info-item">
+            <span class="label">거래 희망 지역</span>
+            <span class="value"><%= p.getRegion() %></span>
         </div>
-        <div class="product-info-item">
-            <span class="product-label">판매 상태</span>
-            <span class="product-value">
-                <span class="product-status-badge <%= detailStatusClass(product.getStatus()) %>">
-                    <%= detailStatusText(product.getStatus()) %>
+        <div class="info-item">
+            <span class="label">판매 상태</span>
+            <span class="value">
+                <span class="badge badge-<%= p.getStatus().toLowerCase() %>">
+                    <%= p.getStatus() %>
                 </span>
             </span>
         </div>
     </div>
 
-    <div class="product-content-section"><%= escapeHtml(product.getContent()) %></div>
-
-    <% if ("success".equals(request.getParameter("report"))) { %>
-        <p class="message success">신고가 접수되었습니다.</p>
-    <% } %>
-    <% if ("insert".equals(request.getParameter("favorite"))) { %>
-        <p class="message success">관심 상품에 등록했습니다.</p>
-    <% } else if ("delete".equals(request.getParameter("favorite"))) { %>
-        <p class="message success">관심 상품에서 해제했습니다.</p>
-    <% } else if ("own".equals(request.getParameter("favorite"))) { %>
-        <p class="message error">내가 등록한 상품은 관심 상품으로 등록할 수 없습니다.</p>
-    <% } else if ("fail".equals(request.getParameter("favorite"))) { %>
-        <p class="message error">관심 상품 처리에 실패했습니다.</p>
-    <% } %>
-
-    <div class="product-button-group">
-        <a href="<%= contextPath %>/product/productList.jsp" class="product-btn product-btn-list">목록으로</a>
-        <% if (loggedIn && loginId.equals(product.getSellerId())) { %>
-            <a href="<%= contextPath %>/product/productEdit.jsp?id=<%= product.getProductId() %>" class="product-btn product-btn-edit">수정하기</a>
-            <form action="<%= contextPath %>/product/productDeleteProcess.jsp" method="post" onsubmit="return confirm('정말로 이 게시글을 삭제하시겠습니까?');">
-                <input type="hidden" name="id" value="<%= product.getProductId() %>">
-                <button type="submit" class="product-btn product-btn-delete">삭제하기</button>
-            </form>
-        <% } else if (loggedIn) { %>
-            <form action="<%= contextPath %>/favorite/favoriteProcess.jsp" method="post">
-                <input type="hidden" name="productId" value="<%= product.getProductId() %>">
-                <button type="submit" class="product-btn product-btn-favorite <%= favorite ? "is-active" : "" %>">
-                    <%= favorite ? "관심 해제" : "관심 등록" %>
-                </button>
-            </form>
-            <a href="<%= contextPath %>/report/report.jsp?targetType=PRODUCT&targetId=<%= product.getProductId() %>" class="product-btn product-btn-delete">신고하기</a>
-        <% } else { %>
-            <a href="<%= contextPath %>/member/login.jsp?error=loginRequired" class="product-btn product-btn-favorite">관심 등록</a>
-        <% } %>
+    <div class="content-section">
+        <%= p.getContent() %>
     </div>
-</main>
-<%@ include file="../common/footer.jsp" %>
+
+    <div class="button-group">
+        <a href="productList.jsp" class="btn btn-list">목록으로</a>
+        <%		
+		    if (loginId != null && loginId.equals(p.getSellerId())) {
+		%>
+		    <a href="productUpdate.jsp?id=<%= p.getProductId() %>" class="btn btn-edit" style="color:white;">수정하기</a>
+		    <button onclick="deleteConfirm(<%= p.getProductId() %>)" class="btn btn-delete">삭제하기</button> 
+		<%
+		    }
+		%>
+    </div>
+</div>
+
 <script>
-function changeDetailImage(element, imgUrl) {
-    document.getElementById("currentImg").src = imgUrl;
-    document.querySelectorAll(".product-thumb-img").forEach((thumb) => {
-        thumb.classList.remove("active-thumb");
-    });
-    element.classList.add("active-thumb");
-}
+	// 썸네일 클릭 시 이미지 변경
+	function changeDetailImage(element, imgUrl) {
+	    document.getElementById('currentImg').src = imgUrl;
+	    
+	    // 클릭할 때 테두리 변화를 주고 싶다면 아래 로직 활성화
+	    const allThumbs = document.querySelectorAll('.thumb-img');
+	    allThumbs.forEach(thumb => thumb.classList.remove('active-thumb'));
+	    element.classList.add('active-thumb');
+	}
+
+    function deleteConfirm(id) {
+        if(confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
+        	location.href = "productDeleteProcess.jsp?id=" + id;
+        }
+    }
 </script>
+
+<%@ include file="../common/footer.jsp" %>
 </body>
 </html>
