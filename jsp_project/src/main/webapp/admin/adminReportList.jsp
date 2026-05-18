@@ -1,8 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List" %>
-<%@ page import="com.carrot.dao.ReportDAO" %>
-<%@ page import="com.carrot.dto.ReportDTO" %>
+<%@ page import="DAO.ReportDAO" %>
+<%@ page import="DTO.ReportDTO" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
 <%!
     private String statusText(String status) {
@@ -44,9 +44,23 @@
         </div>
     </div>
     <% if ("success".equals(result)) { %>
-        <p class="form-success-text">신고를 처리했습니다.</p>
+        <script>
+            (() => {
+                alert("신고를 처리했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("result");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } else if ("fail".equals(result)) { %>
-        <p class="form-error-text">신고 처리에 실패했습니다.</p>
+        <script>
+            (() => {
+                alert("신고 처리에 실패했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("result");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } %>
     <div class="admin-table-wrap">
         <table class="admin-table">

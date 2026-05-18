@@ -1,8 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
-<%@ page import="com.carrot.dao.ProductDAO" %>
-<%@ page import="com.carrot.dto.ProductDTO" %>
+<%@ page import="DAO.ProductDAO" %>
+<%@ page import="DTO.ProductDTO" %>
 <%@ include file="../common/sessionCheck.jsp" %>
 <%!
     private String statusText(String status) {
@@ -22,6 +22,10 @@
     String currentLoginId = (String) session.getAttribute("loginId");
     List<ProductDTO> products = new ProductDAO().getProductsBySellerId(currentLoginId);
     DecimalFormat priceFormat = new DecimalFormat("#,###");
+    String statusFilter = request.getParameter("status");
+    boolean activeOnly = "active".equalsIgnoreCase(statusFilter);
+    boolean soldOnly = "SOLD".equalsIgnoreCase(statusFilter);
+    String listTitle = soldOnly ? "거래완료 상품" : (activeOnly ? "판매중 상품" : "내가 등록한 상품");
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -37,7 +41,7 @@
     <div class="admin-heading">
         <div>
             <p class="eyebrow">마이페이지</p>
-            <h1>내가 등록한 상품</h1>
+            <h1><%= listTitle %></h1>
         </div>
         <div class="admin-actions">
             <a class="button" href="<%= contextPath %>/mypage/mypage.jsp">마이페이지</a>
@@ -60,7 +64,13 @@
                 <% if (products == null || products.isEmpty()) { %>
                     <tr><td class="empty-cell" colspan="6">등록한 상품이 없습니다.</td></tr>
                 <% } else {
+                    int visibleCount = 0;
                     for (ProductDTO product : products) {
+                        boolean isSold = "SOLD".equalsIgnoreCase(product.getStatus());
+                        if ((activeOnly && isSold) || (soldOnly && !isSold)) {
+                            continue;
+                        }
+                        visibleCount++;
                 %>
                     <tr>
                         <td><a class="table-link" href="<%= contextPath %>/product/productDetail.jsp?id=<%= product.getProductId() %>"><%= escapeHtml(product.getTitle()) %></a></td>
@@ -70,6 +80,10 @@
                         <td><span class="status-badge<%= statusClass(product.getStatus()) %>"><%= statusText(product.getStatus()) %></span></td>
                         <td><%= product.getViewCount() %></td>
                     </tr>
+                <%  }
+                    if (visibleCount == 0) {
+                %>
+                    <tr><td class="empty-cell" colspan="6">해당 상품이 없습니다.</td></tr>
                 <%  }
                 } %>
             </tbody>

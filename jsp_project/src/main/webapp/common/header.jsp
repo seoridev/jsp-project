@@ -11,6 +11,17 @@
 	        .replace("\"", "&quot;")
 	        .replace("'", "&#39;");
 	}
+
+	private String escapeScript(String value) {
+	    if (value == null) {
+	        return "";
+	    }
+	    return value
+	        .replace("\\", "\\\\")
+	        .replace("\"", "\\\"")
+	        .replace("\r", "\\r")
+	        .replace("\n", "\\n");
+	}
 %>
 <%
 	//공통 헤더에서 쓸 세션 값 준비

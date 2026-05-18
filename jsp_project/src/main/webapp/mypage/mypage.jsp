@@ -1,11 +1,11 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
-<%@ page import="com.carrot.dao.MemberDAO" %>
-<%@ page import="com.carrot.dao.FavoriteDAO" %>
-<%@ page import="com.carrot.dao.ProductDAO" %>
-<%@ page import="com.carrot.dto.MemberDTO" %>
-<%@ page import="com.carrot.dto.ProductDTO" %>
+<%@ page import="DAO.MemberDAO" %>
+<%@ page import="DAO.FavoriteDAO" %>
+<%@ page import="DAO.ProductDAO" %>
+<%@ page import="DTO.MemberDTO" %>
+<%@ page import="DTO.ProductDTO" %>
 <%@ include file="../common/sessionCheck.jsp" %>
 <%
     String currentLoginId = (String) session.getAttribute("loginId");
@@ -41,20 +41,33 @@
         </div>
         <div class="admin-actions">
             <a class="button primary" href="<%= contextPath %>/mypage/profileEdit.jsp">내 정보 수정</a>
-            <a class="button" href="<%= contextPath %>/mypage/myProductList.jsp">내 상품</a>
-            <a class="button" href="<%= contextPath %>/favorite/favoriteList.jsp">관심 상품</a>
         </div>
     </div>
 
     <section class="admin-summary">
-        <div><span>판매중 상품</span><strong><%= saleCount %></strong></div>
-        <div><span>거래완료</span><strong><%= soldCount %></strong></div>
-        <div><span>관심 상품</span><strong><%= favoriteCount %></strong></div>
-        <div><span>매너 점수</span><strong><%= member == null ? "36.5" : scoreFormat.format(member.getMannerScore()) %></strong></div>
+        <a href="<%= contextPath %>/mypage/myProductList.jsp?status=active">
+            <span>판매중 상품</span><strong><%= saleCount %></strong>
+        </a>
+        <a href="<%= contextPath %>/mypage/myProductList.jsp?status=SOLD">
+            <span>거래완료</span><strong><%= soldCount %></strong>
+        </a>
+        <a href="<%= contextPath %>/favorite/favoriteList.jsp">
+            <span>관심 상품</span><strong><%= favoriteCount %></strong>
+        </a>
+        <div>
+            <span>매너 점수</span><strong><%= member == null ? "36.5" : scoreFormat.format(member.getMannerScore()) %></strong>
+        </div>
     </section>
 
     <% if ("updated".equals(request.getParameter("result"))) { %>
-        <p class="form-success-text">내 정보가 수정되었습니다.</p>
+        <script>
+            (() => {
+                alert("내 정보가 수정되었습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("result");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } %>
 
     <section class="detail-panel">

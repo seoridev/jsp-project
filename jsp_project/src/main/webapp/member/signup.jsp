@@ -47,9 +47,15 @@
 
 	        <%-- 서버 검증 메시지가 있으면 표시 --%>
 	        <% if (!errorMessage.isEmpty()) { %>
-	            <p class="form-error-text"><%= errorMessage %></p>
+	            <script>
+	                (() => {
+	                    alert("<%= escapeScript(errorMessage) %>");
+	                    const url = new URL(window.location.href);
+	                    url.searchParams.delete("error");
+	                    window.history.replaceState({}, "", url);
+	                })();
+	            </script>
 	        <% } %>
-	        <p class="form-error-text" id="signupError" hidden></p>
 
 	        <%-- 기본 입력 규칙 확인 후 처리 페이지로 전송 --%>
 	        <form class="form-grid" action="<%= contextPath %>/member/signupProcess.jsp" method="post" id="signupForm" novalidate>
@@ -135,7 +141,6 @@ const phonePrefix = document.getElementById("phonePrefix");
 const phoneTail = document.getElementById("phoneTail");
 const phone = document.getElementById("phone");
 const region = document.getElementById("region");
-const signupError = document.getElementById("signupError");
 const loginIdMessage = document.getElementById("loginIdMessage");
 const passwordMessage = document.getElementById("passwordMessage");
 const passwordConfirmMessage = document.getElementById("passwordConfirmMessage");
@@ -150,8 +155,9 @@ const duplicateState = {
 };
 
 function showSignupError(message) {
-    signupError.textContent = message;
-    signupError.hidden = message === "";
+    if (message !== "") {
+        alert(message);
+    }
 }
 
 function setFieldState(fieldElement, messageElement, message, type) {

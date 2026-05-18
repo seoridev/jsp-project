@@ -1,8 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="com.carrot.dao.ProductDAO"%>
-<%@ page import="com.carrot.dao.ProductImageDAO"%>
-<%@ page import="com.carrot.dto.ProductDTO"%>
-<%@ page import="com.carrot.dto.ProductImageDTO"%>
+<%@ page import="DAO.ProductDAO"%>
+<%@ page import="DAO.ProductImageDAO"%>
+<%@ page import="DTO.ProductDTO"%>
+<%@ page import="DTO.ProductImageDTO"%>
 <%@ page import="com.oreilly.servlet.MultipartRequest" %>
 <%@ page import="com.oreilly.servlet.multipart.DefaultFileRenamePolicy" %>
 <%@ page import="java.io.File" %>

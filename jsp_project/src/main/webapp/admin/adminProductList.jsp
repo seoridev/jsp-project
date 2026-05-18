@@ -1,8 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
-<%@ page import="com.carrot.dao.ProductDAO" %>
-<%@ page import="com.carrot.dto.ProductDTO" %>
+<%@ page import="DAO.ProductDAO" %>
+<%@ page import="DTO.ProductDTO" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
 <%!
     private String selected(String current, String expected) {
@@ -43,9 +43,23 @@
         </div>
     </div>
     <% if ("success".equals(result)) { %>
-        <p class="form-success-text">상품 상태를 변경했습니다.</p>
+        <script>
+            (() => {
+                alert("상품 상태를 변경했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("result");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } else if ("fail".equals(result)) { %>
-        <p class="form-error-text">상품 상태 변경에 실패했습니다.</p>
+        <script>
+            (() => {
+                alert("상품 상태 변경에 실패했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("result");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } %>
     <div class="admin-table-wrap">
         <table class="admin-table">

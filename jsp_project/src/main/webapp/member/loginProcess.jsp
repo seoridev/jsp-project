@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.carrot.dao.MemberDAO" %>
-<%@ page import="com.carrot.dto.MemberDTO" %>
+<%@ page import="DAO.MemberDAO" %>
+<%@ page import="DTO.MemberDTO" %>
 <%!
 	private boolean isBlank(String value) {
 	    return value == null || value.trim().isEmpty();

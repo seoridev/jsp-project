@@ -1,56 +1,98 @@
--- 상품 기능 DB 스키마
--- 앱 접속 계정(C##userjsp)에서 실행하는 기준입니다.
--- member 테이블은 먼저 생성되어 있어야 합니다.
+-- Full schema for the JSP project.
+-- Run this as the same Oracle user configured in META-INF/context.xml.
+-- The base ADMIN/CATEGORY/MEMBER/PRODUCT/PRODUCT_IMAGE structure follows the
+-- provided WEB DDL, without hard-coded schema/table-space clauses.
+
+CREATE TABLE admin (
+    login_id VARCHAR2(50 BYTE),
+    password VARCHAR2(255 BYTE),
+    name VARCHAR2(50 BYTE),
+    created_at TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE category (
-    category_id NUMBER NOT NULL,
-    category_name VARCHAR2(50 BYTE) NOT NULL,
-    is_active CHAR(1 BYTE) DEFAULT 'Y',
-    CONSTRAINT category_pk PRIMARY KEY (category_id),
-    CONSTRAINT chk_category_active CHECK (is_active IN ('Y', 'N'))
+    category_id NUMBER,
+    category_name VARCHAR2(50 BYTE),
+    is_active CHAR(1 BYTE)
+);
+
+CREATE TABLE member (
+    login_id VARCHAR2(50 BYTE),
+    password VARCHAR2(255 BYTE),
+    nickname VARCHAR2(50 BYTE),
+    phone VARCHAR2(20 BYTE),
+    region VARCHAR2(100 BYTE),
+    profile_text VARCHAR2(255 BYTE),
+    manner_score NUMBER(3,1) DEFAULT 36.5,
+    status VARCHAR2(20 BYTE) DEFAULT 'ACTIVE',
+    created_at TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP(6)
 );
 
 CREATE TABLE product (
-    product_id NUMBER NOT NULL,
-    seller_id VARCHAR2(20 BYTE) NOT NULL,
-    category_id NUMBER NOT NULL,
-    title VARCHAR2(150 BYTE) NOT NULL,
-    content CLOB NOT NULL,
-    price NUMBER NOT NULL,
-    region VARCHAR2(100 BYTE) NOT NULL,
+    product_id NUMBER,
+    seller_id VARCHAR2(20 BYTE),
+    category_id NUMBER,
+    title VARCHAR2(150 BYTE),
+    content CLOB,
+    price NUMBER,
+    region VARCHAR2(100 BYTE),
     status VARCHAR2(20 BYTE) DEFAULT 'SALE',
-    view_count NUMBER DEFAULT 0,
+    view_count NUMBER,
     is_deleted CHAR(1 BYTE) DEFAULT 'N',
     created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
-    updated_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
-    CONSTRAINT product_pk PRIMARY KEY (product_id),
-    CONSTRAINT chk_product_status CHECK (status IN ('SALE', 'RESERVED', 'SOLD', 'HIDDEN')),
-    CONSTRAINT chk_product_deleted CHECK (is_deleted IN ('Y', 'N')),
-    CONSTRAINT fk_product_seller FOREIGN KEY (seller_id)
-        REFERENCES member (login_id),
-    CONSTRAINT fk_product_category FOREIGN KEY (category_id)
-        REFERENCES category (category_id)
+    updated_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP
 );
 
 CREATE TABLE product_image (
-    image_id NUMBER NOT NULL,
-    product_id NUMBER NOT NULL,
+    image_id NUMBER,
+    product_id NUMBER,
     origin_name VARCHAR2(255 BYTE),
     save_name VARCHAR2(255 BYTE),
     image_path VARCHAR2(500 BYTE),
     is_main CHAR(1 BYTE) DEFAULT 'N',
-    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
-    CONSTRAINT product_image_pk PRIMARY KEY (image_id),
-    CONSTRAINT chk_product_image_main CHECK (is_main IN ('Y', 'N')),
-    CONSTRAINT fk_product_image_product FOREIGN KEY (product_id)
-        REFERENCES product (product_id) ON DELETE CASCADE
+    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP
 );
 
-CREATE SEQUENCE seq_product START WITH 51 INCREMENT BY 1 NOCACHE NOCYCLE;
+ALTER TABLE admin ADD CONSTRAINT admin_pk PRIMARY KEY (login_id);
+ALTER TABLE admin MODIFY (login_id NOT NULL);
+ALTER TABLE admin MODIFY (password NOT NULL);
+ALTER TABLE admin MODIFY (name NOT NULL);
+
+ALTER TABLE category MODIFY (category_id NOT NULL);
+ALTER TABLE category MODIFY (category_name NOT NULL);
+ALTER TABLE category ADD CONSTRAINT category_pk PRIMARY KEY (category_id);
+
+ALTER TABLE member ADD CONSTRAINT member_pk PRIMARY KEY (login_id);
+ALTER TABLE member MODIFY (login_id NOT NULL);
+ALTER TABLE member MODIFY (password NOT NULL);
+ALTER TABLE member MODIFY (nickname NOT NULL);
+ALTER TABLE member MODIFY (region NOT NULL);
+ALTER TABLE member ADD CONSTRAINT chk_member_status CHECK (status IN ('ACTIVE','STOPPED','WITHDRAWN'));
+ALTER TABLE member ADD CONSTRAINT uq_member_phone UNIQUE (phone);
+
+ALTER TABLE product MODIFY (category_id NOT NULL);
+ALTER TABLE product MODIFY (title NOT NULL);
+ALTER TABLE product MODIFY (content NOT NULL);
+ALTER TABLE product MODIFY (price NOT NULL);
+ALTER TABLE product MODIFY (region NOT NULL);
+ALTER TABLE product ADD CONSTRAINT chk_product_status CHECK (status IN ('SALE','RESERVED','SOLD','HIDDEN'));
+ALTER TABLE product MODIFY (product_id NOT NULL);
+ALTER TABLE product ADD CONSTRAINT product_pk PRIMARY KEY (product_id);
+ALTER TABLE product ADD CONSTRAINT fk_product_member FOREIGN KEY (seller_id)
+    REFERENCES member (login_id);
+
+ALTER TABLE product_image ADD CONSTRAINT product_image_pk PRIMARY KEY (image_id);
+ALTER TABLE product_image MODIFY (product_id NOT NULL);
+ALTER TABLE product_image ADD CONSTRAINT fk_product_image_product FOREIGN KEY (product_id)
+    REFERENCES product (product_id) ON DELETE CASCADE;
+
+-- Objects required by the current JSP code but missing from the provided DDL.
+CREATE SEQUENCE seq_product START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
 CREATE SEQUENCE seq_image START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
 
 CREATE TABLE favorite (
-    favorite_id NUMBER NOT NULL,
+    favorite_id NUMBER GENERATED BY DEFAULT AS IDENTITY,
     member_id VARCHAR2(20 BYTE) NOT NULL,
     product_id NUMBER NOT NULL,
     created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
@@ -62,56 +104,21 @@ CREATE TABLE favorite (
         REFERENCES product (product_id) ON DELETE CASCADE
 );
 
-CREATE SEQUENCE seq_favorite START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
-
-INSERT INTO category (category_id, category_name, is_active) VALUES (10, '디지털기기', 'Y');
-INSERT INTO category (category_id, category_name, is_active) VALUES (20, '생활가전', 'Y');
-INSERT INTO category (category_id, category_name, is_active) VALUES (30, '가구/인테리어', 'Y');
-INSERT INTO category (category_id, category_name, is_active) VALUES (40, '생활/주방', 'Y');
-INSERT INTO category (category_id, category_name, is_active) VALUES (50, '의류/잡화', 'Y');
-INSERT INTO category (category_id, category_name, is_active) VALUES (60, '취미/게임', 'Y');
-INSERT INTO category (category_id, category_name, is_active) VALUES (70, '도서/티켓', 'Y');
-INSERT INTO category (category_id, category_name, is_active) VALUES (80, '기타 중고물품', 'Y');
-
--- 샘플 판매자 계정입니다. 초기 비밀번호는 Password1 입니다.
-INSERT INTO member (login_id, password, nickname, phone, region, status, created_at)
-VALUES ('user01', '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
-        '시흥거래러', '010-1111-0001', '경기도 시흥시', 'ACTIVE', SYSTIMESTAMP);
-
-INSERT INTO member (login_id, password, nickname, phone, region, status, created_at)
-VALUES ('user02', '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
-        '강남정리왕', '010-1111-0002', '서울특별시 강남구', 'ACTIVE', SYSTIMESTAMP);
-
-INSERT INTO member (login_id, password, nickname, phone, region, status, created_at)
-VALUES ('user03', '19513fdc9da4fb72a4a05eb66917548d3c90ff94d5419e1f2363eea89dfee1dd',
-        '남동게임상점', '010-1111-0003', '인천광역시 남동구', 'ACTIVE', SYSTIMESTAMP);
-
-INSERT INTO product
-    (product_id, seller_id, category_id, title, content, price, region, status, view_count, is_deleted, created_at, updated_at)
-VALUES
-    (48, 'user02', 30, '원목 데스크 정리함', '샘플 상품 설명입니다.', 15000, '서울특별시 강남구', 'RESERVED', 5, 'N',
-     TO_TIMESTAMP('26/05/12 19:58:44.364000000', 'RR/MM/DD HH24:MI:SSXFF'),
-     TO_TIMESTAMP('26/05/12 19:58:44.364000000', 'RR/MM/DD HH24:MI:SSXFF'));
-
-INSERT INTO product
-    (product_id, seller_id, category_id, title, content, price, region, status, view_count, is_deleted, created_at, updated_at)
-VALUES
-    (49, 'user03', 60, '닌텐도 스위치 OLED', '샘플 상품 설명입니다.', 380000, '인천광역시 남동구', 'SOLD', 24, 'N',
-     TO_TIMESTAMP('26/05/12 19:58:44.374000000', 'RR/MM/DD HH24:MI:SSXFF'),
-     TO_TIMESTAMP('26/05/12 19:58:44.374000000', 'RR/MM/DD HH24:MI:SSXFF'));
-
-INSERT INTO product
-    (product_id, seller_id, category_id, title, content, price, region, status, view_count, is_deleted, created_at, updated_at)
-VALUES
-    (47, 'user01', 10, '아이폰 15 프로 256GB', '샘플 상품 설명입니다.', 1100000, '경기도 시흥시', 'SALE', 0, 'N',
-     TO_TIMESTAMP('26/05/12 19:58:44.356000000', 'RR/MM/DD HH24:MI:SSXFF'),
-     TO_TIMESTAMP('26/05/12 19:58:44.356000000', 'RR/MM/DD HH24:MI:SSXFF'));
-
-INSERT INTO product
-    (product_id, seller_id, category_id, title, content, price, region, status, view_count, is_deleted, created_at, updated_at)
-VALUES
-    (50, 'user01', 50, '나이키 에어포스', '샘플 상품 설명입니다.', 85000, '경기도 안산시', 'HIDDEN', 12, 'N',
-     TO_TIMESTAMP('26/05/12 19:58:44.380000000', 'RR/MM/DD HH24:MI:SSXFF'),
-     TO_TIMESTAMP('26/05/12 19:58:44.380000000', 'RR/MM/DD HH24:MI:SSXFF'));
+CREATE TABLE report (
+    report_id NUMBER GENERATED BY DEFAULT AS IDENTITY,
+    reporter_id VARCHAR2(20 BYTE) NOT NULL,
+    target_type VARCHAR2(20 BYTE) NOT NULL,
+    target_id NUMBER NOT NULL,
+    reason VARCHAR2(100 BYTE) NOT NULL,
+    detail CLOB,
+    status VARCHAR2(20 BYTE) DEFAULT 'WAITING' NOT NULL,
+    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
+    processed_at TIMESTAMP(6),
+    CONSTRAINT report_pk PRIMARY KEY (report_id),
+    CONSTRAINT fk_report_reporter FOREIGN KEY (reporter_id)
+        REFERENCES member (login_id),
+    CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT')),
+    CONSTRAINT chk_report_status CHECK (status IN ('WAITING', 'DONE', 'REJECTED'))
+);
 
 COMMIT;

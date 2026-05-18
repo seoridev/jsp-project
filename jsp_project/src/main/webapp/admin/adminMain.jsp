@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.carrot.dao.MemberDAO" %>
-<%@ page import="com.carrot.dao.ReportDAO" %>
+<%@ page import="DAO.MemberDAO" %>
+<%@ page import="DAO.ReportDAO" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
 <%
     String adminName = (String) session.getAttribute("adminName");
@@ -35,7 +35,9 @@
     </div>
 
     <% if (!statsError.isEmpty()) { %>
-        <p class="form-error-text"><%= statsError %></p>
+        <script>
+            alert("<%= escapeScript(statsError) %>");
+        </script>
     <% } %>
 
     <section class="admin-summary">

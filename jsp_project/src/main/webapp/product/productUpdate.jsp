@@ -1,10 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="com.carrot.dao.ProductDAO"%>
-<%@ page import="com.carrot.dao.ProductImageDAO"%>
-<%@ page import="com.carrot.dto.ProductDTO"%>
-<%@ page import="com.carrot.dto.ProductImageDTO"%>
-<%@ page import="com.carrot.dao.CategoryDAO"%>
-<%@ page import="com.carrot.dto.CategoryDTO"%>
+<%@ page import="DAO.ProductDAO"%>
+<%@ page import="DAO.ProductImageDAO"%>
+<%@ page import="DTO.ProductDTO"%>
+<%@ page import="DTO.ProductImageDTO"%>
+<%@ page import="DAO.CategoryDAO"%>
+<%@ page import="DTO.CategoryDTO"%>
 <%@ page import="java.util.List"%>
 <%@ page import="java.util.List" %>
 <%@ include file="../common/sessionCheck.jsp" %>
