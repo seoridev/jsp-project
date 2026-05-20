@@ -300,15 +300,15 @@ USING (
            TO_TIMESTAMP('2026-05-12 19:58:44.380000', 'YYYY-MM-DD HH24:MI:SS.FF6')
     FROM dual
     UNION ALL
-    SELECT 51, 'aaa123', 20, 'aaa',
-           'ddddssdf', 5000, '경기도 안양시 안양구 123-123', 'SALE',
+    SELECT 51, 'aaa123', 20, '미니 전기포트',
+           '자취방에서 쓰기 좋은 1L 전기포트입니다. 정상 작동하고 깨끗하게 세척해 두었습니다.', 5000, '경기도 안양시 안양구 123-123', 'SALE',
            1, 'N',
            TO_TIMESTAMP('2026-05-16 19:42:35.845000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
            TO_TIMESTAMP('2026-05-16 19:42:35.845000', 'YYYY-MM-DD HH24:MI:SS.FF6')
     FROM dual
     UNION ALL
-    SELECT 52, 'aaa123', 40, 'ㅁㅋㅁㅋ',
-           'xxxxx', 300000, '경기도 안양시 안양구 123-123', 'SALE',
+    SELECT 52, 'aaa123', 40, '스테인리스 냄비 세트',
+           '사용감은 조금 있지만 바로 쓰기 좋은 냄비 3종 세트입니다. 직거래 완료된 샘플 상품입니다.', 300000, '경기도 안양시 안양구 123-123', 'SOLD',
            3, 'N',
            TO_TIMESTAMP('2026-05-16 19:53:03.667000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
            TO_TIMESTAMP('2026-05-16 19:53:03.667000', 'YYYY-MM-DD HH24:MI:SS.FF6')
@@ -381,11 +381,37 @@ WHEN NOT MATCHED THEN INSERT
     (s.report_id, s.reporter_id, s.target_type, s.target_id, s.reason, s.detail, s.status, s.created_at, s.processed_at);
 
 --------------------------------------------------------
--- 5. 내 DB 기준 FAVORITE는 현재 0건입니다.
--- 완전 동일 데이터가 목적이면 아래 DELETE를 유지하세요.
+-- 5. 관심 상품 샘플 데이터
+-- 마이페이지 테스트 계정(aaa123)으로 로그인하면 관심 상품 목록에 표시됩니다.
 --------------------------------------------------------
 
-DELETE FROM favorite;
+MERGE INTO favorite f
+USING (
+    SELECT NVL((SELECT MAX(favorite_id) FROM favorite), 0) + ROW_NUMBER() OVER (ORDER BY product_id) favorite_id,
+           member_id,
+           product_id,
+           created_at
+    FROM (
+        SELECT 'aaa123' member_id, 47 product_id,
+               TO_TIMESTAMP('2026-05-17 10:00:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at
+        FROM dual
+        UNION ALL
+        SELECT 'aaa123', 48,
+               TO_TIMESTAMP('2026-05-17 10:05:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+        FROM dual
+        UNION ALL
+        SELECT 'aaa123', 49,
+               TO_TIMESTAMP('2026-05-17 10:10:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+        FROM dual
+    )
+) s
+ON (f.member_id = s.member_id AND f.product_id = s.product_id)
+WHEN MATCHED THEN UPDATE SET
+    f.created_at = s.created_at
+WHEN NOT MATCHED THEN INSERT
+    (favorite_id, member_id, product_id, created_at)
+    VALUES
+    (s.favorite_id, s.member_id, s.product_id, s.created_at);
 
 COMMIT;
 
