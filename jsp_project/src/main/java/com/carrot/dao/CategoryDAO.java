@@ -32,4 +32,26 @@ public class CategoryDAO extends BaseDAO{
 	    return list;
 	}
 	
+	// 카테고리 이름 조회
+	public String selectCategorieName(int id) {
+	    String sql = "SELECT CATEGORY_NAME FROM CATEGORY WHERE IS_ACTIVE = 'Y' AND CATEGORY_ID = ?";
+
+	    try (Connection conn = getConnection();
+	         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+	        pstmt.setInt(1, id);
+
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getString("CATEGORY_NAME");
+	            }
+	        }
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return null;
+	}
+	
 }
