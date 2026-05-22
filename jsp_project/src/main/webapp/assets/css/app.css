@@ -216,7 +216,8 @@ button.primary {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
     width: 100%;
     min-height: 46px;
     border: 1px solid #d7d0c5;
@@ -224,6 +225,11 @@ button.primary {
     padding: 0 14px;
     font-size: 15px;
     background: #fffdf9;
+}
+
+.field textarea {
+    padding-top: 12px;
+    resize: vertical;
 }
 
 .field input:focus,
@@ -248,6 +254,74 @@ button.primary {
 .field.is-invalid .phone-row > select:focus {
     outline-color: rgba(217, 48, 37, 0.18);
     border-color: #d93025;
+}
+
+/* 커뮤니티 MVP 화면 공통 */
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.community-card {
+    border: 1px solid #e5ded3;
+    border-radius: 8px;
+    background: #fff;
+    padding: 18px;
+}
+
+.community-card h3 {
+    margin: 0 0 8px;
+}
+
+.community-meta {
+    color: #756b61;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.community-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.community-tabs a {
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #ded6ca;
+    border-radius: 8px;
+    background: #fffaf3;
+    font-weight: 700;
+}
+
+.community-tabs a.active {
+    border-color: #ff6f0f;
+    background: #ff6f0f;
+    color: #fff;
+}
+
+.community-list {
+    display: grid;
+    gap: 10px;
+}
+
+.community-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid #eee7dc;
+    padding: 12px 0;
+}
+
+.community-content {
+    min-height: 180px;
+    padding: 20px 0;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-all;
 }
 
 .inline-check {

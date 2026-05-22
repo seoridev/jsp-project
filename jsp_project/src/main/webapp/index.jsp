@@ -53,6 +53,10 @@
                 <span class="category-mark mark-orange">중</span>
                 <strong>중고거래</strong>
             </a>
+            <a href="<%= contextPath %>/community/communityHome.jsp">
+                <span class="category-mark mark-green">커</span>
+                <strong>동네마켓 커뮤니티</strong>
+            </a>
             <%-- 추가됨: 활성 카테고리를 CATEGORY_ID 링크로 출력 --%>
             <% for (int i = 0; i < categoryList.size(); i++) {
                 CategoryDTO category = categoryList.get(i);
