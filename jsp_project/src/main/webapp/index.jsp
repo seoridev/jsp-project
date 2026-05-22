@@ -1,4 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.carrot.dao.CategoryDAO" %>
+<%@ page import="com.carrot.dto.CategoryDTO" %>
+<%@ page import="java.util.List" %>
+<%
+    // 추가됨: 메인 카테고리 링크를 실제 활성 카테고리 기준으로 출력
+    CategoryDAO categoryDao = new CategoryDAO();
+    List<CategoryDTO> categoryList = categoryDao.selectAllCategories();
+    String[] categoryMarkClasses = {"mark-red", "mark-yellow", "mark-brown", "mark-yellow", "mark-blue", "mark-green", "mark-orange", "mark-yellow"};
+%>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -44,34 +53,18 @@
                 <span class="category-mark mark-orange">중</span>
                 <strong>중고거래</strong>
             </a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=디지털">
-                <span class="category-mark mark-red">디</span>
-                <strong>디지털기기</strong>
+            <%-- 추가됨: 활성 카테고리를 CATEGORY_ID 링크로 출력 --%>
+            <% for (int i = 0; i < categoryList.size(); i++) {
+                CategoryDTO category = categoryList.get(i);
+                String markClass = categoryMarkClasses[i % categoryMarkClasses.length];
+                String categoryName = category.getCategoryName();
+                String markText = categoryName == null || categoryName.isEmpty() ? "?" : categoryName.substring(0, 1);
+            %>
+            <a href="<%= contextPath %>/product/productList.jsp?categoryId=<%= category.getCategoryId() %>">
+                <span class="category-mark <%= markClass %>"><%= markText %></span>
+                <strong><%= categoryName %></strong>
             </a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=가전">
-                <span class="category-mark mark-yellow">가</span>
-                <strong>생활가전</strong>
-            </a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=가구">
-                <span class="category-mark mark-brown">가</span>
-                <strong>가구/인테리어</strong>
-            </a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=의류">
-                <span class="category-mark mark-blue">의</span>
-                <strong>의류/잡화</strong>
-            </a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=도서">
-                <span class="category-mark mark-green">도</span>
-                <strong>도서/음반</strong>
-            </a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=스포츠">
-                <span class="category-mark mark-orange">스</span>
-                <strong>스포츠/레저</strong>
-            </a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=생활">
-                <span class="category-mark mark-yellow">생</span>
-                <strong>생활/주방</strong>
-            </a>
+            <% } %>
         </nav>
     </section>
 </main>

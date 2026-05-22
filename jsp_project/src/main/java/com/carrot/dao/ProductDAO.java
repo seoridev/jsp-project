@@ -72,27 +72,45 @@ public class ProductDAO extends BaseDAO{
 	
 	// 상품 검색
 	public List<ProductDTO> selectProductList(String type, String keyword) {
+	    // 추가됨: 기존 호출부 호환을 위해 categoryId 없이 새 조회 메서드 호출
+	    return selectProductList(type, keyword, null);
+	}
+
+	// 추가됨: 카테고리와 검색어를 함께 적용하는 상품 목록 조회
+	public List<ProductDTO> selectProductList(String type, String keyword, Integer categoryId) {
 	    List<ProductDTO> list = new ArrayList<>();
 	    
 	    StringBuilder sql = new StringBuilder("SELECT * FROM PRODUCT WHERE IS_DELETED = 'N'");
+	    boolean hasCategory = categoryId != null;
+	    boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+	    String searchType = (type == null || type.trim().isEmpty()) ? "all" : type;
 	    
 	    // 검색 조건이 있을 경우 쿼리 추가
-		if (keyword != null && !keyword.trim().isEmpty()) {
-			sql.append(switch (type) {
+	    // 추가됨: categoryId가 있으면 실제 CATEGORY_ID 기준으로 필터링
+	    if (hasCategory) {
+	        sql.append(" AND CATEGORY_ID = ?");
+	    }
+
+		if (hasKeyword) {
+			sql.append(switch (searchType) {
 			case "title" -> " AND TITLE LIKE ?";
 			case "content" -> " AND CONTENT LIKE ?";
 			case "all" -> " AND (TITLE LIKE ? OR CONTENT LIKE ?)";
-			default -> "";
+			default -> " AND (TITLE LIKE ? OR CONTENT LIKE ?)";
 			});
 	    }
 	    sql.append(" ORDER BY CREATED_AT DESC");
 
 	    try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-	        if (keyword != null && !keyword.trim().isEmpty()) {
+	        int paramIndex = 1;
+	        if (hasCategory) {
+	            pstmt.setInt(paramIndex++, categoryId);
+	        }
+	        if (hasKeyword) {
 	            String searchKeyword = "%" + keyword + "%";
-	            pstmt.setString(1, searchKeyword);
-	            if ("all".equals(type)) {
-	                pstmt.setString(2, searchKeyword);
+	            pstmt.setString(paramIndex++, searchKeyword);
+	            if (!"title".equals(searchType) && !"content".equals(searchType)) {
+	                pstmt.setString(paramIndex++, searchKeyword);
 	            }
 	        }
 
