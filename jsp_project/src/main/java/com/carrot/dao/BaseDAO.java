@@ -1,4 +1,4 @@
-package DAO;
+package com.carrot.dao;
 
 import java.sql.Connection;
 import javax.naming.Context;

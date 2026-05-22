@@ -1,10 +1,10 @@
-package DAO;
+package com.carrot.dao;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import DTO.ProductImageDTO;
+import com.carrot.dto.ProductImageDTO;
 
 public class ProductImageDAO extends BaseDAO{
 

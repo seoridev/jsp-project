@@ -1,5 +1,5 @@
 <%@ page contentType="application/json; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="DAO.MemberDAO" %>
+<%@ page import="com.carrot.dao.MemberDAO" %>
 <%!
     private boolean isValidLoginId(String value) {
         return value != null && value.matches("^[A-Za-z0-9]{4,20}$");

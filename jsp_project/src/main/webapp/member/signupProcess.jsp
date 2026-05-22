@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.sql.SQLException" %>
-<%@ page import="DAO.MemberDAO" %>
-<%@ page import="DTO.MemberDTO" %>
+<%@ page import="com.carrot.dao.MemberDAO" %>
+<%@ page import="com.carrot.dto.MemberDTO" %>
 <%!
 	private boolean isBlank(String value) {
 	    return value == null || value.trim().isEmpty();

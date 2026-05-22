@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.net.URLEncoder" %>
-<%@ page import="DAO.MemberDAO" %>
+<%@ page import="com.carrot.dao.MemberDAO" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
 <%!
 	private boolean isAllowedStatus(String status) {

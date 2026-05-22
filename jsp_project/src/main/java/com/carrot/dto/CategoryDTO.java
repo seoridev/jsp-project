@@ -1,4 +1,4 @@
-package DTO;
+package com.carrot.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

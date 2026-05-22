@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="DAO.ReportDAO" %>
+<%@ page import="com.carrot.dao.ReportDAO" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {

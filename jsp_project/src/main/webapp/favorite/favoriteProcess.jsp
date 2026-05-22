@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="DAO.FavoriteDAO" %>
-<%@ page import="DAO.ProductDAO" %>
-<%@ page import="DTO.ProductDTO" %>
+<%@ page import="com.carrot.dao.FavoriteDAO" %>
+<%@ page import="com.carrot.dao.ProductDAO" %>
+<%@ page import="com.carrot.dto.ProductDTO" %>
 <%
     request.setCharacterEncoding("UTF-8");
 

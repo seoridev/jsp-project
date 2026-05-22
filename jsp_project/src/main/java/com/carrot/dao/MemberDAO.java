@@ -1,4 +1,4 @@
-package DAO;
+package com.carrot.dao;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import DTO.MemberDTO;
+import com.carrot.dto.MemberDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

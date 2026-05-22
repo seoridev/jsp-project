@@ -1,10 +1,10 @@
-package DAO;
+package com.carrot.dao;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import DTO.CategoryDTO;
+import com.carrot.dto.CategoryDTO;
 
 public class CategoryDAO extends BaseDAO{
 

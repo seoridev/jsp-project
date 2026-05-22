@@ -1,8 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List" %>
-<%@ page import="DAO.ReportDAO" %>
-<%@ page import="DTO.ReportDTO" %>
+<%@ page import="com.carrot.dao.ReportDAO" %>
+<%@ page import="com.carrot.dto.ReportDTO" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
 <%!
     private String statusText(String status) {

@@ -1,4 +1,4 @@
-package DAO;
+package com.carrot.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,8 +7,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import DTO.FavoriteDTO;
-import DTO.ProductDTO;
+import com.carrot.dto.FavoriteDTO;
+import com.carrot.dto.ProductDTO;
 
 // 관심 상품 등록, 해제, 목록 조회 DAO
 public class FavoriteDAO extends BaseDAO {

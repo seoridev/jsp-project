@@ -1,4 +1,4 @@
-package DAO;
+package com.carrot.dao;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import DTO.AdminDTO;
+import com.carrot.dto.AdminDTO;
 
 // 관리자 계정 조회와 로그인 검증
 public class AdminDAO extends BaseDAO {

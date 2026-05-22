@@ -1,4 +1,4 @@
-package DTO;
+package com.carrot.dto;
 
 import java.time.LocalDateTime;
 

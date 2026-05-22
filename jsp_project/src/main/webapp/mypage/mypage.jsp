@@ -1,11 +1,11 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
-<%@ page import="DAO.MemberDAO" %>
-<%@ page import="DAO.FavoriteDAO" %>
-<%@ page import="DAO.ProductDAO" %>
-<%@ page import="DTO.MemberDTO" %>
-<%@ page import="DTO.ProductDTO" %>
+<%@ page import="com.carrot.dao.MemberDAO" %>
+<%@ page import="com.carrot.dao.FavoriteDAO" %>
+<%@ page import="com.carrot.dao.ProductDAO" %>
+<%@ page import="com.carrot.dto.MemberDTO" %>
+<%@ page import="com.carrot.dto.ProductDTO" %>
 <%@ include file="../common/sessionCheck.jsp" %>
 <%
     String currentLoginId = (String) session.getAttribute("loginId");

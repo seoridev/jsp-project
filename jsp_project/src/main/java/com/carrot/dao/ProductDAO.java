@@ -1,10 +1,10 @@
-package DAO;
+package com.carrot.dao;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import DTO.ProductDTO;
+import com.carrot.dto.ProductDTO;
 
 public class ProductDAO extends BaseDAO{
 	// 상품 등록

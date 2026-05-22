@@ -1,4 +1,4 @@
-package DTO;
+package com.carrot.dto;
 
 import java.time.LocalDateTime;
 
@@ -13,12 +13,13 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductImageDTO {
-    private int imageId;
+public class FavoriteDTO {
+    private int favoriteId;
+    private String memberId;
     private int productId;
-    private String originName;
-    private String saveName;
-    private String imagePath;
-    private String isMain;
     private LocalDateTime createdAt;
+
+    private String productTitle;
+    private String productStatus;
+    private String productRegion;
 }

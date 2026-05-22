@@ -1,4 +1,4 @@
-package DAO;
+package com.carrot.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import DTO.ReportDTO;
+import com.carrot.dto.ReportDTO;
 
 public class ReportDAO extends BaseDAO {
 
