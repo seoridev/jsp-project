@@ -96,7 +96,8 @@ public class CafeDAO extends BaseDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return true;
+        // 추가됨: DB 오류를 카페명 중복으로 오판하지 않도록 생성 단계에서 실패 처리
+        return false;
     }
 
     public CafeDTO selectCafeById(int cafeId) {

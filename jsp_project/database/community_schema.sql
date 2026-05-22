@@ -1,4 +1,4 @@
--- 동네마켓 커뮤니티 MVP 스키마
+-- 동네마켓 커뮤니티 스키마
 -- Oracle 기준. 기존 MEMBER 테이블의 LOGIN_ID를 회원 FK로 사용한다.
 
 CREATE TABLE cafe (
@@ -127,3 +127,64 @@ ALTER TABLE cafe_comment ADD CONSTRAINT chk_cafe_comment_deleted CHECK (is_delet
 CREATE SEQUENCE seq_cafe_comment START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
 CREATE INDEX idx_cafe_comment_post ON cafe_comment(post_id);
 CREATE INDEX idx_cafe_comment_writer ON cafe_comment(writer_id);
+
+CREATE TABLE cafe_post_image (
+    image_id NUMBER,
+    post_id NUMBER NOT NULL,
+    origin_name VARCHAR2(255 BYTE),
+    save_name VARCHAR2(255 BYTE) NOT NULL,
+    image_path VARCHAR2(500 BYTE) NOT NULL,
+    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP
+);
+
+ALTER TABLE cafe_post_image ADD CONSTRAINT cafe_post_image_pk PRIMARY KEY (image_id);
+ALTER TABLE cafe_post_image ADD CONSTRAINT fk_cafe_post_image_post FOREIGN KEY (post_id) REFERENCES cafe_post(post_id) ON DELETE CASCADE;
+
+CREATE SEQUENCE seq_cafe_post_image START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE INDEX idx_cafe_post_image_post ON cafe_post_image(post_id);
+
+CREATE TABLE cafe_post_like (
+    like_id NUMBER,
+    post_id NUMBER NOT NULL,
+    member_id VARCHAR2(50 BYTE) NOT NULL,
+    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP
+);
+
+ALTER TABLE cafe_post_like ADD CONSTRAINT cafe_post_like_pk PRIMARY KEY (like_id);
+ALTER TABLE cafe_post_like ADD CONSTRAINT uq_cafe_post_like UNIQUE (post_id, member_id);
+ALTER TABLE cafe_post_like ADD CONSTRAINT fk_cafe_post_like_post FOREIGN KEY (post_id) REFERENCES cafe_post(post_id) ON DELETE CASCADE;
+ALTER TABLE cafe_post_like ADD CONSTRAINT fk_cafe_post_like_member FOREIGN KEY (member_id) REFERENCES member(login_id);
+
+CREATE SEQUENCE seq_cafe_post_like START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE TABLE cafe_favorite (
+    favorite_id NUMBER,
+    cafe_id NUMBER NOT NULL,
+    member_id VARCHAR2(50 BYTE) NOT NULL,
+    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP
+);
+
+ALTER TABLE cafe_favorite ADD CONSTRAINT cafe_favorite_pk PRIMARY KEY (favorite_id);
+ALTER TABLE cafe_favorite ADD CONSTRAINT uq_cafe_favorite UNIQUE (cafe_id, member_id);
+ALTER TABLE cafe_favorite ADD CONSTRAINT fk_cafe_favorite_cafe FOREIGN KEY (cafe_id) REFERENCES cafe(cafe_id) ON DELETE CASCADE;
+ALTER TABLE cafe_favorite ADD CONSTRAINT fk_cafe_favorite_member FOREIGN KEY (member_id) REFERENCES member(login_id);
+
+CREATE SEQUENCE seq_cafe_favorite START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+CREATE TABLE cafe_activity_log (
+    log_id NUMBER,
+    cafe_id NUMBER NOT NULL,
+    actor_id VARCHAR2(50 BYTE),
+    action_type VARCHAR2(50 BYTE) NOT NULL,
+    target_type VARCHAR2(50 BYTE),
+    target_id NUMBER,
+    message VARCHAR2(1000 BYTE),
+    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP
+);
+
+ALTER TABLE cafe_activity_log ADD CONSTRAINT cafe_activity_log_pk PRIMARY KEY (log_id);
+ALTER TABLE cafe_activity_log ADD CONSTRAINT fk_cafe_activity_log_cafe FOREIGN KEY (cafe_id) REFERENCES cafe(cafe_id) ON DELETE CASCADE;
+ALTER TABLE cafe_activity_log ADD CONSTRAINT fk_cafe_activity_log_actor FOREIGN KEY (actor_id) REFERENCES member(login_id);
+
+CREATE SEQUENCE seq_cafe_activity_log START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE INDEX idx_cafe_activity_log_cafe ON cafe_activity_log(cafe_id);
