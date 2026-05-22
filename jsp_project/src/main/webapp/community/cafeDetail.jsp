@@ -68,6 +68,8 @@
             <p class="field-message">가입 신청이 접수되었습니다.</p>
         <% } else if ("banned".equals(request.getParameter("join"))) { %>
             <p class="field-message is-error">이 카페에서는 가입이 제한된 상태입니다.</p>
+        <% } else if ("manageDenied".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">카페 관리 권한이 없습니다.</p>
         <% } %>
         <div class="detail-header">
             <div>
@@ -103,6 +105,9 @@
             <% if (writeBoardId > 0) { %>
                 <a class="button primary" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
             <% } %>
+            <% if (ownerOrManager) { %>
+                <a class="button" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+            <% } %>
         </aside>
 
         <section class="detail-panel">
@@ -122,7 +127,7 @@
                 </div>
             <% } %>
             <% if (ownerOrManager) { %>
-                <p class="community-meta">운영자용 게시판/회원 관리는 다음 단계에서 확장 예정입니다.</p>
+                <p class="community-meta">회원 관리는 다음 단계에서 확장 예정입니다.</p>
             <% } %>
         </section>
     </section>

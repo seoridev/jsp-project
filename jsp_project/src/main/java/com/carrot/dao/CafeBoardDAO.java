@@ -75,6 +75,55 @@ public class CafeBoardDAO extends BaseDAO {
         return null;
     }
 
+    public boolean updateBoard(CafeBoardDTO board) {
+        String sql = "UPDATE cafe_board SET board_name = ?, description = ?, read_permission = ?, "
+                + "write_permission = ?, is_notice = ?, display_order = ?, updated_at = SYSTIMESTAMP "
+                + "WHERE board_id = ? AND cafe_id = ? AND status = 'ACTIVE'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, board.getBoardName());
+            pstmt.setString(2, board.getDescription());
+            pstmt.setString(3, board.getReadPermission());
+            pstmt.setString(4, board.getWritePermission());
+            pstmt.setString(5, board.getIsNotice());
+            pstmt.setInt(6, board.getDisplayOrder());
+            pstmt.setInt(7, board.getBoardId());
+            pstmt.setInt(8, board.getCafeId());
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hideBoard(int boardId, int cafeId) {
+        String sql = "UPDATE cafe_board SET status = 'HIDDEN', updated_at = SYSTIMESTAMP "
+                + "WHERE board_id = ? AND cafe_id = ? AND status = 'ACTIVE'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, boardId);
+            pstmt.setInt(2, cafeId);
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hasActivePosts(int boardId) {
+        String sql = "SELECT 1 FROM cafe_post WHERE board_id = ? AND is_deleted = 'N' FETCH FIRST 1 ROWS ONLY";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, boardId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
     private CafeBoardDTO mapBoard(ResultSet rs) throws Exception {
         Timestamp createdAt = rs.getTimestamp("created_at");
         Timestamp updatedAt = rs.getTimestamp("updated_at");
