@@ -199,11 +199,11 @@ public class ProductDAO extends BaseDAO{
 	}
 
 	// ID로 상품 조회
-	public ProductDTO selectProductById(int id) {
+	public ProductDTO selectProductById(long id) {
 		String sql = "SELECT * FROM PRODUCT WHERE PRODUCT_ID = ?";
 
 		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			pstmt.setInt(1, id);
+			pstmt.setLong(1, id);
 			try (ResultSet rs = pstmt.executeQuery()) {
 				if (rs.next()) {
 					return ProductDTO.builder()
