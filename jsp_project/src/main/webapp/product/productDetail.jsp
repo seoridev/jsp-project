@@ -3,6 +3,7 @@
 <%@ page import="com.carrot.dao.ProductImageDAO"%>
 <%@ page import="com.carrot.dto.ProductDTO"%>
 <%@ page import="com.carrot.dto.ProductImageDTO"%>
+<%@ page import="com.carrot.dao.CategoryDAO"%>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.DecimalFormat" %>
 <%@ include file="../common/sessionCheck.jsp" %>
@@ -10,10 +11,11 @@
 <%
     String idParam = request.getParameter("id");
     
-	ProductDAO productDao = new ProductDAO();
-	ProductImageDAO productImageDao = new ProductImageDAO();
-	ProductDTO p = null;
-	List<ProductImageDTO> imageList = null;
+    ProductDAO productDao = new ProductDAO();
+    ProductImageDAO productImageDao = new ProductImageDAO();
+	CategoryDAO categoryDao = new CategoryDAO();
+    ProductDTO p = null;
+    List<ProductImageDTO> imageList = null;
     
     if (idParam != null) {
         int productId = Integer.parseInt(idParam);
@@ -27,187 +29,220 @@
         out.println("<script>alert('존재하지 않는 상품입니다.'); history.back();</script>");
         return;
     }
+
+    boolean isSeller = (session.getAttribute("loginId").equals(p.getSellerId()));
 %>
 
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title><%= p.getTitle() %> - 상세 정보</title>
-<link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
-<style>
-    body { font-family: 'Malgun Gothic', sans-serif; background: #f9f9f9; padding: 40px; color: #333; line-height: 1.6; }
-	.detail-container { max-width: 800px; margin: auto; background: white; padding: 40px; border-radius: 12px; }    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= p.getTitle() %> - 당근마켓</title>
+    <!-- 공통 app.css 연결 -->
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
     
-    /* 이미지 슬라이드/리스트 영역 */
-    .image-section { width: 100%; margin-bottom: 30px; text-align: center; }
-    .main-img { width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
-    .thumb-container { display: flex; gap: 10px; justify-content: center; overflow-x: auto; }
-    .thumb-img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid transparent; }
-    .thumb-img:hover { border-color: #ff5a5f; }
-
-    .content-section { white-space: pre-wrap; padding: 20px 0; border-top: 1px solid #eee; }
-    
-    /* 상단 영역 */
-    .header { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
-    .category { color: #ff5a5f; font-weight: bold; font-size: 0.9em; }
-    .title { font-size: 2em; margin: 10px 0; }
-    .meta-info { color: #888; font-size: 0.85em; display: flex; gap: 15px; }
-
-    /* 상품 정보 요약 박스 */
-    .info-box { background: #fff8f8; border-radius: 8px; padding: 20px; margin-bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .info-item { display: flex; flex-direction: column; }
-    .label { font-size: 0.8em; color: #999; margin-bottom: 5px; }
-    .value { font-size: 1.1em; font-weight: 500; }
-    .price-value { color: #ff5a5f; font-size: 1.5em; font-weight: bold; }
-
-    /* 본문 내용 */
-    .content-section { min-height: 200px; white-space: pre-wrap; margin-bottom: 40px; padding: 10px; border-top: 1px solid #eee; padding-top: 30px; }
-
-    /* 버튼 영역 */
-    .button-group { display: flex; gap: 10px; justify-content: center; }
-    .btn { padding: 12px 25px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; text-decoration: none; }
-    .btn-list { background: #eee; color: #333; }
-    .btn-edit { background: #333; color: #white; }
-    .btn-delete { background: #ff5a5f; color: white; }
-    
-    /* 상태 배지 */
-    .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8em; color: white; }
-    .badge-sale { background: #2ecc71; }
-    .badge-reserved { background: #f1c40f; }
-    .badge-sold { background: #95a5a6; }
-    
-    /* 기존 스타일 유지 및 대표 표시 스타일 추가 */
-    .image-section { width: 100%; margin-bottom: 30px; text-align: center; }
-    .main-img { width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; }
-    .thumb-container { display: flex; gap: 12px; justify-content: center; overflow-x: auto; padding: 5px; }
-    
-    /* 썸네일 감싸는 박스 */
-    .detail-thumb-wrapper { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
-    
-    .thumb-img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
-    .thumb-img:hover { border-color: #ff5a5f; }
-    
-    /* 대표 이미지 썸네일에 줄 테두리 강조 */
-    .thumb-img.active-thumb { border-color: #ff5a5f; }
-
-    /* 상세페이지용 대표 배지 스타일 */
-    .detail-main-badge {
-        position: absolute;
-        top: -5px;
-        left: -5px;
-        background: #ff5a5f;
-        color: white;
-        font-size: 11px;
-        font-weight: bold;
-        padding: 2px 6px;
-        border-radius: 4px;
-        z-index: 10;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    }
-</style>
+    <!-- 이미지 슬라이더 및 본문 전용 스타일 보완 -->
+    <style>
+        .product-image-box {
+            position: relative;
+            width: 100%;
+            background: #fff;
+            border: 1px solid #e5ded3;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .product-main-img {
+            width: 100%;
+            max-height: 480px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        .product-thumb-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            overflow-x: auto;
+            padding: 4px 0;
+        }
+        .product-thumb-wrapper {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            flex-shrink: 0;
+        }
+        .product-thumb-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        .product-thumb-wrapper img.active-thumb {
+            border-color: #ff6f0f;
+        }
+        .product-main-badge {
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            background: #ff6f0f;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 1px 4px;
+            border-radius: 4px;
+            z-index: 5;
+        }
+        .product-content {
+            min-height: 160px;
+            padding: 20px 0;
+            font-size: 16px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
-
-<div class="detail-container">
-	<div class="image-section">
-        <% if (imageList != null && !imageList.isEmpty()) { 
-            ProductImageDTO mainImgDto = imageList.get(0);
-            for (ProductImageDTO img : imageList) {
-                if ("Y".equals(img.getIsMain())) {
-                    mainImgDto = img;
-                    break;
-                }
-            }
-            String mainImgPath = request.getContextPath() + mainImgDto.getImagePath() + mainImgDto.getSaveName();
-        %>
-            <img src="<%= mainImgPath %>" id="currentImg" class="main-img" alt="상품이미지">
-            
-            <div class="thumb-container">
-                <% for (ProductImageDTO img : imageList) { 
-                    String fullPath = request.getContextPath() + img.getImagePath() + img.getSaveName();
-                    boolean isMain = "Y".equals(img.getIsMain());
+<main class="page-shell">
+    <div class="home-layout">
+        
+        <!-- 좌측: 상품 이미지 및 상세 정보 영역 -->
+        <section>
+            <!-- 이미지 섹션 -->
+            <div class="product-image-box">
+                <% if (imageList != null && !imageList.isEmpty()) { 
+                    ProductImageDTO mainImgDto = imageList.get(0);
+                    for (ProductImageDTO img : imageList) {
+                        if ("Y".equals(img.getIsMain())) {
+                            mainImgDto = img;
+                            break;
+                        }
+                    }
+                    String mainImgPath = request.getContextPath() + mainImgDto.getImagePath() + mainImgDto.getSaveName();
                 %>
-                    <div class="detail-thumb-wrapper">
-                        <% if (isMain) { %>
-                            <span class="detail-main-badge">대표</span>
+                    <img src="<%= mainImgPath %>" id="currentImg" class="product-main-img" alt="상품 이미지">
+                    
+                    <div class="product-thumb-container">
+                        <% for (ProductImageDTO img : imageList) { 
+                            String fullPath = request.getContextPath() + img.getImagePath() + img.getSaveName();
+                            boolean isMain = "Y".equals(img.getIsMain());
+                        %>
+                            <div class="product-thumb-wrapper">
+                                <% if (isMain) { %>
+                                    <span class="product-main-badge">대표</span>
+                                <% } %>
+                                <img src="<%= fullPath %>" class="<%= isMain ? "active-thumb" : "" %>" 
+                                     onclick="changeDetailImage(this, '<%= fullPath %>')" alt="썸네일">
+                            </div>
                         <% } %>
-                        <img src="<%= fullPath %>" class="thumb-img <%= isMain ? "active-thumb" : "" %>" 
-                             onclick="changeDetailImage(this, '<%= fullPath %>')">
+                    </div>
+                <% } else { %>
+                    <div class="empty-cell" style="display: flex; align-items: center; justify-content: center;">
+                        등록된 이미지가 없습니다.
                     </div>
                 <% } %>
             </div>
-        <% } else { %>
-            <div style="width:100%; height:300px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#ccc;">
-                등록된 이미지가 없습니다.
+
+            <!-- 상품 상세 정보 내용 -->
+            <div class="detail-panel">
+                <div class="detail-header">
+                    <div>
+                        <span class="status-badge">카테고리 <%= categoryDao.selectCategorieName(p.getCategoryId()) %></span>
+                        <h2><%= p.getTitle() %></h2>
+                        <p>조회수 <%= p.getViewCount() %> · <%= p.getCreatedAt() %></p>
+                    </div>
+                    <div>
+                        <%
+                            String status = p.getStatus().toUpperCase();
+                            if("SALE".equals(status)) { out.print("<span class='status-badge is-active'>판매중</span>"); }
+                            else if("RESERVED".equals(status)) { out.print("<span class='status-badge is-stopped'>예약중</span>"); }
+                            else { out.print("<span class='status-badge is-withdrawn'>판매완료</span>"); }
+                        %>
+                    </div>
+                </div>
+
+                <!-- 본문 텍스트 -->
+                <div class="product-content">
+                    <%= p.getContent() %>
+                </div>
+
+                <!-- 하단 버튼 및 액션 컨트롤 선언 -->
+                <div class="form-actions" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
+                    <a href="productList.jsp" class="button">목록으로</a>
+                    
+                    <% if (isSeller) { %>
+                        <!-- 내가 올린 상품일 때-->
+                        <a href="productUpdate.jsp?id=<%= p.getProductId() %>" class="button primary">수정하기</a>
+                        <button type="button" onclick="deleteConfirm(<%= p.getProductId() %>)" style="border-color: #d93025; background: #fffafa; color: #d93025;">삭제하기</button>
+                    <% } else { %>
+                        <!-- 내가 올린 상품이 아닐 때 -->
+                        <form action="<%= request.getContextPath() %>/chat/chatCreateProcess.jsp" method="POST" style="display: contents;">
+                            <input type="hidden" name="productId" value="<%= p.getProductId() %>">
+                            <input type="hidden" name="sellerId" value="<%= p.getSellerId() %>">
+                            <button type="submit" class="button primary">판매자와 채팅하기</button>
+                        </form>
+                    <% } %>
+                </div>
             </div>
-        <% } %>
-    </div>
-    <div class="header">
-        <div class="category">카테고리 번호: <%= p.getCategoryId() %></div>
-        <h1 class="title"><%= p.getTitle() %></h1>
-        <div class="meta-info">
-            <span>판매자: <strong><%= p.getSellerId() %></strong></span>
-            <span>작성일: <%= p.getCreatedAt() %></span>
-            <span>조회수: <%= p.getViewCount() %></span>
-        </div>
-    </div>
+        </section>
 
-    <div class="info-box">
-        <div class="info-item">
-            <span class="label">판매 가격</span>
-            <span class="value price-value"><%= df.format(p.getPrice()) %>원</span>
-        </div>
-        <div class="info-item">
-            <span class="label">거래 희망 지역</span>
-            <span class="value"><%= p.getRegion() %></span>
-        </div>
-        <div class="info-item">
-            <span class="label">판매 상태</span>
-            <span class="value">
-                <span class="badge badge-<%= p.getStatus().toLowerCase() %>">
-                    <%= p.getStatus() %>
-                </span>
-            </span>
-        </div>
-    </div>
+        <!-- 우측: 판매자 정보 및 가격 요약 패널 -->
+        <aside>
+            <div class="status-panel">
+                <h2>거래 정보</h2>
+                <ul class="status-list">
+                    <li>
+                        <span>판매가격</span>
+                        <strong style="font-size: 20px; color: #ff6f0f;"><%= df.format(p.getPrice()) %> 원</strong>
+                    </li>
+                    <li>
+                        <span>거래지역</span>
+                        <strong><%= p.getRegion() %></strong>
+                    </li>
+                    <li>
+                        <span>판매자</span>
+                        <strong><%= p.getSellerId() %> <% if(isSeller) { %><small style="color:#ff6f0f;">(나)</small><% } %></strong>
+                    </li>
+                </ul>
+                
+                <% if (!isSeller) { %>
+                    <blockquote>
+                        <small style="color: #6d645b; line-height: 1.4; display: block;">
+                            * 안심하고 거래하세요! 거래 전 주소 및 상품 상태를 채팅으로 교환하는 것이 좋습니다.
+                        </small>
+                    </blockquote>
+                <% } %>
+            </div>
+        </aside>
 
-    <div class="content-section">
-        <%= p.getContent() %>
     </div>
+</main>
 
-    <div class="button-group">
-        <a href="productList.jsp" class="btn btn-list">목록으로</a>
-        <%		
-		    if (loginId != null && loginId.equals(p.getSellerId())) {
-		%>
-		    <a href="productUpdate.jsp?id=<%= p.getProductId() %>" class="btn btn-edit" style="color:white;">수정하기</a>
-		    <button onclick="deleteConfirm(<%= p.getProductId() %>)" class="btn btn-delete">삭제하기</button> 
-		<%
-		    }
-		%>
-    </div>
-</div>
+<%@ include file="../common/footer.jsp" %>
 
 <script>
-	// 썸네일 클릭 시 이미지 변경
-	function changeDetailImage(element, imgUrl) {
-	    document.getElementById('currentImg').src = imgUrl;
-	    
-	    // 클릭할 때 테두리 변화를 주고 싶다면 아래 로직 활성화
-	    const allThumbs = document.querySelectorAll('.thumb-img');
-	    allThumbs.forEach(thumb => thumb.classList.remove('active-thumb'));
-	    element.classList.add('active-thumb');
-	}
+    // 썸네일 클릭 시 메인 이미지 교체 및 테두리 활성화
+    function changeDetailImage(element, imgUrl) {
+        document.getElementById('currentImg').src = imgUrl;
+        
+        const allThumbs = document.querySelectorAll('.product-thumb-container img');
+        allThumbs.forEach(thumb => thumb.classList.remove('active-thumb'));
+        element.classList.add('active-thumb');
+    }
 
+    // 게시글 삭제 컨펌
     function deleteConfirm(id) {
         if(confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
-        	location.href = "productDeleteProcess.jsp?id=" + id;
+            location.href = "productDeleteProcess.jsp?id=" + id;
         }
     }
 </script>
-
-<%@ include file="../common/footer.jsp" %>
 </body>
 </html>
