@@ -21,6 +21,28 @@
     CafePostDAO postDao = new CafePostDAO();
     CafePostDTO post = postDao.selectPostById(postId);
     if (post == null) {
+        if ("deleteFail".equals(request.getParameter("error"))) {
+%>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 삭제 실패 | 동네마켓 커뮤니티</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+</head>
+<body>
+<main class="page-shell">
+    <section class="detail-panel">
+        <p class="field-message is-error">게시글을 삭제할 권한이 없거나 이미 삭제된 글입니다.</p>
+        <a class="button primary" href="<%= request.getContextPath() %>/community/communityHome.jsp">커뮤니티 홈</a>
+    </section>
+</main>
+</body>
+</html>
+<%
+            return;
+        }
         response.sendRedirect(request.getContextPath() + "/community/communityHome.jsp?error=noPost");
         return;
     }
@@ -52,6 +74,9 @@
 <%@ include file="../common/header.jsp" %>
 <main class="page-shell">
     <section class="detail-panel">
+        <% if ("deleteFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">게시글을 삭제할 권한이 없거나 이미 삭제된 글입니다.</p>
+        <% } %>
         <div class="detail-header">
             <div>
                 <p><a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>"><%= escapeHtml(post.getCafeName()) %> · <%= escapeHtml(post.getBoardName()) %></a></p>

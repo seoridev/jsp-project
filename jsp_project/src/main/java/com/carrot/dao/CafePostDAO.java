@@ -118,9 +118,25 @@ public class CafePostDAO extends BaseDAO {
         return null;
     }
 
+    public CafePostDTO selectPostForDelete(int postId) {
+        String sql = baseSelect() + " WHERE cp.post_id = ?";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, postId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapPost(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean deletePost(int postId, String memberId, boolean manager) {
         CafePostDTO post = selectPostById(postId);
-        if (post == null || (!manager && !memberId.equals(post.getWriterId()))) {
+        if (post == null || (!manager && (memberId == null || !memberId.equals(post.getWriterId())))) {
             return false;
         }
 
