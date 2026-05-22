@@ -36,6 +36,55 @@ public class CafeDAO extends BaseDAO {
         return 0;
     }
 
+    public int createCafeWithOwnerAndDefaultBoards(CafeDTO cafe) {
+        int cafeId = 0;
+
+        try (Connection conn = getConnection()) {
+            boolean originalAutoCommit = conn.getAutoCommit();
+
+            try {
+                conn.setAutoCommit(false);
+                cafeId = nextVal(conn, "seq_cafe");
+
+                if (!insertCafe(conn, cafeId, cafe)) {
+                    throw new IllegalStateException("Cafe insert failed");
+                }
+                if (!insertCafeMember(conn, cafeId, cafe.getOwnerId(), "OWNER", "ACTIVE")) {
+                    throw new IllegalStateException("Cafe owner insert failed");
+                }
+                if (!updateCafeMemberCount(conn, cafeId, 1)) {
+                    throw new IllegalStateException("Cafe member count update failed");
+                }
+                if (!insertCafeBoard(conn, cafeId, "공지사항", "카페 소식과 운영 안내", "ALL", "MANAGER", "Y", 1)) {
+                    throw new IllegalStateException("Notice board insert failed");
+                }
+                if (!insertCafeBoard(conn, cafeId, "자유게시판", "동네 이웃과 자유롭게 이야기해요", "ALL", "MEMBER", "N", 2)) {
+                    throw new IllegalStateException("Free board insert failed");
+                }
+
+                conn.commit();
+                return cafeId;
+            } catch (Exception e) {
+                try {
+                    conn.rollback();
+                } catch (Exception rollbackError) {
+                    rollbackError.printStackTrace();
+                }
+                e.printStackTrace();
+                return 0;
+            } finally {
+                try {
+                    conn.setAutoCommit(originalAutoCommit);
+                } catch (Exception autoCommitError) {
+                    autoCommitError.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public boolean isDuplicateCafeName(String cafeName) {
         String sql = "SELECT COUNT(*) FROM cafe WHERE cafe_name = ? AND status <> 'DELETED'";
 
@@ -120,6 +169,67 @@ public class CafeDAO extends BaseDAO {
             pstmt.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private boolean insertCafe(Connection conn, int cafeId, CafeDTO cafe) throws Exception {
+        String sql = "INSERT INTO cafe "
+                + "(cafe_id, cafe_name, description, image_path, region, category, visibility, join_type, owner_id) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, cafe.getCafeName());
+            pstmt.setString(3, cafe.getDescription());
+            pstmt.setString(4, cafe.getImagePath());
+            pstmt.setString(5, cafe.getRegion());
+            pstmt.setString(6, cafe.getCategory());
+            pstmt.setString(7, cafe.getVisibility());
+            pstmt.setString(8, cafe.getJoinType());
+            pstmt.setString(9, cafe.getOwnerId());
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    private boolean insertCafeMember(Connection conn, int cafeId, String memberId, String role, String status) throws Exception {
+        String sql = "INSERT INTO cafe_member "
+                + "(cafe_member_id, cafe_id, member_id, role, status) "
+                + "VALUES (seq_cafe_member.NEXTVAL, ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, memberId);
+            pstmt.setString(3, role);
+            pstmt.setString(4, status);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    private boolean insertCafeBoard(Connection conn, int cafeId, String boardName, String description,
+            String readPermission, String writePermission, String isNotice, int displayOrder) throws Exception {
+        String sql = "INSERT INTO cafe_board "
+                + "(board_id, cafe_id, board_name, description, read_permission, write_permission, is_notice, display_order) "
+                + "VALUES (seq_cafe_board.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, boardName);
+            pstmt.setString(3, description);
+            pstmt.setString(4, readPermission);
+            pstmt.setString(5, writePermission);
+            pstmt.setString(6, isNotice);
+            pstmt.setInt(7, displayOrder);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    private boolean updateCafeMemberCount(Connection conn, int cafeId, int amount) throws Exception {
+        String sql = "UPDATE cafe SET member_count = member_count + ? WHERE cafe_id = ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, amount);
+            pstmt.setInt(2, cafeId);
+            return pstmt.executeUpdate() > 0;
         }
     }
 

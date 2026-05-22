@@ -1,7 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
-<%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ include file="../common/sessionCheck.jsp" %>
 <%
@@ -26,7 +24,7 @@
         return;
     }
 
-    int cafeId = cafeDao.insertCafe(CafeDTO.builder()
+    int cafeId = cafeDao.createCafeWithOwnerAndDefaultBoards(CafeDTO.builder()
             .cafeName(cafeName)
             .description(description)
             .region(region)
@@ -41,7 +39,5 @@
         return;
     }
 
-    new CafeMemberDAO().insertOwner(cafeId, currentLoginId);
-    new CafeBoardDAO().insertDefaultBoards(cafeId);
     response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId + "&created=success");
 %>
