@@ -78,8 +78,12 @@
             <p class="field-message is-error">게시글을 삭제할 권한이 없거나 이미 삭제된 글입니다.</p>
         <% } else if ("updateDenied".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">게시글을 수정할 권한이 없습니다.</p>
+        <% } else if ("commentDeleteFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">댓글을 삭제할 권한이 없거나 이미 삭제된 댓글입니다.</p>
         <% } else if ("success".equals(request.getParameter("update"))) { %>
             <p class="field-message is-success">게시글이 수정되었습니다.</p>
+        <% } else if ("success".equals(request.getParameter("commentDelete"))) { %>
+            <p class="field-message is-success">댓글이 삭제되었습니다.</p>
         <% } %>
         <div class="detail-header">
             <div>
@@ -105,7 +109,12 @@
             <% } %>
             <% for (CafeCommentDTO comment : comments) { %>
                 <div class="community-card">
-                    <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
+                    <div class="detail-header" style="align-items:start;">
+                        <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
+                        <% if (currentLoginId != null && (currentLoginId.equals(comment.getWriterId()) || manager)) { %>
+                            <button type="button" onclick="deleteComment(<%= comment.getCommentId() %>)" style="border-color:#d93025;color:#d93025;">삭제</button>
+                        <% } %>
+                    </div>
                     <p><%= escapeHtml(comment.getContent()) %></p>
                     <p class="community-meta"><%= comment.getCreatedAt() %></p>
                 </div>
@@ -130,6 +139,12 @@
     function deletePost(postId) {
         if (confirm("게시글을 삭제하시겠습니까?")) {
             location.href = "<%= request.getContextPath() %>/community/postDeleteProcess.jsp?postId=" + postId;
+        }
+    }
+
+    function deleteComment(commentId) {
+        if (confirm("댓글을 삭제하시겠습니까?")) {
+            location.href = "<%= request.getContextPath() %>/community/commentDeleteProcess.jsp?commentId=" + commentId;
         }
     }
 </script>

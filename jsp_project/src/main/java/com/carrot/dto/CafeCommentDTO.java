@@ -16,6 +16,7 @@ import lombok.Setter;
 public class CafeCommentDTO {
     private int commentId;
     private int postId;
+    private int cafeId;
     private String writerId;
     private String content;
     private String isDeleted;

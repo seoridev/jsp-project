@@ -32,8 +32,10 @@ public class CafeCommentDAO extends BaseDAO {
 
     public List<CafeCommentDTO> selectCommentsByPostId(int postId) {
         List<CafeCommentDTO> list = new ArrayList<>();
-        String sql = "SELECT cc.*, m.nickname AS writer_nickname "
-                + "FROM cafe_comment cc LEFT JOIN member m ON cc.writer_id = m.login_id "
+        String sql = "SELECT cc.*, cp.cafe_id, m.nickname AS writer_nickname "
+                + "FROM cafe_comment cc "
+                + "JOIN cafe_post cp ON cc.post_id = cp.post_id "
+                + "LEFT JOIN member m ON cc.writer_id = m.login_id "
                 + "WHERE cc.post_id = ? AND cc.is_deleted = 'N' "
                 + "ORDER BY cc.created_at ASC, cc.comment_id ASC";
 
@@ -48,6 +50,47 @@ public class CafeCommentDAO extends BaseDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public CafeCommentDTO selectCommentById(int commentId) {
+        String sql = "SELECT cc.*, cp.cafe_id, m.nickname AS writer_nickname "
+                + "FROM cafe_comment cc "
+                + "JOIN cafe_post cp ON cc.post_id = cp.post_id "
+                + "LEFT JOIN member m ON cc.writer_id = m.login_id "
+                + "WHERE cc.comment_id = ?";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, commentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapComment(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean deleteComment(int commentId, String memberId, boolean manager) {
+        CafeCommentDTO comment = selectCommentById(commentId);
+        if (comment == null || "Y".equals(comment.getIsDeleted())
+                || (!manager && (memberId == null || !memberId.equals(comment.getWriterId())))) {
+            return false;
+        }
+
+        String sql = "UPDATE cafe_comment SET is_deleted = 'Y', updated_at = SYSTIMESTAMP WHERE comment_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, commentId);
+            boolean deleted = pstmt.executeUpdate() > 0;
+            if (deleted) {
+                updateCommentCount(conn, comment.getPostId(), -1);
+            }
+            return deleted;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private void updateCommentCount(Connection conn, int postId, int amount) throws Exception {
@@ -65,6 +108,7 @@ public class CafeCommentDAO extends BaseDAO {
         return CafeCommentDTO.builder()
                 .commentId(rs.getInt("comment_id"))
                 .postId(rs.getInt("post_id"))
+                .cafeId(rs.getInt("cafe_id"))
                 .writerId(rs.getString("writer_id"))
                 .content(rs.getString("content"))
                 .isDeleted(rs.getString("is_deleted"))
