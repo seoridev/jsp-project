@@ -134,6 +134,31 @@ public class CafePostDAO extends BaseDAO {
         return null;
     }
 
+    public boolean updatePost(CafePostDTO post, String memberId, boolean manager) {
+        CafePostDTO current = selectPostById(post.getPostId());
+        if (current == null || (!manager && (memberId == null || !memberId.equals(current.getWriterId())))) {
+            return false;
+        }
+
+        String isNotice = manager && "Y".equals(post.getIsNotice()) ? "Y" : current.getIsNotice();
+        if (manager && !"Y".equals(post.getIsNotice())) {
+            isNotice = "N";
+        }
+
+        String sql = "UPDATE cafe_post SET title = ?, content = ?, is_notice = ?, updated_at = SYSTIMESTAMP "
+                + "WHERE post_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, post.getTitle());
+            pstmt.setString(2, post.getContent());
+            pstmt.setString(3, isNotice);
+            pstmt.setInt(4, post.getPostId());
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean deletePost(int postId, String memberId, boolean manager) {
         CafePostDTO post = selectPostById(postId);
         if (post == null || (!manager && (memberId == null || !memberId.equals(post.getWriterId())))) {

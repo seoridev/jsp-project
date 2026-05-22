@@ -76,6 +76,10 @@
     <section class="detail-panel">
         <% if ("deleteFail".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">게시글을 삭제할 권한이 없거나 이미 삭제된 글입니다.</p>
+        <% } else if ("updateDenied".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">게시글을 수정할 권한이 없습니다.</p>
+        <% } else if ("success".equals(request.getParameter("update"))) { %>
+            <p class="field-message is-success">게시글이 수정되었습니다.</p>
         <% } %>
         <div class="detail-header">
             <div>
@@ -84,7 +88,10 @@
                 <p class="community-meta"><%= escapeHtml(post.getWriterNickname()) %> · 조회 <%= post.getViewCount() + 1 %> · 댓글 <%= post.getCommentCount() %></p>
             </div>
             <% if (isWriter || manager) { %>
-                <button type="button" onclick="deletePost(<%= postId %>)" style="border-color:#d93025;color:#d93025;">삭제</button>
+                <div class="form-actions">
+                    <a class="button" href="<%= contextPath %>/community/postUpdate.jsp?postId=<%= postId %>">수정</a>
+                    <button type="button" onclick="deletePost(<%= postId %>)" style="border-color:#d93025;color:#d93025;">삭제</button>
+                </div>
             <% } %>
         </div>
         <div class="community-content"><%= escapeHtml(post.getContent()) %></div>
