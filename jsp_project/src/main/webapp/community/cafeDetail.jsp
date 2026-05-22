@@ -66,6 +66,8 @@
             <p class="field-message is-success">카페에 가입되었습니다.</p>
         <% } else if ("pending".equals(request.getParameter("join"))) { %>
             <p class="field-message">가입 신청이 접수되었습니다.</p>
+        <% } else if ("banned".equals(request.getParameter("join"))) { %>
+            <p class="field-message is-error">이 카페에서는 가입이 제한된 상태입니다.</p>
         <% } %>
         <div class="detail-header">
             <div>

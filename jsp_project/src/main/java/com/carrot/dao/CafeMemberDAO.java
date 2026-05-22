@@ -15,13 +15,22 @@ public class CafeMemberDAO extends BaseDAO {
 
     public String joinCafe(int cafeId, String memberId) {
         CafeMemberDTO current = selectCafeMember(cafeId, memberId);
-        if (current != null && "ACTIVE".equals(current.getStatus())) {
-            return "already";
-        }
-
         String status = getJoinStatus(cafeId);
         if (current != null) {
-            return updateMemberStatus(cafeId, memberId, status) ? status.toLowerCase() : "fail";
+            String currentStatus = current.getStatus();
+            if ("ACTIVE".equals(currentStatus)) {
+                return "already";
+            }
+            if ("PENDING".equals(currentStatus)) {
+                return "pending";
+            }
+            if ("BANNED".equals(currentStatus)) {
+                return "banned";
+            }
+            if ("LEFT".equals(currentStatus) || "REJECTED".equals(currentStatus)) {
+                return updateMemberStatus(cafeId, memberId, currentStatus, status) ? status.toLowerCase() : "fail";
+            }
+            return "fail";
         }
         return insertMember(cafeId, memberId, "MEMBER", status) ? status.toLowerCase() : "fail";
     }
@@ -40,7 +49,7 @@ public class CafeMemberDAO extends BaseDAO {
     public CafeMemberDTO selectCafeMember(int cafeId, String memberId) {
         String sql = "SELECT cm.*, m.nickname, m.region "
                 + "FROM cafe_member cm LEFT JOIN member m ON cm.member_id = m.login_id "
-                + "WHERE cm.cafe_id = ? AND cm.member_id = ? AND cm.status <> 'LEFT'";
+                + "WHERE cm.cafe_id = ? AND cm.member_id = ?";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, cafeId);
@@ -77,7 +86,7 @@ public class CafeMemberDAO extends BaseDAO {
         return false;
     }
 
-    private boolean updateMemberStatus(int cafeId, String memberId, String status) {
+    private boolean updateMemberStatus(int cafeId, String memberId, String oldStatus, String status) {
         String sql = "UPDATE cafe_member SET status = ?, updated_at = SYSTIMESTAMP "
                 + "WHERE cafe_id = ? AND member_id = ?";
 
@@ -86,7 +95,7 @@ public class CafeMemberDAO extends BaseDAO {
             pstmt.setInt(2, cafeId);
             pstmt.setString(3, memberId);
             boolean updated = pstmt.executeUpdate() > 0;
-            if (updated && "ACTIVE".equals(status)) {
+            if (updated && !"ACTIVE".equals(oldStatus) && "ACTIVE".equals(status)) {
                 updateMemberCount(conn, cafeId, 1);
             }
             return updated;
@@ -113,7 +122,7 @@ public class CafeMemberDAO extends BaseDAO {
     }
 
     private void updateMemberCount(Connection conn, int cafeId, int amount) throws Exception {
-        String sql = "UPDATE cafe SET member_count = member_count + ? WHERE cafe_id = ?";
+        String sql = "UPDATE cafe SET member_count = GREATEST(member_count + ?, 0) WHERE cafe_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, amount);
             pstmt.setInt(2, cafeId);
