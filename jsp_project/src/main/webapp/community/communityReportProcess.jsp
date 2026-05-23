@@ -45,7 +45,8 @@
         redirectUrl = request.getContextPath() + "/community/postDetail.jsp?postId=" + targetId;
     } else if ("CAFE_COMMENT".equals(targetType)) {
         CafeCommentDTO comment = new CafeCommentDAO().selectCommentById(targetId);
-        validTarget = comment != null && !"Y".equals(comment.getIsDeleted());
+        CafePostDTO post = comment == null ? null : new CafePostDAO().selectPostById(comment.getPostId());
+        validTarget = comment != null && !"Y".equals(comment.getIsDeleted()) && post != null;
         if (comment != null) {
             redirectUrl = request.getContextPath() + "/community/postDetail.jsp?postId=" + comment.getPostId();
         }
@@ -64,6 +65,12 @@
         return;
     }
 
+    ReportDAO reportDao = new ReportDAO();
+    if (reportDao.existsReport(currentLoginId, targetType, targetId)) {
+        response.sendRedirect(appendParam(redirectUrl, "error=reportDuplicate"));
+        return;
+    }
+
     ReportDTO report = ReportDTO.builder()
             .reporterId(currentLoginId)
             .targetType(targetType)
@@ -71,6 +78,6 @@
             .reason(reason.trim())
             .detail(detail.trim())
             .build();
-    boolean inserted = new ReportDAO().insertReport(report);
+    boolean inserted = reportDao.insertReport(report);
     response.sendRedirect(appendParam(redirectUrl, inserted ? "report=success" : "error=reportFail"));
 %>

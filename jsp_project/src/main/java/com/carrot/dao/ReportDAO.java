@@ -12,23 +12,58 @@ import com.carrot.dto.ReportDTO;
 public class ReportDAO extends BaseDAO {
 
     public boolean insertReport(ReportDTO report) {
-        String sql = "INSERT INTO report "
-            + "(reporter_id, target_type, target_id, reason, detail, status, created_at) "
-            + "VALUES (?, ?, ?, ?, ?, 'WAITING', SYSTIMESTAMP)";
+        try (Connection conn = getConnection()) {
+            boolean useSequence = hasSequence(conn, "SEQ_REPORT");
+            String sql = useSequence
+                ? "INSERT INTO report "
+                    + "(report_id, reporter_id, target_type, target_id, reason, detail, status, created_at) "
+                    + "VALUES (seq_report.NEXTVAL, ?, ?, ?, ?, ?, 'WAITING', SYSTIMESTAMP)"
+                : "INSERT INTO report "
+                    + "(reporter_id, target_type, target_id, reason, detail, status, created_at) "
+                    + "VALUES (?, ?, ?, ?, ?, 'WAITING', SYSTIMESTAMP)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, report.getReporterId());
-            pstmt.setString(2, report.getTargetType());
-            pstmt.setInt(3, report.getTargetId());
-            pstmt.setString(4, report.getReason());
-            pstmt.setString(5, report.getDetail());
-            return pstmt.executeUpdate() > 0;
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, report.getReporterId());
+                pstmt.setString(2, report.getTargetType());
+                pstmt.setInt(3, report.getTargetId());
+                pstmt.setString(4, report.getReason());
+                pstmt.setString(5, report.getDetail());
+                return pstmt.executeUpdate() > 0;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return false;
+    }
+
+    public boolean existsReport(String reporterId, String targetType, int targetId) {
+        String sql = "SELECT 1 FROM report "
+            + "WHERE reporter_id = ? AND target_type = ? AND target_id = ? AND status = 'WAITING'";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, reporterId);
+            pstmt.setString(2, targetType);
+            pstmt.setInt(3, targetId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    private boolean hasSequence(Connection conn, String sequenceName) throws Exception {
+        String sql = "SELECT COUNT(*) FROM user_sequences WHERE sequence_name = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, sequenceName);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
     }
 
     public List<ReportDTO> getReportList() {
@@ -39,6 +74,7 @@ public class ReportDAO extends BaseDAO {
             + "FROM report r "
             + "LEFT JOIN member m ON r.reporter_id = m.login_id "
             + "LEFT JOIN product p ON r.target_type = 'PRODUCT' AND r.target_id = p.product_id "
+            + "WHERE r.target_type NOT IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') "
             + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC";
 
         try (Connection conn = getConnection();
@@ -78,7 +114,11 @@ public class ReportDAO extends BaseDAO {
     }
 
     public boolean processReport(int reportId, String status) {
-        String sql = "UPDATE report SET status = ?, processed_at = SYSTIMESTAMP WHERE report_id = ?";
+        if (!"DONE".equals(status) && !"REJECTED".equals(status)) {
+            return false;
+        }
+        String sql = "UPDATE report SET status = ?, processed_at = SYSTIMESTAMP "
+            + "WHERE report_id = ? AND status = 'WAITING'";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -94,7 +134,8 @@ public class ReportDAO extends BaseDAO {
 
     public boolean processReportAndHideProduct(int reportId, int productId) {
         String hideSql = "UPDATE product SET status = 'HIDDEN', updated_at = SYSTIMESTAMP WHERE product_id = ?";
-        String reportSql = "UPDATE report SET status = 'DONE', processed_at = SYSTIMESTAMP WHERE report_id = ?";
+        String reportSql = "UPDATE report SET status = 'DONE', processed_at = SYSTIMESTAMP "
+            + "WHERE report_id = ? AND target_type = 'PRODUCT' AND target_id = ? AND status = 'WAITING'";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -105,6 +146,7 @@ public class ReportDAO extends BaseDAO {
                 int hidden = hideStmt.executeUpdate();
 
                 reportStmt.setInt(1, reportId);
+                reportStmt.setInt(2, productId);
                 int processed = reportStmt.executeUpdate();
 
                 if (hidden > 0 && processed > 0) {
@@ -126,7 +168,8 @@ public class ReportDAO extends BaseDAO {
     }
 
     public int countWaitingReports() {
-        String sql = "SELECT COUNT(*) FROM report WHERE status = 'WAITING'";
+        String sql = "SELECT COUNT(*) FROM report "
+            + "WHERE status = 'WAITING' AND target_type NOT IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT')";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);

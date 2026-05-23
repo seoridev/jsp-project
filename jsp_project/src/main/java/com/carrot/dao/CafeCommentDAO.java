@@ -93,7 +93,7 @@ public class CafeCommentDAO extends BaseDAO {
                 + "JOIN cafe c ON cp.cafe_id = c.cafe_id "
                 + "LEFT JOIN member m ON cc.writer_id = m.login_id "
                 + "WHERE cc.writer_id = ? AND cc.is_deleted = 'N' "
-                + "AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + "AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' "
                 + "ORDER BY cc.created_at DESC";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {

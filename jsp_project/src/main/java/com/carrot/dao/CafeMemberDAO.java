@@ -18,6 +18,9 @@ public class CafeMemberDAO extends BaseDAO {
     public String joinCafe(int cafeId, String memberId) {
         CafeMemberDTO current = selectCafeMember(cafeId, memberId);
         String status = getJoinStatus(cafeId);
+        if (status == null) {
+            return "fail";
+        }
         if (current != null) {
             String currentStatus = current.getStatus();
             if ("ACTIVE".equals(currentStatus)) {
@@ -78,8 +81,12 @@ public class CafeMemberDAO extends BaseDAO {
     public List<CafeMemberDTO> selectCafeMembers(int cafeId) {
         String sql = "SELECT cm.*, m.nickname, m.region "
                 + "FROM cafe_member cm LEFT JOIN member m ON cm.member_id = m.login_id "
-                + "WHERE cm.cafe_id = ? AND cm.status = 'ACTIVE' "
-                + "ORDER BY CASE cm.role WHEN 'OWNER' THEN 1 WHEN 'MANAGER' THEN 2 ELSE 3 END, cm.joined_at ASC";
+                + "WHERE cm.cafe_id = ? "
+                + "ORDER BY CASE cm.status "
+                + "WHEN 'ACTIVE' THEN 1 WHEN 'PENDING' THEN 2 WHEN 'REJECTED' THEN 3 "
+                + "WHEN 'BANNED' THEN 4 WHEN 'LEFT' THEN 5 ELSE 6 END, "
+                + "CASE cm.role WHEN 'OWNER' THEN 1 WHEN 'MANAGER' THEN 2 ELSE 3 END, "
+                + "cm.joined_at DESC";
         return selectMembersBySql(sql, cafeId);
     }
 
@@ -227,7 +234,7 @@ public class CafeMemberDAO extends BaseDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "PENDING";
+        return null;
     }
 
     private void updateMemberCount(Connection conn, int cafeId, int amount) throws Exception {

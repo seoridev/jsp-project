@@ -13,6 +13,25 @@
             return 0;
         }
     }
+
+    private String statusText(String status) {
+        if ("ACTIVE".equals(status)) return "활동";
+        if ("PENDING".equals(status)) return "승인 대기";
+        if ("REJECTED".equals(status)) return "거절";
+        if ("BANNED".equals(status)) return "차단";
+        if ("LEFT".equals(status)) return "탈퇴";
+        return status == null ? "-" : status;
+    }
+
+    private String statusClass(String status) {
+        if ("ACTIVE".equals(status)) return " is-active";
+        if ("PENDING".equals(status) || "BANNED".equals(status)) return " is-stopped";
+        return " is-withdrawn";
+    }
+
+    private String formatDateTime(java.time.LocalDateTime value) {
+        return value == null ? "-" : value.toString().replace("T", " ");
+    }
 %>
 <%
     int cafeId = parseIntParam(request.getParameter("cafeId"));
@@ -48,7 +67,7 @@
             <div>
                 <p><a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
                 <h1>회원 관리</h1>
-                <p class="community-meta">승인 대기 <%= pendingMembers.size() %>명 · 활동 회원 <%= cafeMembers.size() %>명</p>
+                <p class="community-meta">승인 대기 <%= pendingMembers.size() %>명 · 전체 회원 <%= cafeMembers.size() %>명</p>
             </div>
         </div>
         <% if ("success".equals(request.getParameter("approve"))) { %>
@@ -97,19 +116,24 @@
     </section>
 
     <section class="detail-panel">
-        <h2>활동 회원</h2>
+        <h2>전체 회원</h2>
         <div class="community-list">
             <% if (cafeMembers.isEmpty()) { %>
-                <p class="empty-cell">활동 중인 회원이 없습니다.</p>
+                <p class="empty-cell">회원이 없습니다.</p>
             <% } %>
             <% for (CafeMemberDTO member : cafeMembers) { %>
                 <div class="community-row">
                     <span>
                         <strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong>
                         <br>
-                        <small class="community-meta"><%= escapeHtml(member.getMemberId()) %> · <%= escapeHtml(member.getRegion()) %></small>
+                        <small class="community-meta">
+                            <%= escapeHtml(member.getMemberId()) %> · <%= escapeHtml(member.getRegion()) %> · 가입일 <%= escapeHtml(formatDateTime(member.getJoinedAt())) %>
+                        </small>
                     </span>
-                    <span class="status-badge is-active"><%= escapeHtml(member.getRole()) %></span>
+                    <span class="form-actions">
+                        <span class="status-badge"><%= escapeHtml(member.getRole()) %></span>
+                        <span class="status-badge<%= statusClass(member.getStatus()) %>"><%= escapeHtml(statusText(member.getStatus())) %></span>
+                    </span>
                 </div>
             <% } %>
         </div>

@@ -87,23 +87,24 @@ public class CafeDAO extends BaseDAO {
 
     public boolean isDuplicateCafeName(String cafeName) {
         String sql = "SELECT COUNT(*) FROM cafe WHERE cafe_name = ? AND status <> 'DELETED'";
+        boolean duplicate = false;
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, cafeName);
             try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() && rs.getInt(1) > 0;
+                duplicate = rs.next() && rs.getInt(1) > 0;
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return true;
         }
-        // 추가됨: DB 오류를 카페명 중복으로 오판하지 않도록 생성 단계에서 실패 처리
-        return false;
+        return duplicate;
     }
 
     public CafeDTO selectCafeById(int cafeId) {
         String sql = "SELECT c.*, m.nickname AS owner_nickname "
                 + "FROM cafe c LEFT JOIN member m ON c.owner_id = m.login_id "
-                + "WHERE c.cafe_id = ? AND c.status <> 'DELETED'";
+                + "WHERE c.cafe_id = ? AND c.status = 'ACTIVE'";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, cafeId);

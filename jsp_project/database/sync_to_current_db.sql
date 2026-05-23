@@ -71,7 +71,7 @@ BEGIN
             processed_at TIMESTAMP(6),
             CONSTRAINT report_pk PRIMARY KEY (report_id),
             CONSTRAINT fk_report_reporter FOREIGN KEY (reporter_id) REFERENCES member(login_id),
-            CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT')),
+            CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT', 'CAFE', 'CAFE_POST', 'CAFE_COMMENT')),
             CONSTRAINT chk_report_status CHECK (status IN ('WAITING', 'DONE', 'REJECTED'))
         )
     ]';

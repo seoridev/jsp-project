@@ -40,7 +40,7 @@ public class CafeBoardDAO extends BaseDAO {
     public List<CafeBoardDTO> selectBoardsByCafeId(int cafeId) {
         List<CafeBoardDTO> list = new ArrayList<>();
         String sql = "SELECT cb.*, "
-                + "(SELECT COUNT(*) FROM cafe_post cp WHERE cp.board_id = cb.board_id AND cp.is_deleted = 'N') AS post_count "
+                + "(SELECT COUNT(*) FROM cafe_post cp WHERE cp.board_id = cb.board_id AND cp.is_deleted = 'N' AND cp.is_hidden = 'N') AS post_count "
                 + "FROM cafe_board cb WHERE cb.cafe_id = ? AND cb.status = 'ACTIVE' "
                 + "ORDER BY cb.display_order ASC, cb.board_id ASC";
 
@@ -59,7 +59,7 @@ public class CafeBoardDAO extends BaseDAO {
 
     public CafeBoardDTO selectBoardById(int boardId) {
         String sql = "SELECT cb.*, "
-                + "(SELECT COUNT(*) FROM cafe_post cp WHERE cp.board_id = cb.board_id AND cp.is_deleted = 'N') AS post_count "
+                + "(SELECT COUNT(*) FROM cafe_post cp WHERE cp.board_id = cb.board_id AND cp.is_deleted = 'N' AND cp.is_hidden = 'N') AS post_count "
                 + "FROM cafe_board cb WHERE cb.board_id = ? AND cb.status = 'ACTIVE'";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -111,7 +111,7 @@ public class CafeBoardDAO extends BaseDAO {
     }
 
     public boolean hasActivePosts(int boardId) {
-        String sql = "SELECT 1 FROM cafe_post WHERE board_id = ? AND is_deleted = 'N' FETCH FIRST 1 ROWS ONLY";
+        String sql = "SELECT 1 FROM cafe_post WHERE board_id = ? AND is_deleted = 'N' AND is_hidden = 'N' FETCH FIRST 1 ROWS ONLY";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, boardId);

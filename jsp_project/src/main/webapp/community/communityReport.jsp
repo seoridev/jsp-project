@@ -48,7 +48,8 @@
         backUrl = request.getContextPath() + "/community/postDetail.jsp?postId=" + post.getPostId();
     } else {
         CafeCommentDTO comment = new CafeCommentDAO().selectCommentById(targetId);
-        if (comment == null || "Y".equals(comment.getIsDeleted())) {
+        CafePostDTO post = comment == null ? null : new CafePostDAO().selectPostById(comment.getPostId());
+        if (comment == null || "Y".equals(comment.getIsDeleted()) || post == null) {
             response.sendRedirect(request.getContextPath() + "/community/communityHome.jsp?error=reportTarget");
             return;
         }

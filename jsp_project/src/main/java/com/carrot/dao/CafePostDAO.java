@@ -53,18 +53,19 @@ public class CafePostDAO extends BaseDAO {
         List<CafePostDTO> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder(baseSelect()
-                + " WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N'");
+                + " WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + "AND c.status = 'ACTIVE'");
         params.add(cafeId);
         params.add(boardId);
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(cp.content) LIKE ?)");
+            sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(DBMS_LOB.SUBSTR(cp.content, 4000, 1)) LIKE ?)");
             String value = "%" + keyword.trim().toLowerCase() + "%";
             params.add(value);
             params.add(value);
         }
         int safePage = Math.max(1, page);
-        int safePageSize = Math.max(1, pageSize);
+        int safePageSize = (pageSize == 20) ? 20 : 10;
         int offset = (safePage - 1) * safePageSize;
         sql.append(" ORDER BY cp.is_notice DESC, cp.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         params.add(offset);
@@ -86,12 +87,14 @@ public class CafePostDAO extends BaseDAO {
     public int countPosts(int cafeId, int boardId, String keyword) {
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM cafe_post cp "
-                + "WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N'");
+                + "JOIN cafe c ON cp.cafe_id = c.cafe_id "
+                + "WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + "AND c.status = 'ACTIVE'");
         params.add(cafeId);
         params.add(boardId);
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(cp.content) LIKE ?)");
+            sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(DBMS_LOB.SUBSTR(cp.content, 4000, 1)) LIKE ?)");
             String value = "%" + keyword.trim().toLowerCase() + "%";
             params.add(value);
             params.add(value);
@@ -111,7 +114,7 @@ public class CafePostDAO extends BaseDAO {
     public List<CafePostDTO> selectRecentPosts(int limit) {
         List<CafePostDTO> list = new ArrayList<>();
         String sql = baseSelect()
-                + " WHERE cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + " WHERE cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' "
                 + "ORDER BY cp.created_at DESC FETCH FIRST " + Math.max(1, limit) + " ROWS ONLY";
 
         try (Connection conn = getConnection();
@@ -129,7 +132,7 @@ public class CafePostDAO extends BaseDAO {
     public List<CafePostDTO> selectRecentPostsByCafeId(int cafeId, int limit) {
         List<CafePostDTO> list = new ArrayList<>();
         String sql = baseSelect()
-                + " WHERE cp.cafe_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + " WHERE cp.cafe_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' "
                 + "ORDER BY cp.created_at DESC FETCH FIRST " + Math.max(1, limit) + " ROWS ONLY";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -148,7 +151,7 @@ public class CafePostDAO extends BaseDAO {
     public List<CafePostDTO> selectPostsByWriter(String writerId) {
         List<CafePostDTO> list = new ArrayList<>();
         String sql = baseSelect()
-                + " WHERE cp.writer_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + " WHERE cp.writer_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' "
                 + "ORDER BY cp.created_at DESC";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -184,7 +187,7 @@ public class CafePostDAO extends BaseDAO {
 
     public CafePostDTO selectPostById(int postId) {
         String sql = baseSelect()
-                + " WHERE cp.post_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N'";
+                + " WHERE cp.post_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE'";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, postId);

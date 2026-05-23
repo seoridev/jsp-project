@@ -27,26 +27,26 @@ public class CafeFavoriteDAO extends BaseDAO {
     }
 
     public boolean toggleFavorite(int cafeId, String memberId) {
-        if (existsFavorite(cafeId, memberId)) {
-            String sql = "DELETE FROM cafe_favorite WHERE cafe_id = ? AND member_id = ?";
-            try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setInt(1, cafeId);
-                pstmt.setString(2, memberId);
-                return pstmt.executeUpdate() > 0;
-            } catch (Exception e) {
-                e.printStackTrace();
+        Connection conn = null;
+        boolean originalAutoCommit = true;
+        try {
+            conn = getConnection();
+            originalAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            boolean toggled = existsFavorite(conn, cafeId, memberId)
+                    ? deleteFavorite(conn, cafeId, memberId)
+                    : insertFavorite(conn, cafeId, memberId);
+            if (!toggled) {
+                conn.rollback();
+                return false;
             }
-            return false;
-        }
-
-        String sql = "INSERT INTO cafe_favorite (favorite_id, cafe_id, member_id) "
-                + "VALUES (seq_cafe_favorite.NEXTVAL, ?, ?)";
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, cafeId);
-            pstmt.setString(2, memberId);
-            return pstmt.executeUpdate() > 0;
+            conn.commit();
+            return true;
         } catch (Exception e) {
+            rollbackQuietly(conn);
             e.printStackTrace();
+        } finally {
+            closeQuietly(conn, originalAutoCommit);
         }
         return false;
     }
@@ -71,6 +71,55 @@ public class CafeFavoriteDAO extends BaseDAO {
             e.printStackTrace();
         }
         return cafes;
+    }
+
+    private boolean existsFavorite(Connection conn, int cafeId, String memberId) throws Exception {
+        String sql = "SELECT 1 FROM cafe_favorite WHERE cafe_id = ? AND member_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, memberId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private boolean insertFavorite(Connection conn, int cafeId, String memberId) throws Exception {
+        String sql = "INSERT INTO cafe_favorite (favorite_id, cafe_id, member_id) "
+                + "VALUES (seq_cafe_favorite.NEXTVAL, ?, ?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, memberId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    private boolean deleteFavorite(Connection conn, int cafeId, String memberId) throws Exception {
+        String sql = "DELETE FROM cafe_favorite WHERE cafe_id = ? AND member_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, memberId);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+
+    private void rollbackQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void closeQuietly(Connection conn, boolean autoCommit) {
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(autoCommit);
+                conn.close();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private CafeDTO mapCafe(ResultSet rs) throws Exception {

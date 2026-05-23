@@ -83,6 +83,8 @@
             <p class="field-message is-error">즐겨찾기 처리에 실패했습니다.</p>
         <% } else if ("success".equals(request.getParameter("report"))) { %>
             <p class="field-message is-success">신고가 접수되었습니다.</p>
+        <% } else if ("reportDuplicate".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">이미 접수되어 처리 대기 중인 신고입니다.</p>
         <% } else if ("reportFail".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">신고 접수에 실패했습니다.</p>
         <% } %>
