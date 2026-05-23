@@ -16,31 +16,46 @@ public class CafePostDAO extends BaseDAO {
                 + "(post_id, cafe_id, board_id, writer_id, title, content, is_notice) "
                 + "VALUES (seq_cafe_post.NEXTVAL, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, post.getCafeId());
-            pstmt.setInt(2, post.getBoardId());
-            pstmt.setString(3, post.getWriterId());
-            pstmt.setString(4, post.getTitle());
-            pstmt.setString(5, post.getContent());
-            pstmt.setString(6, post.getIsNotice() == null ? "N" : post.getIsNotice());
-            int result = pstmt.executeUpdate();
-            if (result > 0) {
-                updateCafePostCount(conn, post.getCafeId(), 1);
-                return selectLastPostId(conn);
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, post.getCafeId());
+                pstmt.setInt(2, post.getBoardId());
+                pstmt.setString(3, post.getWriterId());
+                pstmt.setString(4, post.getTitle());
+                pstmt.setString(5, post.getContent());
+                pstmt.setString(6, post.getIsNotice() == null ? "N" : post.getIsNotice());
+                int result = pstmt.executeUpdate();
+                if (result > 0) {
+                    updateCafePostCount(conn, post.getCafeId(), 1);
+                    int postId = selectLastPostId(conn);
+                    conn.commit();
+                    return postId;
+                }
+                conn.rollback();
             }
         } catch (Exception e) {
+            rollbackQuietly(conn);
             e.printStackTrace();
+        } finally {
+            closeQuietly(conn);
         }
         return 0;
     }
 
     public List<CafePostDTO> selectPosts(int cafeId, int boardId, String keyword, int limit) {
+        return selectPosts(cafeId, boardId, keyword, 1, limit);
+    }
+
+    public List<CafePostDTO> selectPosts(int cafeId, int boardId, String keyword, int page, int pageSize) {
         List<CafePostDTO> list = new ArrayList<>();
-        List<String> params = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder(baseSelect()
                 + " WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N'");
-        params.add(String.valueOf(cafeId));
-        params.add(String.valueOf(boardId));
+        params.add(cafeId);
+        params.add(boardId);
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(cp.content) LIKE ?)");
@@ -48,8 +63,12 @@ public class CafePostDAO extends BaseDAO {
             params.add(value);
             params.add(value);
         }
-        sql.append(" ORDER BY cp.is_notice DESC, cp.created_at DESC FETCH FIRST ")
-                .append(Math.max(1, limit)).append(" ROWS ONLY");
+        int safePage = Math.max(1, page);
+        int safePageSize = Math.max(1, pageSize);
+        int offset = (safePage - 1) * safePageSize;
+        sql.append(" ORDER BY cp.is_notice DESC, cp.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(safePageSize);
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             bindParams(pstmt, params);
@@ -62,6 +81,31 @@ public class CafePostDAO extends BaseDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public int countPosts(int cafeId, int boardId, String keyword) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM cafe_post cp "
+                + "WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N'");
+        params.add(cafeId);
+        params.add(boardId);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(cp.content) LIKE ?)");
+            String value = "%" + keyword.trim().toLowerCase() + "%";
+            params.add(value);
+            params.add(value);
+        }
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     public List<CafePostDTO> selectRecentPosts(int limit) {
@@ -94,6 +138,43 @@ public class CafePostDAO extends BaseDAO {
                 while (rs.next()) {
                     list.add(mapPost(rs));
                 }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<CafePostDTO> selectPostsByWriter(String writerId) {
+        List<CafePostDTO> list = new ArrayList<>();
+        String sql = baseSelect()
+                + " WHERE cp.writer_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + "ORDER BY cp.created_at DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, writerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapPost(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<CafePostDTO> selectAllPostsForAdmin() {
+        List<CafePostDTO> list = new ArrayList<>();
+        String sql = baseSelect()
+                + " WHERE cp.is_deleted = 'N' "
+                + "ORDER BY cp.created_at DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapPost(rs));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -165,16 +246,60 @@ public class CafePostDAO extends BaseDAO {
             return false;
         }
 
-        String sql = "UPDATE cafe_post SET is_deleted = 'Y', updated_at = SYSTIMESTAMP WHERE post_id = ?";
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, postId);
-            boolean deleted = pstmt.executeUpdate() > 0;
-            if (deleted) {
+        String sql = "UPDATE cafe_post SET is_deleted = 'Y', updated_at = SYSTIMESTAMP "
+                + "WHERE post_id = ? AND is_deleted = 'N' AND is_hidden = 'N'";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, postId);
+                boolean deleted = pstmt.executeUpdate() > 0;
+                if (!deleted) {
+                    conn.rollback();
+                    return false;
+                }
                 updateCafePostCount(conn, post.getCafeId(), -1);
+                conn.commit();
+                return true;
             }
-            return deleted;
         } catch (Exception e) {
+            rollbackQuietly(conn);
             e.printStackTrace();
+        } finally {
+            closeQuietly(conn);
+        }
+        return false;
+    }
+
+    public boolean hidePostByAdmin(int postId) {
+        CafePostDTO post = selectPostForDelete(postId);
+        if (post == null || "Y".equals(post.getIsDeleted()) || "Y".equals(post.getIsHidden())) {
+            return false;
+        }
+
+        String sql = "UPDATE cafe_post SET is_hidden = 'Y', updated_at = SYSTIMESTAMP "
+                + "WHERE post_id = ? AND is_deleted = 'N' AND is_hidden = 'N'";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, postId);
+                boolean hidden = pstmt.executeUpdate() > 0;
+                if (!hidden) {
+                    conn.rollback();
+                    return false;
+                }
+                updateCafePostCount(conn, post.getCafeId(), -1);
+                conn.commit();
+                return true;
+            }
+        } catch (Exception e) {
+            rollbackQuietly(conn);
+            e.printStackTrace();
+        } finally {
+            closeQuietly(conn);
         }
         return false;
     }
@@ -214,9 +339,33 @@ public class CafePostDAO extends BaseDAO {
         }
     }
 
-    private void bindParams(PreparedStatement pstmt, List<String> params) throws Exception {
+    private void bindParams(PreparedStatement pstmt, List<?> params) throws Exception {
         for (int i = 0; i < params.size(); i++) {
-            pstmt.setString(i + 1, params.get(i));
+            Object value = params.get(i);
+            if (value instanceof Integer) {
+                pstmt.setInt(i + 1, (Integer) value);
+            } else {
+                pstmt.setString(i + 1, value == null ? null : value.toString());
+            }
+        }
+    }
+
+    private void rollbackQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void closeQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 

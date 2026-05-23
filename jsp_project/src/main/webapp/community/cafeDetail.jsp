@@ -2,6 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
+<%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
@@ -31,8 +32,8 @@
     CafeMemberDTO myMember = currentLoginId == null ? null : memberDao.selectCafeMember(cafeId, currentLoginId);
     boolean activeMember = myMember != null && "ACTIVE".equals(myMember.getStatus());
     boolean pendingMember = myMember != null && "PENDING".equals(myMember.getStatus());
-    boolean ownerOrManager = myMember != null && "ACTIVE".equals(myMember.getStatus())
-            && ("OWNER".equals(myMember.getRole()) || "MANAGER".equals(myMember.getRole()));
+    boolean ownerOrManager = activeMember && ("OWNER".equals(myMember.getRole()) || "MANAGER".equals(myMember.getRole()));
+    boolean favoriteCafe = currentLoginId != null && new CafeFavoriteDAO().existsFavorite(cafeId, currentLoginId);
     boolean canRead = "PUBLIC".equals(cafe.getVisibility()) || activeMember;
 
     List<CafeBoardDTO> boards = new CafeBoardDAO().selectBoardsByCafeId(cafeId);
@@ -70,6 +71,20 @@
             <p class="field-message is-error">이 카페에서는 가입이 제한된 상태입니다.</p>
         <% } else if ("manageDenied".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">카페 관리 권한이 없습니다.</p>
+        <% } else if ("approveFail".equals(request.getParameter("error")) || "rejectFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">회원 처리에 실패했습니다.</p>
+        <% } else if ("success".equals(request.getParameter("leave"))) { %>
+            <p class="field-message is-success">카페에서 탈퇴했습니다.</p>
+        <% } else if ("ownerLeaveDenied".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">카페 운영자는 바로 탈퇴할 수 없습니다.</p>
+        <% } else if ("leaveFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">카페 탈퇴 처리에 실패했습니다.</p>
+        <% } else if ("favoriteFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">즐겨찾기 처리에 실패했습니다.</p>
+        <% } else if ("success".equals(request.getParameter("report"))) { %>
+            <p class="field-message is-success">신고가 접수되었습니다.</p>
+        <% } else if ("reportFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">신고 접수에 실패했습니다.</p>
         <% } %>
         <div class="detail-header">
             <div>
@@ -79,10 +94,25 @@
                 <p class="community-meta">회원 <%= cafe.getMemberCount() %> · 글 <%= cafe.getPostCount() %> · 조회 <%= cafe.getViewCount() %></p>
             </div>
             <div class="form-actions">
+                <% if (loggedIn) { %>
+                    <form action="<%= contextPath %>/community/cafeFavoriteProcess.jsp" method="post">
+                        <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                        <button type="submit"><%= favoriteCafe ? "즐겨찾기 해제" : "즐겨찾기" %></button>
+                    </form>
+                    <a class="button" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE&targetId=<%= cafeId %>">신고</a>
+                <% } %>
                 <% if (!loggedIn) { %>
                     <a class="button primary" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 가입</a>
                 <% } else if (activeMember) { %>
                     <span class="status-badge is-active"><%= escapeHtml(myMember.getRole()) %></span>
+                    <% if ("OWNER".equals(myMember.getRole())) { %>
+                        <span class="community-meta">카페 운영자는 바로 탈퇴할 수 없습니다.</span>
+                    <% } else { %>
+                        <form action="<%= contextPath %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
+                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                            <button type="submit">카페 탈퇴</button>
+                        </form>
+                    <% } %>
                 <% } else if (pendingMember) { %>
                     <span class="status-badge is-stopped">승인 대기</span>
                 <% } else { %>
@@ -107,6 +137,7 @@
             <% } %>
             <% if (ownerOrManager) { %>
                 <a class="button" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                <a class="button" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
             <% } %>
         </aside>
 
@@ -125,9 +156,6 @@
                         </a>
                     <% } %>
                 </div>
-            <% } %>
-            <% if (ownerOrManager) { %>
-                <p class="community-meta">회원 관리는 다음 단계에서 확장 예정입니다.</p>
             <% } %>
         </section>
     </section>

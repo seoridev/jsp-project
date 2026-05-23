@@ -54,6 +54,29 @@ public class ReportDAO extends BaseDAO {
         return reports;
     }
 
+    public List<ReportDTO> getCommunityReportList() {
+        List<ReportDTO> reports = new ArrayList<>();
+        String sql = "SELECT r.report_id, r.reporter_id, r.target_type, r.target_id, "
+            + "r.reason, r.detail, r.status, r.created_at, r.processed_at, "
+            + "m.nickname AS reporter_nickname, CAST(NULL AS VARCHAR2(200)) AS product_title "
+            + "FROM report r "
+            + "LEFT JOIN member m ON r.reporter_id = m.login_id "
+            + "WHERE r.target_type IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') "
+            + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                reports.add(mapReport(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return reports;
+    }
+
     public boolean processReport(int reportId, String status) {
         String sql = "UPDATE report SET status = ?, processed_at = SYSTIMESTAMP WHERE report_id = ?";
 

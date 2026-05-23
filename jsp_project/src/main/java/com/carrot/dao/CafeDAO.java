@@ -162,6 +162,83 @@ public class CafeDAO extends BaseDAO {
         return list;
     }
 
+    public List<CafeDTO> selectJoinedCafes(String memberId) {
+        List<CafeDTO> list = new ArrayList<>();
+        String sql = "SELECT c.*, m.nickname AS owner_nickname "
+                + "FROM cafe_member cm "
+                + "JOIN cafe c ON cm.cafe_id = c.cafe_id "
+                + "LEFT JOIN member m ON c.owner_id = m.login_id "
+                + "WHERE cm.member_id = ? AND cm.status = 'ACTIVE' AND cm.role <> 'OWNER' AND c.status = 'ACTIVE' "
+                + "ORDER BY cm.joined_at DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, memberId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapCafe(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<CafeDTO> selectOwnedCafes(String ownerId) {
+        List<CafeDTO> list = new ArrayList<>();
+        String sql = "SELECT c.*, m.nickname AS owner_nickname "
+                + "FROM cafe c LEFT JOIN member m ON c.owner_id = m.login_id "
+                + "WHERE c.owner_id = ? AND c.status = 'ACTIVE' "
+                + "ORDER BY c.created_at DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, ownerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapCafe(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<CafeDTO> selectAllCafesForAdmin() {
+        List<CafeDTO> list = new ArrayList<>();
+        String sql = "SELECT c.*, m.nickname AS owner_nickname "
+                + "FROM cafe c LEFT JOIN member m ON c.owner_id = m.login_id "
+                + "WHERE c.status <> 'DELETED' "
+                + "ORDER BY c.created_at DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapCafe(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean updateCafeStatus(int cafeId, String status) {
+        if (!"ACTIVE".equals(status) && !"HIDDEN".equals(status)) {
+            return false;
+        }
+        String sql = "UPDATE cafe SET status = ?, updated_at = SYSTIMESTAMP WHERE cafe_id = ? AND status <> 'DELETED'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+            pstmt.setInt(2, cafeId);
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public void increaseViewCount(int cafeId) {
         String sql = "UPDATE cafe SET view_count = view_count + 1 WHERE cafe_id = ?";
 
@@ -225,7 +302,7 @@ public class CafeDAO extends BaseDAO {
     }
 
     private boolean updateCafeMemberCount(Connection conn, int cafeId, int amount) throws Exception {
-        String sql = "UPDATE cafe SET member_count = member_count + ? WHERE cafe_id = ?";
+        String sql = "UPDATE cafe SET member_count = GREATEST(member_count + ?, 0) WHERE cafe_id = ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, amount);

@@ -19,7 +19,13 @@
 <%
     int cafeId = parseIntParam(request.getParameter("cafeId"));
     int boardId = parseIntParam(request.getParameter("boardId"));
+    int pageNo = parseIntParam(request.getParameter("page"));
+    if (pageNo <= 0) {
+        pageNo = 1;
+    }
+    int pageSize = 10;
     String keyword = request.getParameter("keyword");
+    String keywordParam = keyword == null ? "" : java.net.URLEncoder.encode(keyword, "UTF-8");
 
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     if (cafe == null) {
@@ -27,11 +33,12 @@
         return;
     }
 
-    List<CafeBoardDTO> boards = new CafeBoardDAO().selectBoardsByCafeId(cafeId);
+    CafeBoardDAO boardDao = new CafeBoardDAO();
+    List<CafeBoardDTO> boards = boardDao.selectBoardsByCafeId(cafeId);
     if (boardId <= 0 && !boards.isEmpty()) {
         boardId = boards.get(0).getBoardId();
     }
-    CafeBoardDTO selectedBoard = new CafeBoardDAO().selectBoardById(boardId);
+    CafeBoardDTO selectedBoard = boardDao.selectBoardById(boardId);
     if (selectedBoard == null || selectedBoard.getCafeId() != cafeId) {
         response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId);
         return;
@@ -42,7 +49,14 @@
     boolean activeMember = currentLoginId != null && memberDao.isActiveMember(cafeId, currentLoginId);
     boolean canRead = "PUBLIC".equals(cafe.getVisibility()) || activeMember;
     boolean canWrite = activeMember && ("MEMBER".equals(selectedBoard.getWritePermission()) || memberDao.isCafeManagerOrOwner(cafeId, currentLoginId));
-    List<CafePostDTO> posts = canRead ? new CafePostDAO().selectPosts(cafeId, boardId, keyword, 100) : java.util.Collections.emptyList();
+
+    CafePostDAO postDao = new CafePostDAO();
+    int totalCount = canRead ? postDao.countPosts(cafeId, boardId, keyword) : 0;
+    int totalPages = Math.max(1, (int) Math.ceil(totalCount / (double) pageSize));
+    if (pageNo > totalPages) {
+        pageNo = totalPages;
+    }
+    List<CafePostDTO> posts = canRead ? postDao.selectPosts(cafeId, boardId, keyword, pageNo, pageSize) : java.util.Collections.emptyList();
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -76,6 +90,7 @@
         <form class="form-grid" action="<%= contextPath %>/community/postList.jsp" method="get">
             <input type="hidden" name="cafeId" value="<%= cafeId %>">
             <input type="hidden" name="boardId" value="<%= boardId %>">
+            <input type="hidden" name="page" value="1">
             <div class="inline-check">
                 <input name="keyword" placeholder="글 검색" value="<%= escapeHtml(keyword) %>">
                 <button type="submit">검색</button>
@@ -95,9 +110,22 @@
             <div class="community-list">
                 <% for (CafePostDTO post : posts) { %>
                     <a class="community-row" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>">
-                        <span><strong><%= "Y".equals(post.getIsNotice()) ? "[공지] " : "" %><%= escapeHtml(post.getTitle()) %></strong><br><small class="community-meta"><%= escapeHtml(post.getWriterNickname()) %> · 조회 <%= post.getViewCount() %></small></span>
+                        <span>
+                            <strong><%= "Y".equals(post.getIsNotice()) ? "[공지] " : "" %><%= escapeHtml(post.getTitle()) %></strong>
+                            <br>
+                            <small class="community-meta"><%= escapeHtml(post.getWriterNickname()) %> · 조회 <%= post.getViewCount() %></small>
+                        </span>
                         <span class="community-meta">댓글 <%= post.getCommentCount() %></span>
                     </a>
+                <% } %>
+            </div>
+            <div class="form-actions" style="justify-content:center;margin-top:16px;">
+                <% if (pageNo > 1) { %>
+                    <a class="button" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo - 1 %>">이전</a>
+                <% } %>
+                <span class="community-meta"><%= pageNo %> / <%= totalPages %> 페이지 · 총 <%= totalCount %>개</span>
+                <% if (pageNo < totalPages) { %>
+                    <a class="button" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo + 1 %>">다음</a>
                 <% } %>
             </div>
         <% } %>

@@ -4,6 +4,7 @@
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
+<%@ page import="com.carrot.dao.CafePostLikeDAO" %>
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
@@ -32,6 +33,8 @@
     boolean activeMember = false;
     boolean manager = false;
     boolean isWriter = false;
+    boolean likedPost = false;
+    int likeCount = 0;
     List<CafeCommentDTO> comments = java.util.Collections.emptyList();
     if (post != null) {
         cafe = new CafeDAO().selectCafeById(post.getCafeId());
@@ -45,6 +48,9 @@
         }
 
         postDao.increaseViewCount(postId);
+        CafePostLikeDAO likeDao = new CafePostLikeDAO();
+        likedPost = currentLoginId != null && likeDao.existsLike(postId, currentLoginId);
+        likeCount = likeDao.countLike(postId);
         comments = new CafeCommentDAO().selectCommentsByPostId(postId);
     }
 %>
@@ -76,12 +82,31 @@
             <p class="field-message is-success">게시글이 수정되었습니다.</p>
         <% } else if ("success".equals(request.getParameter("commentDelete"))) { %>
             <p class="field-message is-success">댓글이 삭제되었습니다.</p>
+        <% } else if ("likeDenied".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">좋아요는 카페 가입 후 누를 수 있습니다.</p>
+        <% } else if ("likeFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">좋아요 처리에 실패했습니다.</p>
+        <% } else if ("success".equals(request.getParameter("report"))) { %>
+            <p class="field-message is-success">신고가 접수되었습니다.</p>
+        <% } else if ("reportFail".equals(request.getParameter("error"))) { %>
+            <p class="field-message is-error">신고 접수에 실패했습니다.</p>
         <% } %>
         <div class="detail-header">
             <div>
                 <p><a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>"><%= escapeHtml(post.getCafeName()) %> · <%= escapeHtml(post.getBoardName()) %></a></p>
                 <h1><%= escapeHtml(post.getTitle()) %></h1>
-                <p class="community-meta"><%= escapeHtml(post.getWriterNickname()) %> · 조회 <%= post.getViewCount() + 1 %> · 댓글 <%= post.getCommentCount() %></p>
+                <p class="community-meta"><%= escapeHtml(post.getWriterNickname()) %> · 조회 <%= post.getViewCount() + 1 %> · 댓글 <%= post.getCommentCount() %> · 좋아요 <%= likeCount %></p>
+                <div class="form-actions" style="margin-top:8px;">
+                    <% if (activeMember) { %>
+                        <form action="<%= contextPath %>/community/postLikeProcess.jsp" method="post">
+                            <input type="hidden" name="postId" value="<%= postId %>">
+                            <button type="submit"><%= likedPost ? "좋아요 취소" : "좋아요" %></button>
+                        </form>
+                    <% } %>
+                    <% if (loggedIn) { %>
+                        <a class="button" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_POST&targetId=<%= postId %>">신고</a>
+                    <% } %>
+                </div>
             </div>
             <% if (isWriter || manager) { %>
                 <div class="form-actions">
@@ -103,9 +128,14 @@
                 <div class="community-card">
                     <div class="detail-header" style="align-items:start;">
                         <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
-                        <% if (currentLoginId != null && (currentLoginId.equals(comment.getWriterId()) || manager)) { %>
-                            <button type="button" onclick="deleteComment(<%= comment.getCommentId() %>)" style="border-color:#d93025;color:#d93025;">삭제</button>
-                        <% } %>
+                        <div class="form-actions">
+                            <% if (loggedIn) { %>
+                                <a class="button" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_COMMENT&targetId=<%= comment.getCommentId() %>">신고</a>
+                            <% } %>
+                            <% if (currentLoginId != null && (currentLoginId.equals(comment.getWriterId()) || manager)) { %>
+                                <button type="button" onclick="deleteComment(<%= comment.getCommentId() %>)" style="border-color:#d93025;color:#d93025;">삭제</button>
+                            <% } %>
+                        </div>
                     </div>
                     <p><%= escapeHtml(comment.getContent()) %></p>
                     <p class="community-meta"><%= comment.getCreatedAt() %></p>

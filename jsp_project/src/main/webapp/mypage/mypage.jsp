@@ -35,6 +35,9 @@
 <%@ include file="../common/header.jsp" %>
 <main class="admin-shell">
     <div class="admin-heading">
+        <a href="<%= contextPath %>/mypage/myCafeList.jsp">
+            <span>내 커뮤니티 활동</span><strong>보기</strong>
+        </a>
         <div>
             <p class="eyebrow">마이페이지</p>
             <h1><%= escapeHtml(member == null ? currentLoginId : member.getNickname()) %>님</h1>
