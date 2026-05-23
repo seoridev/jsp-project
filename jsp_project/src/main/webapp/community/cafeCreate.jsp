@@ -11,13 +11,14 @@
 <body>
 <%@ include file="../common/header.jsp" %>
 <main class="auth-wrap">
-    <section class="auth-panel">
+    <section class="auth-panel community-write-panel">
+        <p class="eyebrow">커뮤니티</p>
         <h1>카페 만들기</h1>
-        <p>동네 이웃과 함께할 주제를 정해보세요.</p>
+        <p>이웃과 주제별 이야기를 나눌 동네 공간을 만들어보세요.</p>
         <% if ("duplicate".equals(request.getParameter("error"))) { %>
-            <p style="color:#d93025;">이미 사용 중인 카페명입니다.</p>
+            <p class="field-message is-error">이미 사용 중인 카페명입니다.</p>
         <% } else if ("fail".equals(request.getParameter("error"))) { %>
-            <p style="color:#d93025;">카페 생성에 실패했습니다.</p>
+            <p class="field-message is-error">카페 생성에 실패했습니다.</p>
         <% } %>
         <form class="form-grid" action="<%= contextPath %>/community/cafeCreateProcess.jsp" method="post">
             <div class="field">
@@ -34,7 +35,7 @@
             </div>
             <div class="field">
                 <label for="category">주제</label>
-                <input id="category" name="category" maxlength="50" placeholder="예: 육아, 반려동물, 동네소식" required>
+                <input id="category" name="category" maxlength="50" placeholder="독서, 반려동물, 동네 소식" required>
             </div>
             <div class="field">
                 <label for="visibility">공개 범위</label>
@@ -50,9 +51,9 @@
                     <option value="APPROVAL">승인 가입</option>
                 </select>
             </div>
-            <div class="form-actions">
-                <button class="primary" type="submit">생성하기</button>
-                <a class="button" href="<%= contextPath %>/community/communityHome.jsp">취소</a>
+            <div class="form-actions horizontal">
+                <button class="btn-primary" type="submit">생성하기</button>
+                <a class="button btn-secondary" href="<%= contextPath %>/community/communityHome.jsp">취소</a>
             </div>
         </form>
     </section>

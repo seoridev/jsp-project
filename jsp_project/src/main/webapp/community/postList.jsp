@@ -68,16 +68,20 @@
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
-<main class="page-shell">
-    <section class="detail-panel">
-        <div class="detail-header">
+<main class="page-shell community-shell">
+    <section class="community-section">
+        <div class="detail-header community-list-header">
             <div>
-                <p><a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
+                <p class="breadcrumb">
+                    <a href="<%= contextPath %>/community/communityHome.jsp">커뮤니티</a>
+                    <span>/</span>
+                    <a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a>
+                </p>
                 <h1><%= escapeHtml(selectedBoard.getBoardName()) %></h1>
                 <p class="community-meta"><%= escapeHtml(selectedBoard.getDescription()) %></p>
             </div>
             <% if (canWrite) { %>
-                <a class="button primary" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">글쓰기</a>
+                <a class="button btn-primary" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">글쓰기</a>
             <% } %>
         </div>
         <div class="community-tabs">
@@ -87,45 +91,49 @@
                 </a>
             <% } %>
         </div>
-        <form class="form-grid" action="<%= contextPath %>/community/postList.jsp" method="get">
+        <form class="community-search board-search" action="<%= contextPath %>/community/postList.jsp" method="get">
             <input type="hidden" name="cafeId" value="<%= cafeId %>">
             <input type="hidden" name="boardId" value="<%= boardId %>">
             <input type="hidden" name="page" value="1">
-            <div class="inline-check">
-                <input name="keyword" placeholder="글 검색" value="<%= escapeHtml(keyword) %>">
-                <button type="submit">검색</button>
-            </div>
+            <input name="keyword" placeholder="글 검색" value="<%= escapeHtml(keyword) %>">
+            <button class="btn-primary" type="submit">검색</button>
         </form>
     </section>
 
-    <section class="detail-panel">
+    <section class="community-section">
         <% if ("success".equals(request.getParameter("delete"))) { %>
-            <p class="field-message is-success">게시글이 삭제되었습니다.</p>
+            <p class="field-message is-success">Post deleted.</p>
         <% } %>
         <% if (!canRead) { %>
             <p class="empty-cell">비공개 카페입니다. 가입 후 글을 볼 수 있습니다.</p>
         <% } else if (posts.isEmpty()) { %>
             <p class="empty-cell">게시글이 없습니다.</p>
         <% } else { %>
-            <div class="community-list">
+            <div class="post-feed-list">
                 <% for (CafePostDTO post : posts) { %>
-                    <a class="community-row" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>">
-                        <span>
-                            <strong><%= "Y".equals(post.getIsNotice()) ? "[공지] " : "" %><%= escapeHtml(post.getTitle()) %></strong>
-                            <br>
-                            <small class="community-meta"><%= escapeHtml(post.getWriterNickname()) %> · 조회 <%= post.getViewCount() %></small>
-                        </span>
-                        <span class="community-meta">댓글 <%= post.getCommentCount() %></span>
+                    <a class="post-feed-item" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>">
+                        <div class="post-title-row">
+                            <% if ("Y".equals(post.getIsNotice())) { %><span class="notice-badge">공지</span><% } %>
+                            <strong><%= escapeHtml(post.getTitle()) %></strong>
+                        </div>
+                        <div class="post-meta">
+                            <span><%= escapeHtml(post.getWriterNickname()) %></span>
+                            <span>조회 <%= post.getViewCount() %></span>
+                        </div>
+                        <div class="post-counts">
+                            <span>댓글 <%= post.getCommentCount() %>개</span>
+                            <span>좋아요 <%= post.getLikeCount() %>개</span>
+                        </div>
                     </a>
                 <% } %>
             </div>
-            <div class="form-actions" style="justify-content:center;margin-top:16px;">
+            <div class="pagination">
                 <% if (pageNo > 1) { %>
-                    <a class="button" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo - 1 %>">이전</a>
+                    <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo - 1 %>">이전</a>
                 <% } %>
                 <span class="community-meta"><%= pageNo %> / <%= totalPages %> 페이지 · 총 <%= totalCount %>개</span>
                 <% if (pageNo < totalPages) { %>
-                    <a class="button" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo + 1 %>">다음</a>
+                    <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo + 1 %>">다음</a>
                 <% } %>
             </div>
         <% } %>

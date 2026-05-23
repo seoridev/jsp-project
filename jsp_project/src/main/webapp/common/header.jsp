@@ -1,41 +1,39 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%!
-	private String escapeHtml(String value) {
-	    if (value == null) {
-	        return "";
-	    }
-	    return value
-	        .replace("&", "&amp;")
-	        .replace("<", "&lt;")
-	        .replace(">", "&gt;")
-	        .replace("\"", "&quot;")
-	        .replace("'", "&#39;");
-	}
+    private String escapeHtml(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+    }
 
-	private String escapeScript(String value) {
-	    if (value == null) {
-	        return "";
-	    }
-	    return value
-	        .replace("\\", "\\\\")
-	        .replace("\"", "\\\"")
-	        .replace("\r", "\\r")
-	        .replace("\n", "\\n");
-	}
+    private String escapeScript(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\r", "\\r")
+            .replace("\n", "\\n");
+    }
 %>
 <%
-	//공통 헤더에서 쓸 세션 값 준비
-	request.setCharacterEncoding("UTF-8");
-	response.setContentType("text/html; charset=UTF-8");
-	response.setCharacterEncoding("UTF-8");
+    request.setCharacterEncoding("UTF-8");
+    response.setContentType("text/html; charset=UTF-8");
+    response.setCharacterEncoding("UTF-8");
 
-	String contextPath = request.getContextPath();
-	String loginId = (String) session.getAttribute("loginId");
-	String loginNickname = (String) session.getAttribute("loginNickname");
-	String loginRegion = (String) session.getAttribute("loginRegion");
-	boolean loggedIn = loginId != null;
+    String contextPath = request.getContextPath();
+    String loginId = (String) session.getAttribute("loginId");
+    String loginNickname = (String) session.getAttribute("loginNickname");
+    String loginRegion = (String) session.getAttribute("loginRegion");
+    boolean loggedIn = loginId != null;
 %>
-<%-- 로그인 여부에 따라 상단 메뉴 변경 --%>
 <header class="site-header">
     <a class="brand" href="<%= contextPath %>/index.jsp">
         <span class="brand-mark">D</span>
@@ -47,7 +45,7 @@
         <a href="<%= contextPath %>/community/communityHome.jsp">커뮤니티</a>
         <% if (loggedIn) { %>
             <a href="<%= contextPath %>/favorite/favoriteList.jsp">관심 상품</a>
-            <a href="<%= contextPath %>/chat/chatRoomList.jsp">채팅 목록</a>
+            <a href="<%= contextPath %>/chat/chatRoomList.jsp">채팅</a>
             <a href="<%= contextPath %>/mypage/mypage.jsp">마이페이지</a>
             <a href="<%= contextPath %>/member/logout.jsp">로그아웃</a>
         <% } else { %>

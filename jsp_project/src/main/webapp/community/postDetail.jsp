@@ -59,105 +59,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= deletedPostFail ? "게시글 삭제 실패" : escapeHtml(post.getTitle()) %> | 동네마켓 커뮤니티</title>
+    <title><%= deletedPostFail ? "게시글 삭제 실패" : escapeHtml(post.getTitle()) %> | 커뮤니티</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
-<main class="page-shell">
+<main class="page-shell community-shell">
     <% if (deletedPostFail) { %>
-        <section class="detail-panel">
-            <p class="field-message is-error">게시글을 삭제할 권한이 없거나 이미 삭제된 글입니다.</p>
-            <a class="button primary" href="<%= contextPath %>/community/communityHome.jsp">커뮤니티 홈</a>
+        <section class="community-section">
+            <p class="field-message is-error">게시글을 삭제할 수 없습니다.</p>
+            <a class="button btn-primary" href="<%= contextPath %>/community/communityHome.jsp">커뮤니티 홈</a>
         </section>
     <% } else { %>
-    <section class="detail-panel">
-        <% if ("deleteFail".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">게시글을 삭제할 권한이 없거나 이미 삭제된 글입니다.</p>
-        <% } else if ("updateDenied".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">게시글을 수정할 권한이 없습니다.</p>
-        <% } else if ("commentDeleteFail".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">댓글을 삭제할 권한이 없거나 이미 삭제된 댓글입니다.</p>
-        <% } else if ("success".equals(request.getParameter("update"))) { %>
-            <p class="field-message is-success">게시글이 수정되었습니다.</p>
-        <% } else if ("success".equals(request.getParameter("commentDelete"))) { %>
-            <p class="field-message is-success">댓글이 삭제되었습니다.</p>
-        <% } else if ("likeDenied".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">좋아요는 카페 가입 후 누를 수 있습니다.</p>
-        <% } else if ("likeFail".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">좋아요 처리에 실패했습니다.</p>
-        <% } else if ("success".equals(request.getParameter("report"))) { %>
-            <p class="field-message is-success">신고가 접수되었습니다.</p>
-        <% } else if ("reportDuplicate".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">이미 접수되어 처리 대기 중인 신고입니다.</p>
-        <% } else if ("reportFail".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">신고 접수에 실패했습니다.</p>
-        <% } %>
-        <div class="detail-header">
-            <div>
-                <p><a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>"><%= escapeHtml(post.getCafeName()) %> · <%= escapeHtml(post.getBoardName()) %></a></p>
-                <h1><%= escapeHtml(post.getTitle()) %></h1>
-                <p class="community-meta"><%= escapeHtml(post.getWriterNickname()) %> · 조회 <%= post.getViewCount() + 1 %> · 댓글 <%= post.getCommentCount() %> · 좋아요 <%= likeCount %></p>
-                <div class="form-actions" style="margin-top:8px;">
+    <div class="post-detail-layout">
+        <article class="post-main-column">
+            <section class="community-section post-article">
+                <% if (request.getParameter("error") != null) { %>
+                    <p class="field-message is-error">요청을 처리하지 못했습니다.</p>
+                <% } else if ("success".equals(request.getParameter("update"))) { %>
+                    <p class="field-message is-success">게시글이 수정되었습니다.</p>
+                <% } else if ("success".equals(request.getParameter("commentDelete"))) { %>
+                    <p class="field-message is-success">댓글이 삭제되었습니다.</p>
+                <% } else if ("success".equals(request.getParameter("report"))) { %>
+                    <p class="field-message is-success">신고가 접수되었습니다.</p>
+                <% } %>
+                <p class="breadcrumb">
+                    <a href="<%= contextPath %>/community/communityHome.jsp">커뮤니티</a>
+                    <span>/</span>
+                    <a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>"><%= escapeHtml(post.getCafeName()) %></a>
+                    <span>/</span>
+                    <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>"><%= escapeHtml(post.getBoardName()) %></a>
+                </p>
+                <div class="post-title-row large">
+                    <% if ("Y".equals(post.getIsNotice())) { %><span class="notice-badge">공지</span><% } %>
+                    <h1><%= escapeHtml(post.getTitle()) %></h1>
+                </div>
+                <div class="author-row">
+                    <div class="author-avatar"><%= escapeHtml(post.getWriterNickname()).isEmpty() ? "U" : escapeHtml(post.getWriterNickname()).substring(0, 1) %></div>
+                    <div>
+                        <strong><%= escapeHtml(post.getWriterNickname()) %></strong>
+                        <div class="post-meta">
+                            <span>조회 <%= post.getViewCount() + 1 %></span>
+                            <span>댓글 <%= comments.size() %>개</span>
+                            <span>좋아요 <%= likeCount %>개</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="post-body"><%= escapeHtml(post.getContent()) %></div>
+                <div class="post-action-bar">
                     <% if (activeMember) { %>
                         <form action="<%= contextPath %>/community/postLikeProcess.jsp" method="post">
                             <input type="hidden" name="postId" value="<%= postId %>">
-                            <button type="submit"><%= likedPost ? "좋아요 취소" : "좋아요" %></button>
+                            <button class="btn-secondary" type="submit"><%= likedPost ? "좋아요 취소" : "좋아요" %></button>
                         </form>
                     <% } %>
                     <% if (loggedIn) { %>
-                        <a class="button" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_POST&targetId=<%= postId %>">신고</a>
+                        <a class="button btn-ghost" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_POST&targetId=<%= postId %>">신고</a>
+                    <% } %>
+                    <% if (isWriter || manager) { %>
+                        <a class="button btn-secondary" href="<%= contextPath %>/community/postUpdate.jsp?postId=<%= postId %>">수정</a>
+                        <button class="btn-danger" type="button" onclick="deletePost(<%= postId %>)">삭제</button>
                     <% } %>
                 </div>
-            </div>
-            <% if (isWriter || manager) { %>
-                <div class="form-actions">
-                    <a class="button" href="<%= contextPath %>/community/postUpdate.jsp?postId=<%= postId %>">수정</a>
-                    <button type="button" onclick="deletePost(<%= postId %>)" style="border-color:#d93025;color:#d93025;">삭제</button>
-                </div>
-            <% } %>
-        </div>
-        <div class="community-content"><%= escapeHtml(post.getContent()) %></div>
-    </section>
+            </section>
 
-    <section class="detail-panel">
-        <h2>댓글 <%= comments.size() %></h2>
-        <div class="community-list">
-            <% if (comments.isEmpty()) { %>
-                <p class="empty-cell">아직 댓글이 없습니다.</p>
-            <% } %>
-            <% for (CafeCommentDTO comment : comments) { %>
-                <div class="community-card">
-                    <div class="detail-header" style="align-items:start;">
-                        <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
-                        <div class="form-actions">
-                            <% if (loggedIn) { %>
-                                <a class="button" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_COMMENT&targetId=<%= comment.getCommentId() %>">신고</a>
-                            <% } %>
-                            <% if (currentLoginId != null && (currentLoginId.equals(comment.getWriterId()) || manager)) { %>
-                                <button type="button" onclick="deleteComment(<%= comment.getCommentId() %>)" style="border-color:#d93025;color:#d93025;">삭제</button>
-                            <% } %>
+            <section class="community-section">
+                <div class="section-title-row">
+                    <h2>댓글 <%= comments.size() %>개</h2>
+                </div>
+                <div class="comment-list">
+                    <% if (comments.isEmpty()) { %>
+                        <p class="empty-cell">아직 댓글이 없습니다.</p>
+                    <% } %>
+                    <% for (CafeCommentDTO comment : comments) { %>
+                        <div class="comment-item">
+                            <div class="comment-avatar"><%= escapeHtml(comment.getWriterNickname()).isEmpty() ? "U" : escapeHtml(comment.getWriterNickname()).substring(0, 1) %></div>
+                            <div class="comment-body">
+                                <div class="comment-meta">
+                                    <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
+                                    <span><%= comment.getCreatedAt() %></span>
+                                </div>
+                                <p><%= escapeHtml(comment.getContent()) %></p>
+                                <div class="comment-actions">
+                                    <% if (loggedIn) { %>
+                                        <a class="button btn-ghost" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_COMMENT&targetId=<%= comment.getCommentId() %>">신고</a>
+                                    <% } %>
+                                    <% if (currentLoginId != null && (currentLoginId.equals(comment.getWriterId()) || manager)) { %>
+                                        <button class="btn-danger" type="button" onclick="deleteComment(<%= comment.getCommentId() %>)">삭제</button>
+                                    <% } %>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <p><%= escapeHtml(comment.getContent()) %></p>
-                    <p class="community-meta"><%= comment.getCreatedAt() %></p>
+                    <% } %>
                 </div>
-            <% } %>
-        </div>
-        <% if (activeMember) { %>
-            <form class="form-grid" action="<%= contextPath %>/community/commentWriteProcess.jsp" method="post">
-                <input type="hidden" name="postId" value="<%= postId %>">
-                <div class="inline-check">
-                    <input name="content" maxlength="1000" placeholder="댓글을 입력하세요" required>
-                    <button class="primary" type="submit">등록</button>
+                <% if (activeMember) { %>
+                    <form class="comment-form" action="<%= contextPath %>/community/commentWriteProcess.jsp" method="post">
+                        <input type="hidden" name="postId" value="<%= postId %>">
+                        <label class="visually-hidden" for="commentContent">댓글 작성</label>
+                        <textarea id="commentContent" name="content" maxlength="1000" placeholder="댓글을 입력하세요" required></textarea>
+                        <button class="btn-primary" type="submit">댓글 등록</button>
+                    </form>
+                <% } else if (!loggedIn) { %>
+                    <p class="community-meta">댓글은 로그인 후 작성할 수 있습니다.</p>
+                <% } else { %>
+                    <p class="community-meta">댓글은 카페 가입 후 작성할 수 있습니다.</p>
+                <% } %>
+            </section>
+        </article>
+
+        <aside class="post-side-column">
+            <section class="cafe-action-card">
+                <span class="community-badge"><%= escapeHtml(cafe.getCategory()) %></span>
+                <h2><%= escapeHtml(cafe.getCafeName()) %></h2>
+                <p><%= escapeHtml(cafe.getDescription()) %></p>
+                <div class="community-meta-row">
+                    <span>회원 <%= cafe.getMemberCount() %>명</span>
+                    <span>글 <%= cafe.getPostCount() %>개</span>
                 </div>
-            </form>
-        <% } else if (!loggedIn) { %>
-            <p class="community-meta">댓글은 로그인 후 작성할 수 있습니다.</p>
-        <% } else { %>
-            <p class="community-meta">댓글은 카페 가입 후 작성할 수 있습니다.</p>
-        <% } %>
-    </section>
+                <a class="button btn-secondary" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>">카페로 돌아가기</a>
+                <a class="button btn-ghost" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>">게시판 목록</a>
+            </section>
+        </aside>
+    </div>
     <% } %>
 </main>
 <script>
