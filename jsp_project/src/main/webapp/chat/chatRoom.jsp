@@ -37,7 +37,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>채팅방 - 동네마켓</title>
+    <title>동네마켓 | 채팅방</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
     <style>
         .chat-shell {
