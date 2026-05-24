@@ -12,8 +12,8 @@ public class ChatMessageDAO extends BaseDAO {
 
 	// 채팅 메세지 삽입
     public int insertMessage(ChatMessageDTO dto) {
-        String sql = "INSERT INTO CHAT_MESSAGE (MESSAGE_ID, ROOM_ID, SENDER_ID, MESSAGE, IS_READ, CREATED_AT) "
-                   + "VALUES (SEQ_MESSAGE.NEXTVAL, ?, ?, ?, '1', SYSTIMESTAMP)";
+        String sql = "INSERT INTO CHAT_MESSAGE (MESSAGE_ID, ROOM_ID, SENDER_ID, MESSAGE, MSG_TYPE, IS_READ, CREATED_AT) "
+                   + "VALUES (SEQ_MESSAGE.NEXTVAL, ?, ?, ?, ?, '1', SYSTIMESTAMP)";
 
         int result = 0;
         
@@ -22,6 +22,8 @@ public class ChatMessageDAO extends BaseDAO {
             pstmt.setInt(1, dto.getRoomId());
             pstmt.setString(2, dto.getSenderId());
             pstmt.setString(3, dto.getMessage()); 
+            pstmt.setString(3, dto.getMessage());
+            pstmt.setString(4, dto.getMsgType());
 
             result = pstmt.executeUpdate();            
         } catch (Exception e) {
@@ -35,7 +37,7 @@ public class ChatMessageDAO extends BaseDAO {
     public List<ChatMessageDTO> getMessageListByRoomId(int roomId) {
         List<ChatMessageDTO> list = new ArrayList<>();
 
-        String sql = "SELECT MESSAGE_ID, ROOM_ID, SENDER_ID, MESSAGE, IS_READ, CREATED_AT "
+        String sql = "SELECT MESSAGE_ID, ROOM_ID, SENDER_ID, MESSAGE, IS_READ, MSG_TYPE, CREATED_AT "
                    + "FROM CHAT_MESSAGE "
                    + "WHERE ROOM_ID = ? "
                    + "ORDER BY CREATED_AT ASC";
@@ -51,8 +53,8 @@ public class ChatMessageDAO extends BaseDAO {
 	            	        .senderId(rs.getString("SENDER_ID"))
 	            	        .message(rs.getString("MESSAGE"))
 	            	        .isRead(rs.getString("IS_READ"))
+	            	        .msgType(rs.getString("MSG_TYPE"))
 	            	        .createdAt(rs.getTimestamp("CREATED_AT"))
-	            	        .type("TALK")
 	            	        .build();	                
 	                list.add(dto);
 	            }
