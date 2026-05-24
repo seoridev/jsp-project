@@ -60,102 +60,140 @@
 <body>
 <%@ include file="../common/header.jsp" %>
 <main class="page-shell community-shell">
-    <section class="cafe-profile-hero">
-        <% if ("success".equals(request.getParameter("created"))) { %>
-            <p class="field-message is-success">카페가 생성되었습니다.</p>
-        <% } else if ("active".equals(request.getParameter("join"))) { %>
-            <p class="field-message is-success">카페에 가입되었습니다.</p>
-        <% } else if ("pending".equals(request.getParameter("join"))) { %>
-            <p class="field-message">가입 신청이 접수되었습니다.</p>
-        <% } else if ("success".equals(request.getParameter("leave"))) { %>
-            <p class="field-message is-success">카페에서 탈퇴했습니다.</p>
-        <% } else if (request.getParameter("error") != null) { %>
-            <p class="field-message is-error">요청을 처리하지 못했습니다.</p>
-        <% } %>
-        <div class="cafe-cover cover-tone-<%= cafe.getCafeId() % 4 %>"></div>
-        <div class="cafe-profile-content">
-            <div class="cafe-avatar"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></div>
-            <div class="cafe-title-row">
-                <div>
-                    <span class="community-badge"><%= escapeHtml(cafe.getCategory()) %></span>
+    <% if ("success".equals(request.getParameter("created"))) { %>
+        <p class="field-message is-success">카페가 생성되었습니다.</p>
+    <% } else if ("active".equals(request.getParameter("join"))) { %>
+        <p class="field-message is-success">카페에 가입되었습니다.</p>
+    <% } else if ("pending".equals(request.getParameter("join"))) { %>
+        <p class="field-message">가입 요청이 접수되었습니다.</p>
+    <% } else if ("success".equals(request.getParameter("leave"))) { %>
+        <p class="field-message is-success">카페에서 탈퇴했습니다.</p>
+    <% } else if (request.getParameter("error") != null) { %>
+        <p class="field-message is-error">요청을 처리하지 못했습니다.</p>
+    <% } %>
+
+    <section class="cafe-gate">
+        <div class="cafe-cover-band">
+            <span class="cafe-cover-label"><%= escapeHtml(cafe.getCategory()) %></span>
+        </div>
+        <div class="cafe-gate-content">
+            <div class="cafe-avatar cafe-gate-avatar"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></div>
+            <div class="cafe-gate-copy">
+                <div class="cafe-title-row">
                     <h1><%= escapeHtml(cafe.getCafeName()) %></h1>
-                    <p><%= escapeHtml(cafe.getDescription()) %></p>
+                    <span class="cafe-badge"><%= escapeHtml(cafe.getVisibility()) %></span>
                 </div>
-                <% if (activeMember) { %>
-                    <span class="status-badge is-active"><%= escapeHtml(myMember.getRole()) %></span>
-                <% } else if (pendingMember) { %>
-                    <span class="status-badge is-stopped">승인 대기</span>
-                <% } %>
-            </div>
-            <div class="cafe-stat-grid">
-                <div><span>지역</span><strong><%= escapeHtml(cafe.getRegion()) %></strong></div>
-                <div><span>회원</span><strong><%= cafe.getMemberCount() %></strong></div>
-                <div><span>글</span><strong><%= cafe.getPostCount() %></strong></div>
-                <div><span>조회</span><strong><%= cafe.getViewCount() + 1 %></strong></div>
+                <p><%= escapeHtml(cafe.getDescription()) %></p>
+                <div class="cafe-meta-line">
+                    <span><%= escapeHtml(cafe.getCategory()) %></span>
+                    <span><%= escapeHtml(cafe.getRegion()) %></span>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="community-two-column">
-        <aside class="cafe-action-card">
-            <h2>카페 활동</h2>
-            <div class="form-actions">
-                <% if (!loggedIn) { %>
-                    <a class="button btn-primary" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 가입</a>
-                <% } else if (activeMember && writeBoardId > 0) { %>
-                    <a class="button btn-primary" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
-                <% } else if (!pendingMember) { %>
-                    <a class="button btn-primary" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeId %>">카페 가입</a>
-                <% } %>
-                <% if (loggedIn) { %>
-                    <form action="<%= contextPath %>/community/cafeFavoriteProcess.jsp" method="post">
-                        <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                        <button class="btn-secondary" type="submit"><%= favoriteCafe ? "즐겨찾기 해제" : "즐겨찾기" %></button>
-                    </form>
-                    <a class="button btn-ghost" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE&targetId=<%= cafeId %>">신고</a>
-                <% } %>
-                <% if (activeMember && !"OWNER".equals(myMember.getRole())) { %>
-                    <form action="<%= contextPath %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('Leave this cafe?');">
-                        <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                        <button class="btn-danger" type="submit">카페 탈퇴</button>
-                    </form>
-                <% } %>
-                <% if (ownerOrManager) { %>
-                    <a class="button btn-secondary" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
-                    <a class="button btn-secondary" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
-                <% } %>
+    <section class="cafe-layout cafe-detail-layout">
+        <aside class="cafe-left">
+            <div class="cafe-box">
+                <div class="cafe-section-title">카페 활동</div>
+                <div class="cafe-box-body cafe-action-stack">
+                    <% if (!loggedIn) { %>
+                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 가입</a>
+                    <% } else if (activeMember) { %>
+                        <% if (writeBoardId > 0) { %>
+                            <a class="button btn-main" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
+                        <% } %>
+                    <% } else if (pendingMember) { %>
+                        <span class="status-badge is-stopped">승인 대기</span>
+                    <% } else { %>
+                        <a class="button btn-main" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeId %>">카페 가입</a>
+                    <% } %>
+                    <% if (loggedIn) { %>
+                        <form action="<%= contextPath %>/community/cafeFavoriteProcess.jsp" method="post">
+                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                            <button class="btn-sub" type="submit"><%= favoriteCafe ? "즐겨찾기 해제" : "즐겨찾기" %></button>
+                        </form>
+                        <a class="button btn-sub" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE&targetId=<%= cafeId %>">신고</a>
+                    <% } %>
+                    <% if (activeMember && !"OWNER".equals(myMember.getRole())) { %>
+                        <form action="<%= contextPath %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
+                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                            <button class="btn-danger btn-small" type="submit">카페 탈퇴</button>
+                        </form>
+                    <% } %>
+                </div>
             </div>
-            <h2>게시판</h2>
-            <div class="community-tabs vertical">
-                <% for (CafeBoardDTO board : boards) { %>
-                    <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
-                        <%= escapeHtml(board.getBoardName()) %> <span><%= board.getPostCount() %></span>
-                    </a>
-                <% } %>
+
+            <div class="cafe-box cafe-info-box">
+                <div class="cafe-section-title">내 카페 정보</div>
+                <div class="cafe-box-body">
+                    <ul class="cafe-stat-list">
+                        <li><span>내 등급</span><strong><%= activeMember ? escapeHtml(myMember.getRole()) : (pendingMember ? "승인 대기" : "방문자") %></strong></li>
+                        <li><span>지역</span><strong><%= escapeHtml(cafe.getRegion()) %></strong></li>
+                        <li><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></li>
+                    </ul>
+                </div>
             </div>
+
+            <div class="cafe-box">
+                <div class="cafe-section-title">게시판 목록</div>
+                <nav class="cafe-menu-list" aria-label="카페 메뉴">
+                    <a class="cafe-menu-item active" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
+                    <% if (!boards.isEmpty()) { %>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boards.get(0).getBoardId() %>">전체글 보기</a>
+                    <% } %>
+                    <% for (CafeBoardDTO board : boards) { %>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
+                            <span><%= escapeHtml(board.getBoardName()) %></span>
+                            <span><%= board.getPostCount() %></span>
+                        </a>
+                    <% } %>
+                </nav>
+            </div>
+            <div class="cafe-box cafe-info-box">
+                <div class="cafe-section-title">카페 통계</div>
+                <div class="cafe-box-body">
+                    <ul class="cafe-stat-list">
+                        <li><span>회원</span><strong><%= cafe.getMemberCount() %></strong></li>
+                        <li><span>게시글</span><strong><%= cafe.getPostCount() %></strong></li>
+                        <li><span>조회</span><strong><%= cafe.getViewCount() + 1 %></strong></li>
+                    </ul>
+                </div>
+            </div>
+            <% if (ownerOrManager) { %>
+                <div class="cafe-box">
+                    <div class="cafe-section-title">관리 메뉴</div>
+                    <nav class="cafe-menu-list">
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
+                    </nav>
+                </div>
+            <% } %>
         </aside>
 
-        <section class="community-section">
-            <div class="section-title-row">
-                <h2>최근 글</h2>
+        <section class="cafe-main cafe-box">
+            <div class="cafe-section-title">
+                <span>최근 글</span>
+                <% if (activeMember && writeBoardId > 0) { %>
+                    <a class="button btn-main btn-small" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
+                <% } %>
             </div>
             <% if (!canRead) { %>
-                <p class="empty-cell">비공개 카페입니다. 가입 후 글을 볼 수 있습니다.</p>
+                <div class="cafe-private-guide">
+                    <strong>비공개 카페입니다.</strong>
+                    <p>가입 후 글을 볼 수 있습니다.</p>
+                </div>
             <% } else if (posts.isEmpty()) { %>
                 <p class="empty-cell">아직 작성된 글이 없습니다.</p>
             <% } else { %>
-                <div class="post-feed-list">
+                <div class="cafe-post-list">
                     <% for (CafePostDTO post : posts) { %>
-                        <a class="post-feed-item" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>">
-                            <div class="post-title-row">
-                                <% if ("Y".equals(post.getIsNotice())) { %><span class="notice-badge">공지</span><% } %>
-                                <strong><%= escapeHtml(post.getTitle()) %></strong>
-                            </div>
-                            <div class="post-meta">
-                                <span><%= escapeHtml(post.getBoardName()) %></span>
-                                <span><%= escapeHtml(post.getWriterNickname()) %></span>
-                                <span>댓글 <%= post.getCommentCount() %>개</span>
-                            </div>
+                        <a class="cafe-post-item <%= "Y".equals(post.getIsNotice()) ? "is-notice" : "" %>" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>">
+                            <span class="<%= "Y".equals(post.getIsNotice()) ? "notice-badge" : "board-badge is-normal" %>"><%= "Y".equals(post.getIsNotice()) ? "공지" : "일반" %></span>
+                            <span class="cafe-post-board"><%= escapeHtml(post.getBoardName()) %></span>
+                            <span class="cafe-post-title"><%= escapeHtml(post.getTitle()) %></span>
+                            <span class="cafe-post-author"><%= escapeHtml(post.getWriterNickname()) %></span>
+                            <span class="cafe-post-comments">댓글 <%= post.getCommentCount() %></span>
                         </a>
                     <% } %>
                 </div>

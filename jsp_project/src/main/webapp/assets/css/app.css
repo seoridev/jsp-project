@@ -1650,3 +1650,670 @@ button.btn-danger,
         flex-direction: column;
     }
 }
+
+/* Naver-cafe-inspired dense PC community UI */
+.community-shell {
+    width: min(1160px, calc(100% - 32px));
+    gap: 14px;
+}
+
+.cafe-top {
+    border: 1px solid #e5ded3;
+    border-radius: 4px;
+    background: #fff;
+    padding: 18px 20px;
+}
+
+.cafe-top h1 {
+    margin: 4px 0 8px;
+    font-size: 26px;
+    line-height: 1.25;
+}
+
+.cafe-top p {
+    margin: 0;
+    color: #6d645b;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.cafe-layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr) 240px;
+    gap: 14px;
+    align-items: start;
+}
+
+.cafe-left,
+.cafe-main,
+.cafe-right {
+    min-width: 0;
+}
+
+.cafe-box {
+    border: 1px solid #e5ded3;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.cafe-box + .cafe-box {
+    margin-top: 12px;
+}
+
+.cafe-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 40px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee7dc;
+    background: #fffaf3;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.cafe-box-body {
+    padding: 12px;
+}
+
+.cafe-search-bar,
+.board-search-bar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    border: 1px solid #e5ded3;
+    border-radius: 4px;
+    background: #fff;
+    padding: 10px 12px;
+}
+
+.cafe-search-bar input,
+.board-search-bar input,
+.cafe-filter-bar input,
+.cafe-filter-bar select,
+.write-title-input,
+.write-content-area {
+    min-width: 0;
+    min-height: 36px;
+    border: 1px solid #d7d0c5;
+    border-radius: 4px;
+    background: #fffdf9;
+    padding: 0 10px;
+    color: #202124;
+    font: inherit;
+}
+
+.cafe-filter-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) 130px 130px 120px auto;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee7dc;
+    background: #fffdf9;
+}
+
+.cafe-portal-grid {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr) 240px;
+    gap: 14px;
+}
+
+.cafe-category-list,
+.cafe-menu-list,
+.cafe-stat-list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cafe-category-list a,
+.cafe-menu-item,
+.cafe-small-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 34px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #f0ebe3;
+    color: #3a332d;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.cafe-category-list a:last-child,
+.cafe-menu-item:last-child,
+.cafe-small-row:last-child {
+    border-bottom: 0;
+}
+
+.cafe-menu-item.active {
+    background: #fff4e8;
+    color: #d95c00;
+    font-weight: 900;
+}
+
+.cafe-rank-list,
+.cafe-directory-list,
+.board-row-list {
+    display: grid;
+}
+
+.cafe-rank-item,
+.cafe-directory-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eee7dc;
+    background: #fff;
+}
+
+.cafe-rank-item:last-child,
+.cafe-directory-item:last-child {
+    border-bottom: 0;
+}
+
+.cafe-rank-number {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #e7d5bd;
+    border-radius: 4px;
+    background: #fff8ef;
+    color: #d95c00;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.cafe-initial {
+    display: inline-grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #e5ded3;
+    border-radius: 4px;
+    background: #f8f1e7;
+    color: #8a4f19;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.cafe-list-copy {
+    min-width: 0;
+}
+
+.cafe-list-copy strong {
+    display: block;
+    overflow: hidden;
+    color: #202124;
+    font-size: 15px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cafe-list-copy p {
+    overflow: hidden;
+    margin: 4px 0 0;
+    color: #6d645b;
+    font-size: 13px;
+    line-height: 1.45;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cafe-meta-line,
+.post-meta-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    color: #756b61;
+    font-size: 12px;
+}
+
+.cafe-badge,
+.board-badge,
+.notice-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 7px;
+    border: 1px solid #ead7bc;
+    border-radius: 4px;
+    background: #fff7ed;
+    color: #a95700;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.board-badge.is-normal {
+    border-color: #ded6ca;
+    background: #f7f4ee;
+    color: #5f574f;
+}
+
+.cafe-info-box .cafe-stat-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #f0ebe3;
+    color: #756b61;
+    font-size: 13px;
+}
+
+.cafe-info-box .cafe-stat-list strong {
+    color: #202124;
+}
+
+.cafe-action-stack {
+    display: grid;
+    gap: 8px;
+}
+
+.btn-main,
+.button.btn-main,
+button.btn-main {
+    min-height: 36px;
+    border-color: #ff6f0f;
+    border-radius: 4px;
+    background: #ff6f0f;
+    color: #fff;
+}
+
+.btn-sub,
+.button.btn-sub,
+button.btn-sub {
+    min-height: 36px;
+    border-color: #d7d0c5;
+    border-radius: 4px;
+    background: #fff;
+    color: #3a332d;
+}
+
+.btn-text,
+.button.btn-text,
+button.btn-text {
+    min-height: 28px;
+    padding: 0 4px;
+    border-color: transparent;
+    background: transparent;
+    color: #756b61;
+    font-size: 12px;
+}
+
+.btn-small,
+.button.btn-small,
+button.btn-small {
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.btn-danger,
+.button.btn-danger,
+button.btn-danger {
+    border-color: #e7b8b1;
+    border-radius: 4px;
+    background: #fff;
+    color: #b42318;
+}
+
+.post-board-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    background: #fff;
+}
+
+.post-board-table th,
+.post-board-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #eee7dc;
+    font-size: 13px;
+    text-align: center;
+}
+
+.post-board-table th {
+    background: #fffaf3;
+    color: #5f574f;
+    font-weight: 900;
+}
+
+.post-board-table .col-type {
+    width: 70px;
+}
+
+.post-board-table .col-author {
+    width: 110px;
+}
+
+.post-board-table .col-count {
+    width: 64px;
+}
+
+.post-board-table .post-title-cell {
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post-read-panel {
+    padding: 18px 20px;
+}
+
+.post-read-header {
+    border-bottom: 1px solid #eee7dc;
+    padding-bottom: 14px;
+}
+
+.post-read-header h1 {
+    margin: 10px 0 8px;
+    font-size: 24px;
+    line-height: 1.35;
+}
+
+.post-body {
+    max-width: none;
+    min-height: 240px;
+    margin-top: 0;
+    padding: 22px 0;
+    border-top: 0;
+    border-bottom: 1px solid #eee7dc;
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+.comment-item {
+    border: 0;
+    border-bottom: 1px solid #eee7dc;
+    border-radius: 0;
+    background: #fff;
+    padding: 12px 0;
+}
+
+.comment-avatar,
+.author-avatar {
+    border-radius: 4px;
+    background: #f8f1e7;
+    color: #8a4f19;
+}
+
+.comment-form textarea {
+    border-radius: 4px;
+    border-color: #d7d0c5;
+}
+
+.cafe-write-wrap {
+    width: min(920px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 22px 0 56px;
+}
+
+.cafe-write-panel {
+    border: 1px solid #e5ded3;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.cafe-write-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid #eee7dc;
+    background: #fffaf3;
+}
+
+.cafe-write-head h1 {
+    margin: 6px 0 0;
+    font-size: 24px;
+}
+
+.cafe-write-form {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+}
+
+.write-title-input {
+    height: 42px;
+    font-size: 16px;
+}
+
+.write-content-area {
+    min-height: 320px;
+    padding: 12px;
+    resize: vertical;
+    line-height: 1.7;
+}
+
+.write-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 8px;
+}
+
+.community-section,
+.cafe-action-card,
+.cafe-profile-hero,
+.community-cafe-card,
+.post-feed-item {
+    border-color: #e5ded3;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.community-cafe-card:hover,
+.post-feed-item:hover {
+    border-color: #e0c8a8;
+    box-shadow: none;
+    transform: none;
+}
+
+.cafe-gate {
+    overflow: hidden;
+    border: 1px solid #e5ded3;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.cafe-cover-band {
+    min-height: 150px;
+    padding: 16px;
+    background:
+        linear-gradient(135deg, rgba(32, 124, 83, 0.88), rgba(255, 111, 15, 0.78)),
+        repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0 1px, transparent 1px 20px),
+        #3d8b65;
+}
+
+.cafe-cover-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 0 9px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.cafe-gate-content {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    align-items: end;
+    padding: 0 20px 20px;
+}
+
+.cafe-gate-avatar {
+    width: 86px;
+    height: 86px;
+    margin-top: -43px;
+    border: 5px solid #fff;
+    border-radius: 50%;
+    background: #fff7ed;
+    color: #d95c00;
+    font-size: 34px;
+    box-shadow: 0 6px 16px rgba(55, 42, 26, 0.12);
+}
+
+.cafe-gate-copy {
+    min-width: 0;
+    padding-top: 16px;
+}
+
+.cafe-gate .cafe-title-row {
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.cafe-gate .cafe-title-row h1 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.25;
+}
+
+.cafe-gate-copy p {
+    margin: 9px 0 0;
+    color: #4c443d;
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+.cafe-detail-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+}
+
+.cafe-action-stack .button,
+.cafe-action-stack button,
+.cafe-action-stack form {
+    width: 100%;
+}
+
+.cafe-action-stack .status-badge {
+    justify-content: center;
+    min-height: 36px;
+}
+
+.cafe-post-list {
+    display: grid;
+}
+
+.cafe-post-item {
+    display: grid;
+    grid-template-columns: 56px 96px minmax(0, 1fr) 110px 76px;
+    gap: 10px;
+    align-items: center;
+    min-height: 50px;
+    padding: 11px 12px;
+    border-bottom: 1px solid #eee7dc;
+    background: #fff;
+    font-size: 13px;
+}
+
+.cafe-post-item:last-child {
+    border-bottom: 0;
+}
+
+.cafe-post-item.is-notice {
+    background: #fff9f1;
+}
+
+.cafe-post-item:hover {
+    background: #fffaf3;
+}
+
+.cafe-post-title {
+    overflow: hidden;
+    color: #202124;
+    font-size: 14px;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cafe-post-board,
+.cafe-post-author,
+.cafe-post-comments {
+    overflow: hidden;
+    color: #756b61;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cafe-post-comments {
+    text-align: right;
+}
+
+.cafe-private-guide {
+    margin: 16px;
+    padding: 22px;
+    border: 1px solid #ead7bc;
+    border-radius: 4px;
+    background: #fffaf3;
+    text-align: center;
+}
+
+.cafe-private-guide strong {
+    display: block;
+    color: #202124;
+    font-size: 16px;
+}
+
+.cafe-private-guide p {
+    margin: 8px 0 0;
+    color: #756b61;
+}
+
+@media (max-width: 900px) {
+    .cafe-gate-content,
+    .cafe-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .cafe-gate-content {
+        align-items: start;
+    }
+
+    .cafe-post-item {
+        grid-template-columns: 56px minmax(0, 1fr);
+    }
+
+    .cafe-post-board,
+    .cafe-post-title,
+    .cafe-post-author,
+    .cafe-post-comments {
+        grid-column: 2;
+        text-align: left;
+    }
+}
+
+@media (max-width: 560px) {
+    .cafe-cover-band {
+        min-height: 120px;
+    }
+
+    .cafe-gate .cafe-title-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .cafe-gate .cafe-title-row h1 {
+        font-size: 24px;
+    }
+
+}
