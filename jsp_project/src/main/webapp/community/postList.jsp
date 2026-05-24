@@ -180,7 +180,7 @@
                 </form>
 
                 <% if ("success".equals(request.getParameter("delete"))) { %>
-                    <p class="field-message is-success">게시글이 삭제되었습니다.</p>
+                    <p class="notice-toast">게시글이 삭제되었습니다.</p>
                 <% } %>
                 <% if (!canRead) { %>
                     <p class="empty-cell">비공개 카페입니다. 가입 후 글을 볼 수 있습니다.</p>

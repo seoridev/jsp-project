@@ -32,8 +32,8 @@
     String readPermission = request.getParameter("readPermission");
     String writePermission = request.getParameter("writePermission");
     String isNotice = request.getParameter("isNotice") == null ? "N" : request.getParameter("isNotice");
-    int displayOrder = Math.max(1, parseIntParam(request.getParameter("displayOrder"), 1));
     String currentLoginId = (String) session.getAttribute("loginId");
+    CafeBoardDAO boardDao = new CafeBoardDAO();
 
     boolean valid = cafeId > 0
             && new CafeMemberDAO().isCafeManagerOrOwner(cafeId, currentLoginId)
@@ -48,8 +48,10 @@
         return;
     }
 
-    boolean created = new CafeBoardDAO().insertBoard(cafeId, boardName, description, readPermission,
+    int displayOrder = boardDao.nextDisplayOrder(cafeId);
+
+    int createdBoardId = boardDao.insertBoardAndReturnId(cafeId, boardName, description, readPermission,
             writePermission, isNotice, displayOrder);
     response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
-            + cafeId + (created ? "&create=success" : "&error=createFail"));
+            + cafeId + (createdBoardId > 0 ? "&boardId=" + createdBoardId + "&create=success" : "&error=createFail"));
 %>

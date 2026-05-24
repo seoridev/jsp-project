@@ -165,11 +165,11 @@
                 <% if (request.getParameter("error") != null) { %>
                     <p class="field-message is-error">요청을 처리하지 못했습니다.</p>
                 <% } else if ("success".equals(request.getParameter("update"))) { %>
-                    <p class="field-message is-success">게시글이 수정되었습니다.</p>
+                    <p class="notice-toast">게시글이 수정되었습니다.</p>
                 <% } else if ("success".equals(request.getParameter("commentDelete"))) { %>
-                    <p class="field-message is-success">댓글이 삭제되었습니다.</p>
+                    <p class="notice-toast">댓글이 삭제되었습니다.</p>
                 <% } else if ("success".equals(request.getParameter("report"))) { %>
-                    <p class="field-message is-success">신고가 접수되었습니다.</p>
+                    <p class="notice-toast">신고가 접수되었습니다.</p>
                 <% } %>
                 <div class="post-read-header">
                     <p class="breadcrumb">

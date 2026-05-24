@@ -13,8 +13,11 @@
     }
 %>
 <%
+    request.setCharacterEncoding("UTF-8");
+
     int cafeId = parseIntParam(request.getParameter("cafeId"));
     int boardId = parseIntParam(request.getParameter("boardId"));
+    String direction = request.getParameter("direction");
     String currentLoginId = (String) session.getAttribute("loginId");
 
     CafeBoardDAO boardDao = new CafeBoardDAO();
@@ -22,20 +25,16 @@
     boolean valid = cafeId > 0
             && board != null
             && board.getCafeId() == cafeId
-            && new CafeMemberDAO().isCafeManagerOrOwner(cafeId, currentLoginId);
+            && new CafeMemberDAO().isCafeManagerOrOwner(cafeId, currentLoginId)
+            && ("UP".equals(direction) || "DOWN".equals(direction));
+
     if (!valid) {
         response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
-                + cafeId + "&boardId=" + boardId + "&error=hideFail");
+                + cafeId + "&boardId=" + boardId + "&error=orderFail");
         return;
     }
 
-    if (boardDao.hasActivePosts(boardId)) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
-                + cafeId + "&boardId=" + boardId + "&error=hasPosts");
-        return;
-    }
-
-    boolean hidden = boardDao.hideBoard(boardId, cafeId);
+    boolean moved = boardDao.moveBoard(cafeId, boardId, direction);
     response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
-            + cafeId + (hidden ? "&hide=success" : "&error=hideFail"));
+            + cafeId + "&boardId=" + boardId + (moved ? "&update=success" : "&error=orderFail"));
 %>

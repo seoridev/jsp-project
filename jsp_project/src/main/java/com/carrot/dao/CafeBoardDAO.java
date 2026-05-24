@@ -18,21 +18,141 @@ public class CafeBoardDAO extends BaseDAO {
 
     public boolean insertBoard(int cafeId, String boardName, String description, String readPermission,
             String writePermission, String isNotice, int displayOrder) {
-        String sql = "INSERT INTO cafe_board "
+        return insertBoardAndReturnId(cafeId, boardName, description, readPermission, writePermission,
+                isNotice, displayOrder) > 0;
+    }
+
+    public int insertBoardAndReturnId(int cafeId, String boardName, String description, String readPermission,
+            String writePermission, String isNotice, int displayOrder) {
+        String sequenceSql = "SELECT seq_cafe_board.NEXTVAL FROM dual";
+        String insertSql = "INSERT INTO cafe_board "
                 + "(board_id, cafe_id, board_name, description, read_permission, write_permission, is_notice, display_order) "
-                + "VALUES (seq_cafe_board.NEXTVAL, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = getConnection();
+                PreparedStatement sequenceStmt = conn.prepareStatement(sequenceSql);
+                PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+            int boardId = 0;
+            try (ResultSet rs = sequenceStmt.executeQuery()) {
+                if (rs.next()) {
+                    boardId = rs.getInt(1);
+                }
+            }
+            if (boardId <= 0) {
+                return 0;
+            }
+
+            insertStmt.setInt(1, boardId);
+            insertStmt.setInt(2, cafeId);
+            insertStmt.setString(3, boardName);
+            insertStmt.setString(4, description);
+            insertStmt.setString(5, readPermission);
+            insertStmt.setString(6, writePermission);
+            insertStmt.setString(7, isNotice);
+            insertStmt.setInt(8, displayOrder);
+            return insertStmt.executeUpdate() > 0 ? boardId : 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int nextDisplayOrder(int cafeId) {
+        String sql = "SELECT NVL(MAX(display_order), 0) + 1 FROM cafe_board WHERE cafe_id = ? AND status = 'ACTIVE'";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, cafeId);
-            pstmt.setString(2, boardName);
-            pstmt.setString(3, description);
-            pstmt.setString(4, readPermission);
-            pstmt.setString(5, writePermission);
-            pstmt.setString(6, isNotice);
-            pstmt.setInt(7, displayOrder);
-            return pstmt.executeUpdate() > 0;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return 1;
+    }
+
+    public boolean moveBoard(int cafeId, int boardId, String direction) {
+        boolean moveUp = "UP".equals(direction);
+        boolean moveDown = "DOWN".equals(direction);
+        if (!moveUp && !moveDown) {
+            return false;
+        }
+
+        String currentSql = "SELECT display_order FROM cafe_board WHERE cafe_id = ? AND board_id = ? AND status = 'ACTIVE'";
+        String targetSql = "SELECT board_id, display_order FROM cafe_board "
+                + "WHERE cafe_id = ? AND status = 'ACTIVE' AND display_order " + (moveUp ? "<" : ">") + " ? "
+                + "ORDER BY display_order " + (moveUp ? "DESC" : "ASC") + ", board_id " + (moveUp ? "DESC" : "ASC")
+                + " FETCH FIRST 1 ROWS ONLY";
+        String updateSql = "UPDATE cafe_board SET display_order = ?, updated_at = SYSTIMESTAMP "
+                + "WHERE cafe_id = ? AND board_id = ? AND status = 'ACTIVE'";
+
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            int currentOrder = 0;
+            try (PreparedStatement pstmt = conn.prepareStatement(currentSql)) {
+                pstmt.setInt(1, cafeId);
+                pstmt.setInt(2, boardId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return false;
+                    }
+                    currentOrder = rs.getInt("display_order");
+                }
+            }
+
+            int targetBoardId = 0;
+            int targetOrder = 0;
+            try (PreparedStatement pstmt = conn.prepareStatement(targetSql)) {
+                pstmt.setInt(1, cafeId);
+                pstmt.setInt(2, currentOrder);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        return true;
+                    }
+                    targetBoardId = rs.getInt("board_id");
+                    targetOrder = rs.getInt("display_order");
+                }
+            }
+
+            try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
+                pstmt.setInt(1, targetOrder);
+                pstmt.setInt(2, cafeId);
+                pstmt.setInt(3, boardId);
+                pstmt.executeUpdate();
+
+                pstmt.setInt(1, currentOrder);
+                pstmt.setInt(2, cafeId);
+                pstmt.setInt(3, targetBoardId);
+                pstmt.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (Exception rollbackError) {
+                    rollbackError.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (Exception closeError) {
+                    closeError.printStackTrace();
+                }
+            }
         }
         return false;
     }

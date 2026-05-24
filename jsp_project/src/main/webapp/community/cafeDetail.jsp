@@ -62,13 +62,13 @@
 <%@ include file="../common/header.jsp" %>
 <main class="page-shell community-shell">
     <% if ("success".equals(request.getParameter("created"))) { %>
-        <p class="field-message is-success">카페가 생성되었습니다.</p>
+        <p class="notice-toast">카페가 생성되었습니다.</p>
     <% } else if ("active".equals(request.getParameter("join"))) { %>
-        <p class="field-message is-success">카페에 가입되었습니다.</p>
+        <p class="notice-toast">카페에 가입되었습니다.</p>
     <% } else if ("pending".equals(request.getParameter("join"))) { %>
         <p class="field-message">가입 요청이 접수되었습니다.</p>
     <% } else if ("success".equals(request.getParameter("leave"))) { %>
-        <p class="field-message is-success">카페에서 탈퇴했습니다.</p>
+        <p class="notice-toast">카페에서 탈퇴했습니다.</p>
     <% } else if (request.getParameter("error") != null) { %>
         <p class="field-message is-error">요청을 처리하지 못했습니다.</p>
     <% } %>

@@ -65,5 +65,5 @@
             .displayOrder(displayOrder)
             .build());
     response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
-            + cafeId + (updated ? "&update=success" : "&error=updateFail"));
+            + cafeId + "&boardId=" + boardId + (updated ? "&update=success" : "&error=updateFail"));
 %>

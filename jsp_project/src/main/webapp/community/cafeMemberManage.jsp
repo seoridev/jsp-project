@@ -61,82 +61,146 @@
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
-<main class="page-shell">
-    <section class="detail-panel">
-        <div class="detail-header">
-            <div>
-                <p><a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
-                <h1>회원 관리</h1>
-                <p class="community-meta">승인 대기 <%= pendingMembers.size() %>명 · 전체 회원 <%= cafeMembers.size() %>명</p>
-            </div>
+<main class="page-shell manage-shell">
+    <section class="manage-header">
+        <div>
+            <p class="breadcrumb"><a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
+            <h1>회원 관리</h1>
         </div>
-        <% if ("success".equals(request.getParameter("approve"))) { %>
-            <p class="field-message is-success">가입 신청을 승인했습니다.</p>
-        <% } else if ("success".equals(request.getParameter("reject"))) { %>
-            <p class="field-message is-success">가입 신청을 거절했습니다.</p>
-        <% } else if ("approveFail".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">승인할 수 없는 신청입니다.</p>
-        <% } else if ("rejectFail".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">거절할 수 없는 신청입니다.</p>
-        <% } else if ("manageDenied".equals(request.getParameter("error"))) { %>
-            <p class="field-message is-error">카페 관리 권한이 없습니다.</p>
-        <% } else if (request.getParameter("error") != null) { %>
-            <p class="field-message is-error">회원 처리에 실패했습니다.</p>
-        <% } %>
+        <a class="button btn-sub" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
     </section>
 
-    <section class="detail-panel">
-        <h2>승인 대기</h2>
-        <div class="community-list">
-            <% if (pendingMembers.isEmpty()) { %>
-                <p class="empty-cell">승인 대기 중인 회원이 없습니다.</p>
-            <% } %>
-            <% for (CafeMemberDTO member : pendingMembers) { %>
-                <div class="community-row">
-                    <span>
-                        <strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong>
-                        <br>
-                        <small class="community-meta"><%= escapeHtml(member.getMemberId()) %> · <%= escapeHtml(member.getRegion()) %></small>
-                    </span>
-                    <span class="form-actions">
-                        <form action="<%= contextPath %>/community/memberApproveProcess.jsp" method="post">
-                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                            <input type="hidden" name="memberId" value="<%= escapeHtml(member.getMemberId()) %>">
-                            <button class="primary" type="submit">승인</button>
-                        </form>
-                        <form action="<%= contextPath %>/community/memberRejectProcess.jsp" method="post">
-                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                            <input type="hidden" name="memberId" value="<%= escapeHtml(member.getMemberId()) %>">
-                            <button type="submit">거절</button>
-                        </form>
-                    </span>
-                </div>
-            <% } %>
-        </div>
-    </section>
+    <% if ("success".equals(request.getParameter("approve"))) { %>
+        <p class="notice-toast">가입 신청을 승인했습니다.</p>
+    <% } else if ("success".equals(request.getParameter("reject"))) { %>
+        <p class="notice-toast">가입 신청을 거절했습니다.</p>
+    <% } else if ("approveFail".equals(request.getParameter("error"))) { %>
+        <p class="field-message is-error">승인할 수 없는 신청입니다.</p>
+    <% } else if ("rejectFail".equals(request.getParameter("error"))) { %>
+        <p class="field-message is-error">거절할 수 없는 신청입니다.</p>
+    <% } else if ("manageDenied".equals(request.getParameter("error"))) { %>
+        <p class="field-message is-error">카페 관리 권한이 없습니다.</p>
+    <% } else if (request.getParameter("error") != null) { %>
+        <p class="field-message is-error">회원 처리에 실패했습니다.</p>
+    <% } %>
 
-    <section class="detail-panel">
-        <h2>전체 회원</h2>
-        <div class="community-list">
-            <% if (cafeMembers.isEmpty()) { %>
-                <p class="empty-cell">회원이 없습니다.</p>
-            <% } %>
-            <% for (CafeMemberDTO member : cafeMembers) { %>
-                <div class="community-row">
-                    <span>
-                        <strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong>
-                        <br>
-                        <small class="community-meta">
-                            <%= escapeHtml(member.getMemberId()) %> · <%= escapeHtml(member.getRegion()) %> · 가입일 <%= escapeHtml(formatDateTime(member.getJoinedAt())) %>
-                        </small>
-                    </span>
-                    <span class="form-actions">
-                        <span class="status-badge"><%= escapeHtml(member.getRole()) %></span>
-                        <span class="status-badge<%= statusClass(member.getStatus()) %>"><%= escapeHtml(statusText(member.getStatus())) %></span>
-                    </span>
+    <section class="manage-layout">
+        <aside class="manage-sidebar">
+            <div class="manage-sidebar-title">카페 관리</div>
+            <nav class="manage-menu" aria-label="카페 관리 메뉴">
+                <a href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                <a class="active" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
+                <a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
+            </nav>
+        </aside>
+
+        <section class="manage-content">
+            <section class="manage-summary-grid">
+                <div class="manage-summary-card">
+                    <span>승인 대기</span>
+                    <strong><%= pendingMembers.size() %></strong>
                 </div>
-            <% } %>
-        </div>
+                <div class="manage-summary-card">
+                    <span>전체 회원</span>
+                    <strong><%= cafeMembers.size() %></strong>
+                </div>
+            </section>
+
+            <section class="manage-card">
+                <div class="manage-card-head">
+                    <div>
+                        <h2>승인 대기 회원</h2>
+                        <p>가입 신청을 확인하고 승인 또는 거절할 수 있습니다.</p>
+                    </div>
+                    <span class="status-badge is-pending">승인 필요 <%= pendingMembers.size() %>명</span>
+                </div>
+                <div class="manage-table-wrap">
+                    <table class="manage-table member-manage-table">
+                        <thead>
+                            <tr>
+                                <th>닉네임</th>
+                                <th>아이디</th>
+                                <th>지역</th>
+                                <th>가입일</th>
+                                <th>상태</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (pendingMembers.isEmpty()) { %>
+                                <tr>
+                                    <td class="empty-cell" colspan="6">승인 대기 중인 회원이 없습니다.</td>
+                                </tr>
+                            <% } %>
+                            <% for (CafeMemberDTO member : pendingMembers) { %>
+                                <tr>
+                                    <td><strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong></td>
+                                    <td><%= escapeHtml(member.getMemberId()) %></td>
+                                    <td><%= escapeHtml(member.getRegion()) %></td>
+                                    <td><%= escapeHtml(formatDateTime(member.getJoinedAt())) %></td>
+                                    <td><span class="status-badge is-pending">승인 필요</span></td>
+                                    <td>
+                                        <div class="manage-actions">
+                                            <form action="<%= contextPath %>/community/memberApproveProcess.jsp" method="post">
+                                                <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                                                <input type="hidden" name="memberId" value="<%= escapeHtml(member.getMemberId()) %>">
+                                                <button class="btn-main btn-small" type="submit">승인</button>
+                                            </form>
+                                            <form action="<%= contextPath %>/community/memberRejectProcess.jsp" method="post">
+                                                <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                                                <input type="hidden" name="memberId" value="<%= escapeHtml(member.getMemberId()) %>">
+                                                <button class="btn-danger btn-small" type="submit">거절</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="manage-card">
+                <div class="manage-card-head">
+                    <div>
+                        <h2>전체 회원</h2>
+                        <p>카페에 등록된 회원의 역할과 상태를 확인합니다.</p>
+                    </div>
+                    <span class="status-badge">총 <%= cafeMembers.size() %>명</span>
+                </div>
+                <div class="manage-table-wrap">
+                    <table class="manage-table member-manage-table">
+                        <thead>
+                            <tr>
+                                <th>닉네임</th>
+                                <th>아이디</th>
+                                <th>지역</th>
+                                <th>가입일</th>
+                                <th>역할</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (cafeMembers.isEmpty()) { %>
+                                <tr>
+                                    <td class="empty-cell" colspan="6">회원이 없습니다.</td>
+                                </tr>
+                            <% } %>
+                            <% for (CafeMemberDTO member : cafeMembers) { %>
+                                <tr>
+                                    <td><strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong></td>
+                                    <td><%= escapeHtml(member.getMemberId()) %></td>
+                                    <td><%= escapeHtml(member.getRegion()) %></td>
+                                    <td><%= escapeHtml(formatDateTime(member.getJoinedAt())) %></td>
+                                    <td><span class="status-badge"><%= escapeHtml(member.getRole()) %></span></td>
+                                    <td><span class="status-badge<%= statusClass(member.getStatus()) %>"><%= escapeHtml(statusText(member.getStatus())) %></span></td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </section>
     </section>
 </main>
 <%@ include file="../common/footer.jsp" %>
