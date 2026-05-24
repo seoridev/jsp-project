@@ -20,6 +20,7 @@
 %>
 <%
     int cafeId = parseIntParam(request.getParameter("cafeId"));
+    String cafeDetailRedirect = java.net.URLEncoder.encode("/community/cafeDetail.jsp?cafeId=" + cafeId, "UTF-8");
     CafeDAO cafeDao = new CafeDAO();
     CafeDTO cafe = cafeDao.selectCafeById(cafeId);
     if (cafe == null) {
@@ -98,7 +99,7 @@
                 <div class="cafe-section-title">카페 활동</div>
                 <div class="cafe-box-body cafe-action-stack">
                     <% if (!loggedIn) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 가입</a>
+                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeDetailRedirect %>">로그인 후 가입</a>
                     <% } else if (activeMember) { %>
                         <% if (writeBoardId > 0) { %>
                             <a class="button btn-main" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>

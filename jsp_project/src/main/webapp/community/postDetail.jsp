@@ -21,6 +21,7 @@
 %>
 <%
     int postId = parseIntParam(request.getParameter("postId"));
+    String postDetailRedirect = java.net.URLEncoder.encode("/community/postDetail.jsp?postId=" + postId, "UTF-8");
     CafePostDAO postDao = new CafePostDAO();
     CafePostDTO post = postDao.selectPostById(postId);
     boolean deletedPostFail = post == null && "deleteFail".equals(request.getParameter("error"));
@@ -103,7 +104,7 @@
                 <div class="cafe-section-title">카페 활동</div>
                 <div class="cafe-box-body cafe-action-stack">
                     <% if (!loggedIn) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 가입</a>
+                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= postDetailRedirect %>">로그인 후 가입</a>
                     <% } else if (activeMember) { %>
                         <a class="button btn-main" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>">글쓰기</a>
                     <% } else { %>

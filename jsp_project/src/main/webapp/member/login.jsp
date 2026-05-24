@@ -2,6 +2,10 @@
 <%
 	//로그인 결과에 맞는 안내 문구 설정
 	String error = request.getParameter("error");
+	String redirect = request.getParameter("redirect");
+	if (redirect == null) {
+	    redirect = "";
+	}
 	String errorMessage = "";
 
 	if ("empty".equals(error)) {
@@ -47,6 +51,7 @@
 
 	        <%-- 계정 확인은 처리 페이지에서 진행 --%>
 	        <form class="form-grid" action="<%= contextPath %>/member/loginProcess.jsp" method="post">
+	            <input type="hidden" name="redirect" value="<%= escapeHtml(redirect) %>">
 	            <div class="field">
 	                <label for="loginId">아이디</label>
 	                <input type="text" id="loginId" name="loginId" maxlength="50" required>

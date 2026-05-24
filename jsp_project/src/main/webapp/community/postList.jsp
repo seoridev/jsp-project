@@ -58,6 +58,11 @@
         pageNo = totalPages;
     }
     List<CafePostDTO> posts = canRead ? postDao.selectPosts(cafeId, boardId, keyword, pageNo, pageSize) : java.util.Collections.emptyList();
+    String postListRedirect = "/community/postList.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&page=" + pageNo;
+    if (keyword != null && !keyword.trim().isEmpty()) {
+        postListRedirect += "&keyword=" + keywordParam;
+    }
+    String encodedPostListRedirect = java.net.URLEncoder.encode(postListRedirect, "UTF-8");
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -96,7 +101,7 @@
                 <div class="cafe-section-title">카페 활동</div>
                 <div class="cafe-box-body cafe-action-stack">
                     <% if (!loggedIn) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 가입</a>
+                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= encodedPostListRedirect %>">로그인 후 가입</a>
                     <% } else if (canWrite) { %>
                         <a class="button btn-main" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">글쓰기</a>
                     <% } else if (activeMember) { %>
