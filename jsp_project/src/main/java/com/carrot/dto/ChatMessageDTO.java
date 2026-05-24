@@ -10,13 +10,11 @@ import lombok.Setter;
 @Setter
 @Builder
 public class ChatMessageDTO {
-	// 웹소켓 제어용 필드 
-    private String type;      
-
     private int messageId;    
     private int roomId;       
     private String senderId;   
     private String message;    
-    private String isRead;     
+    private String isRead;
+    private String msgType;      
     private Timestamp createdAt;
 }

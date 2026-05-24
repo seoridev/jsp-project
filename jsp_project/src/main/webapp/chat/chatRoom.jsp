@@ -118,6 +118,39 @@
             font-size: 13px;
             font-weight: 700;
         }
+        
+		.inline-check {
+		    display: flex !important;
+		    align-items: center !important;
+		    gap: 8px; /* 요소 사이의 간격을 일정하게 유지 */
+		    width: 100%;
+		}
+		
+		.inline-check button[onclick*="imageInput"] {
+		    flex-shrink: 0; /* 버튼이 찌그러지지 않도록 방어 */
+		    background: none !important;
+		    border: none !important;
+		    font-size: 22px !important;
+		    padding: 0 4px !important;
+		    margin: 0 !important;
+		    cursor: pointer;
+		    line-height: 1;
+		}
+		
+		#messageInput {
+		    flex-grow: 1;
+		    height: 40px; 
+		    padding: 0 12px;
+		    border: 1px solid #cbd5e1;
+		    border-radius: 6px;
+		    box-sizing: border-box;
+		}
+		
+		#sendBtn {
+		    flex-shrink: 0;
+		    height: 40px;
+		    white-space: nowrap;
+		}
     </style>
 </head>
 <body>
@@ -132,14 +165,20 @@
         <div class="chat-body" id="chatMessages">
         	<%-- 대화 로그 기록 렌더링 --%>
 		    <% if (oldMessageList != null && !oldMessageList.isEmpty()) { 
-		        for (com.carrot.dto.ChatMessageDTO msgDto : oldMessageList) { 
+		        for (ChatMessageDTO msgDto : oldMessageList) { 
 		            // 로그인한 나인지, 상대방인지 판별
 		            boolean isMe = msgDto.getSenderId().equals(userId);
 		            String msgClass = isMe ? "me" : "other";
 		    %>
 		            <div class="msg-wrapper <%= msgClass %>">
 		                <div class="msg-sender"><%= msgDto.getSenderId() %></div>
-		                <div class="msg-bubble"><%= msgDto.getMessage() %></div>
+		                <div class="msg-bubble">
+		                    <% if ("IMAGE".equals(msgDto.getMsgType())) { %>
+		                        <img src="<%= request.getContextPath() %>/upload/chat/<%= msgDto.getMessage() %>" style="max-width: 200px; border-radius: 8px; cursor: pointer;" onclick="window.open(this.src)">
+		                    <% } else { %>
+		                        <%= msgDto.getMessage() %>
+		                    <% } %>
+		                </div>
 		            </div>
 		    <% 
 		        } 
@@ -154,12 +193,16 @@
         <div class="status-panel" style="border: none; border-radius: 0; padding: 18px;">
             <div class="field">
                 <div class="inline-check">
+                    <form id="imageForm" enctype="multipart/form-data" style="display: none;">
+                    	<input type="file" id="imageInput" name="imageFile" accept="image/*" onchange="uploadImageFile()">
+                    </form>
+                    <button type="button" onclick="document.getElementById('imageInput').click();" style="background: none; border: none; font-size: 20px; cursor: pointer; padding-right: 10px;">🖼️</button>
+                    
                     <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." onkeyup="if(event.keyCode==13) sendMessage();" disabled>
                     <button type="button" id="sendBtn" class="primary" onclick="sendMessage();" disabled>전송</button>
                 </div>
             </div>
         </div>
-
     </div>
     
 </main>
@@ -194,7 +237,7 @@
             try {
                 const data = JSON.parse(event.data);
                 if (data.senderId !== userId) {
-                    displayMessage(data.senderId, data.message);
+                	displayMessage(data.senderId, data.message, data.msgType);
                 }
             } catch (e) {
                 displayMessage("시스템", event.data);
@@ -219,23 +262,70 @@
         const packet = {
             roomId: roomId,
             senderId: userId,
-            message: msg
+            message: msg,
+            msgType: "TEXT"
         };
 
         webSocket.send(JSON.stringify(packet));
-        displayMessage(userId, msg); 
+        displayMessage(userId, msg, "TEXT");
         
         messageInput.value = "";
         messageInput.focus();
     }
+    
+    function uploadImageFile() {
+        const fileInput = document.getElementById("imageInput");
+        if (!fileInput.files || !fileInput.files[0]) return;
 
-    function displayMessage(sender, message) {
+        const formData = new FormData();
+        formData.append("imageFile", fileInput.files[0]);
+
+        fetch("<%= request.getContextPath() %>/chat/chatSendProcess.jsp", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.text())
+        .then(fileName => {
+            const result = fileName.trim();
+            if (result === "FAIL" || result === "ERROR") {
+                alert("이미지 업로드에 실패했습니다.");
+                return;
+            }
+
+            const packet = {
+                roomId: roomId,
+                senderId: userId,
+                message: result,  // 파일명
+                msgType: "IMAGE"  // 이미지 타입 명시
+            };
+
+            webSocket.send(JSON.stringify(packet));
+
+            displayMessage(userId, result, "IMAGE");
+            
+            fileInput.value = "";
+        })
+        .catch(err => {
+            console.error("Upload Error:", err);
+            alert("서버 연결에 실패했습니다.");
+        });
+    }
+
+    function displayMessage(sender, message, msgType = "TEXT") {
         const isMe = (sender === userId);
         const msgClass = isMe ? "me" : "other";
         
+        let contentHtml = "";
+        if (msgType === "IMAGE") {
+            const imgPath = "<%= request.getContextPath() %>/upload/chat/" + message;
+            contentHtml = '<img src="' + imgPath + '" style="max-width: 200px; border-radius: 8px; cursor: pointer;" onclick="window.open(this.src)">';
+        } else {
+            contentHtml = message;
+        }
+        
         const html = '<div class="msg-wrapper ' + msgClass + '">'
                    + '<div class="msg-sender">' + sender + '</div>'
-                   + '<div class="msg-bubble">' + message + '</div>'
+                   + '<div class="msg-bubble">' + contentHtml + '</div>'
                    + '</div>';
         
         chatMessages.innerHTML += html;
