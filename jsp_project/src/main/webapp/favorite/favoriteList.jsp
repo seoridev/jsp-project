@@ -44,9 +44,23 @@
     </div>
 
     <% if ("delete".equals(request.getParameter("favorite"))) { %>
-        <p class="form-success-text">관심 상품에서 해제했습니다.</p>
+        <script>
+            (() => {
+                alert("관심 상품에서 해제했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("favorite");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } else if ("fail".equals(request.getParameter("favorite"))) { %>
-        <p class="form-error-text">관심 상품 처리에 실패했습니다.</p>
+        <script>
+            (() => {
+                alert("관심 상품 처리에 실패했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("favorite");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } %>
 
     <div class="admin-table-wrap">

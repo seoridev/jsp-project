@@ -72,27 +72,45 @@ public class ProductDAO extends BaseDAO{
 	
 	// 상품 검색
 	public List<ProductDTO> selectProductList(String type, String keyword) {
+	    // 추가됨: 기존 호출부 호환을 위해 categoryId 없이 새 조회 메서드 호출
+	    return selectProductList(type, keyword, null);
+	}
+
+	// 추가됨: 카테고리와 검색어를 함께 적용하는 상품 목록 조회
+	public List<ProductDTO> selectProductList(String type, String keyword, Integer categoryId) {
 	    List<ProductDTO> list = new ArrayList<>();
 	    
 	    StringBuilder sql = new StringBuilder("SELECT * FROM PRODUCT WHERE IS_DELETED = 'N'");
+	    boolean hasCategory = categoryId != null;
+	    boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+	    String searchType = (type == null || type.trim().isEmpty()) ? "all" : type;
 	    
 	    // 검색 조건이 있을 경우 쿼리 추가
-		if (keyword != null && !keyword.trim().isEmpty()) {
-			sql.append(switch (type) {
+	    // 추가됨: categoryId가 있으면 실제 CATEGORY_ID 기준으로 필터링
+	    if (hasCategory) {
+	        sql.append(" AND CATEGORY_ID = ?");
+	    }
+
+		if (hasKeyword) {
+			sql.append(switch (searchType) {
 			case "title" -> " AND TITLE LIKE ?";
 			case "content" -> " AND CONTENT LIKE ?";
 			case "all" -> " AND (TITLE LIKE ? OR CONTENT LIKE ?)";
-			default -> "";
+			default -> " AND (TITLE LIKE ? OR CONTENT LIKE ?)";
 			});
 	    }
 	    sql.append(" ORDER BY CREATED_AT DESC");
 
 	    try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-	        if (keyword != null && !keyword.trim().isEmpty()) {
+	        int paramIndex = 1;
+	        if (hasCategory) {
+	            pstmt.setInt(paramIndex++, categoryId);
+	        }
+	        if (hasKeyword) {
 	            String searchKeyword = "%" + keyword + "%";
-	            pstmt.setString(1, searchKeyword);
-	            if ("all".equals(type)) {
-	                pstmt.setString(2, searchKeyword);
+	            pstmt.setString(paramIndex++, searchKeyword);
+	            if (!"title".equals(searchType) && !"content".equals(searchType)) {
+	                pstmt.setString(paramIndex++, searchKeyword);
 	            }
 	        }
 
@@ -121,12 +139,89 @@ public class ProductDAO extends BaseDAO{
 	    return list;
 	}
 	
+	// [추가] 마이페이지에서 로그인한 사용자의 상품만 조회
+	public List<ProductDTO> getProductsBySellerId(String sellerId) {
+		List<ProductDTO> list = new ArrayList<>();
+		String sql = "SELECT p.*, c.CATEGORY_NAME FROM PRODUCT p "
+				+ "LEFT JOIN CATEGORY c ON p.CATEGORY_ID = c.CATEGORY_ID "
+				+ "WHERE p.SELLER_ID = ? AND NVL(p.IS_DELETED, 'N') = 'N' "
+				+ "ORDER BY p.CREATED_AT DESC";
+
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, sellerId);
+
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					list.add(mapProductWithCategory(rs));
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+
+	// [추가] 관리자 상품 관리에서 삭제 여부와 상관없이 전체 상품 조회
+	public List<ProductDTO> getAllProductsForAdmin() {
+		List<ProductDTO> list = new ArrayList<>();
+		String sql = "SELECT p.*, c.CATEGORY_NAME FROM PRODUCT p "
+				+ "LEFT JOIN CATEGORY c ON p.CATEGORY_ID = c.CATEGORY_ID "
+				+ "ORDER BY p.CREATED_AT DESC";
+
+		try (Connection conn = getConnection();
+				PreparedStatement pstmt = conn.prepareStatement(sql);
+				ResultSet rs = pstmt.executeQuery()) {
+			while (rs.next()) {
+				list.add(mapProductWithCategory(rs));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+
+	// [추가] 관리자 상품 관리 화면에서 상품 상태만 변경
+	public boolean updateProductStatusForAdmin(long productId, String status) {
+		String sql = "UPDATE PRODUCT SET STATUS = ?, UPDATED_AT = SYSTIMESTAMP WHERE PRODUCT_ID = ?";
+
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, status);
+			pstmt.setLong(2, productId);
+			return pstmt.executeUpdate() > 0;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	// [추가] 마이페이지/관리자 상품 조회 결과를 ProductDTO로 변환
+	private ProductDTO mapProductWithCategory(ResultSet rs) throws Exception {
+		Timestamp createdAt = rs.getTimestamp("CREATED_AT");
+		Timestamp updatedAt = rs.getTimestamp("UPDATED_AT");
+
+		return ProductDTO.builder()
+				.productId(rs.getInt("PRODUCT_ID"))
+				.sellerId(rs.getString("SELLER_ID"))
+				.categoryId(rs.getInt("CATEGORY_ID"))
+				.title(rs.getString("TITLE"))
+				.content(rs.getString("CONTENT"))
+				.price(rs.getInt("PRICE"))
+				.region(rs.getString("REGION"))
+				.status(rs.getString("STATUS"))
+				.viewCount(rs.getInt("VIEW_COUNT"))
+				.isDeleted(rs.getString("IS_DELETED"))
+				.createdAt(createdAt == null ? null : createdAt.toLocalDateTime())
+				.updatedAt(updatedAt == null ? null : updatedAt.toLocalDateTime())
+				.categoryName(rs.getString("CATEGORY_NAME"))
+				.build();
+	}
+
 	// ID로 상품 조회
-	public ProductDTO selectProductById(int id) {
+	public ProductDTO selectProductById(long id) {
 		String sql = "SELECT * FROM PRODUCT WHERE PRODUCT_ID = ?";
 
 		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-			pstmt.setInt(1, id);
+			pstmt.setLong(1, id);
 			try (ResultSet rs = pstmt.executeQuery()) {
 				if (rs.next()) {
 					return ProductDTO.builder()

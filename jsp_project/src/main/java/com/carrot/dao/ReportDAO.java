@@ -13,8 +13,8 @@ public class ReportDAO extends BaseDAO {
 
     public boolean insertReport(ReportDTO report) {
         String sql = "INSERT INTO report "
-            + "(report_id, reporter_id, target_type, target_id, reason, detail, status, created_at) "
-            + "VALUES (seq_report.NEXTVAL, ?, ?, ?, ?, ?, 'WAITING', SYSTIMESTAMP)";
+            + "(reporter_id, target_type, target_id, reason, detail, status, created_at) "
+            + "VALUES (?, ?, ?, ?, ?, 'WAITING', SYSTIMESTAMP)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

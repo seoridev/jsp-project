@@ -32,8 +32,8 @@ public class FavoriteDAO extends BaseDAO {
     }
 
     public boolean insertFavorite(String memberId, long productId) {
-        String sql = "INSERT INTO favorite (favorite_id, member_id, product_id, created_at) "
-            + "VALUES (seq_favorite.NEXTVAL, ?, ?, SYSTIMESTAMP)";
+        String sql = "INSERT INTO favorite (member_id, product_id, created_at) "
+            + "VALUES (?, ?, SYSTIMESTAMP)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

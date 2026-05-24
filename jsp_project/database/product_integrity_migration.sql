@@ -43,12 +43,7 @@ WHEN NOT MATCHED THEN
     INSERT (login_id, password, nickname, phone, region, status, created_at)
     VALUES (s.login_id, s.password, s.nickname, s.phone, s.region, 'ACTIVE', SYSTIMESTAMP);
 
-ALTER TABLE product MODIFY (seller_id NOT NULL);
-
 ALTER TABLE product ADD CONSTRAINT fk_product_seller
     FOREIGN KEY (seller_id) REFERENCES member (login_id);
-
-ALTER TABLE product ADD CONSTRAINT fk_product_category
-    FOREIGN KEY (category_id) REFERENCES category (category_id);
 
 COMMIT;

@@ -43,9 +43,23 @@
         </div>
     </div>
     <% if ("success".equals(result)) { %>
-        <p class="form-success-text">상품 상태를 변경했습니다.</p>
+        <script>
+            (() => {
+                alert("상품 상태를 변경했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("result");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } else if ("fail".equals(result)) { %>
-        <p class="form-error-text">상품 상태 변경에 실패했습니다.</p>
+        <script>
+            (() => {
+                alert("상품 상태 변경에 실패했습니다.");
+                const url = new URL(window.location.href);
+                url.searchParams.delete("result");
+                window.history.replaceState({}, "", url);
+            })();
+        </script>
     <% } %>
     <div class="admin-table-wrap">
         <table class="admin-table">

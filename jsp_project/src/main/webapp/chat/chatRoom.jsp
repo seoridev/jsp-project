@@ -223,7 +223,13 @@
     };
 
     function connectWebSocket() {
-    	const wsUrl = "ws://" + window.location.host + "/jsp_project/chatServer/" + roomId + "/" + userId;        webSocket = new WebSocket(wsUrl);
+        // 추가됨: 현재 접속한 페이지 프로토콜에 맞춰 WebSocket 프로토콜 선택
+        const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+        // 추가됨: 배포 컨텍스트 경로를 JSP에서 가져와 하드코딩 경로 문제 방지
+        const contextPath = "<%= request.getContextPath() %>";
+        // 추가됨: userId에 특수문자가 있어도 WebSocket 경로가 깨지지 않도록 인코딩
+        const wsUrl = protocol + window.location.host + contextPath + "/chatServer/" + roomId + "/" + encodeURIComponent(userId);
+        webSocket = new WebSocket(wsUrl);
 
         webSocket.onopen = function(event) {
             chatMessages.innerHTML += '<div class="msg-system field-message is-success">채팅방에 성공적으로 연결되었습니다.</div>';

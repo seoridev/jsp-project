@@ -135,9 +135,23 @@
 	    </div>
 
 	    <% if ("success".equals(result)) { %>
-	        <p class="form-success-text">회원 상태를 변경했습니다.</p>
+	        <script>
+	            (() => {
+	                alert("회원 상태를 변경했습니다.");
+	                const url = new URL(window.location.href);
+	                url.searchParams.delete("result");
+	                window.history.replaceState({}, "", url);
+	            })();
+	        </script>
 	    <% } else if ("fail".equals(result)) { %>
-	        <p class="form-error-text">회원 상태를 변경하지 못했습니다.</p>
+	        <script>
+	            (() => {
+	                alert("회원 상태를 변경하지 못했습니다.");
+	                const url = new URL(window.location.href);
+	                url.searchParams.delete("result");
+	                window.history.replaceState({}, "", url);
+	            })();
+	        </script>
 	    <% } %>
 
 	    <%-- 검색 조건이 주소에 남도록 GET 사용 --%>
@@ -169,7 +183,9 @@
 	    </form>
 
 	    <% if (!listError.isEmpty()) { %>
-	        <p class="form-error-text"><%= listError %></p>
+	        <script>
+	            alert("<%= escapeScript(listError) %>");
+	        </script>
 	    <% } else { %>
 	        <div class="admin-list-meta">
 	            <span>총 <strong><%= totalCount %></strong>명</span>

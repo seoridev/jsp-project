@@ -1,15 +1,50 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="com.carrot.dao.CategoryDAO" %>
 <%@ page import="com.carrot.dao.ProductDAO" %>
+<%@ page import="com.carrot.dto.CategoryDTO" %>
 <%@ page import="com.carrot.dto.ProductDTO" %>
+<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.text.DecimalFormat" %>
 
 <%
 	String type = request.getParameter("type");
 	String keyword = request.getParameter("keyword");
+	String categoryIdParam = request.getParameter("categoryId");
+	Integer categoryId = null;
+
+    // 추가됨: categoryId 파라미터를 숫자로 안전하게 변환
+	if (categoryIdParam != null && !categoryIdParam.trim().isEmpty()) {
+	    try {
+	        categoryId = Integer.parseInt(categoryIdParam);
+	    } catch (NumberFormatException e) {
+	        categoryId = null;
+	    }
+	}
 
     ProductDAO dao = new ProductDAO();
-    List<ProductDTO> list = dao.selectProductList(type, keyword);
+    CategoryDAO categoryDao = new CategoryDAO();
+    List<CategoryDTO> categoryList = categoryDao.selectAllCategories();
+    String selectedCategoryName = null;
+
+    // 추가됨: 존재하는 활성 카테고리일 때만 categoryId 필터 적용
+    if (categoryId != null) {
+        selectedCategoryName = categoryDao.selectCategoryName(categoryId);
+        if (selectedCategoryName == null) {
+            categoryId = null;
+        }
+    }
+
+    // 추가됨: 카테고리와 검색어를 함께 적용해 상품 조회
+    List<ProductDTO> list = dao.selectProductList(type, keyword, categoryId);
+    String displayType = (type == null || type.trim().isEmpty()) ? "all" : type;
+    // 추가됨: 잘못된 검색 type은 화면과 링크에서 전체 검색으로 처리
+    if (!"title".equals(displayType) && !"content".equals(displayType) && !"all".equals(displayType)) {
+        displayType = "all";
+    }
+    String displayKeyword = keyword == null ? "" : keyword.trim();
+    String encodedKeyword = URLEncoder.encode(displayKeyword, "UTF-8");
+    int productCount = list == null ? 0 : list.size();
     
     DecimalFormat df = new DecimalFormat("#,###");
 %>
@@ -48,6 +83,34 @@
         cursor: pointer;
     }
     .btn-search:hover { background: #444; }
+    /* 추가됨: 상품 목록 카테고리 필터 표시 */
+    .list-summary {
+        margin: 0 0 12px;
+        color: #555;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .category-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .category-filter a {
+        padding: 7px 12px;
+        border: 1px solid #ddd;
+        border-radius: 16px;
+        color: #555;
+        text-decoration: none;
+        font-size: 13px;
+        background: #fff;
+    }
+    .category-filter a.active {
+        border-color: #ff5a5f;
+        background: #ff5a5f;
+        color: #fff;
+        font-weight: 700;
+    }
     
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
@@ -91,19 +154,46 @@
 	<div class="container">
 		<h2>🥕 중고거래 물품 목록</h2>
 
+		<%-- 추가됨: 현재 목록 기준과 상품 개수 표시 --%>
+		<p class="list-summary">
+			<%= selectedCategoryName != null ? selectedCategoryName : "전체" %> 상품 <%= productCount %>개
+			<% if (!displayKeyword.isEmpty()) { %>
+				<span> / 검색어: <%= displayKeyword %></span>
+			<% } %>
+		</p>
+
+		<%-- 추가됨: 목록 화면에서도 CATEGORY_ID 기준 카테고리 필터 제공 --%>
+		<div class="category-filter">
+			<a class="<%= categoryId == null ? "active" : "" %>"
+			   href="productList.jsp<%= !displayKeyword.isEmpty() ? "?type=" + displayType + "&keyword=" + encodedKeyword : "" %>">전체</a>
+			<% for (CategoryDTO category : categoryList) {
+			    String categoryUrl = "productList.jsp?categoryId=" + category.getCategoryId();
+			    if (!displayKeyword.isEmpty()) {
+			        categoryUrl += "&type=" + displayType + "&keyword=" + encodedKeyword;
+			    }
+			%>
+				<a class="<%= categoryId != null && categoryId == category.getCategoryId() ? "active" : "" %>"
+				   href="<%= categoryUrl %>"><%= category.getCategoryName() %></a>
+			<% } %>
+		</div>
+
 		<div class="search-bar">
 			<form action="productList.jsp" method="get"
 				style="display: flex; gap: 10px; width: 100%;">
+				<%-- 추가됨: 검색 시 선택된 카테고리 유지 --%>
+				<% if (categoryId != null) { %>
+				<input type="hidden" name="categoryId" value="<%= categoryId %>">
+				<% } %>
 				<select name="type">
-					<option value="title" <%= "title".equals(type) ? "selected" : "" %>>제목</option>
+					<option value="title" <%= "title".equals(displayType) ? "selected" : "" %>>제목</option>
 					<option value="content"
-						<%= "content".equals(type) ? "selected" : "" %>>내용</option>
-					<option value="all" <%= "all".equals(type) ? "selected" : "" %>>제목+내용</option>
+						<%= "content".equals(displayType) ? "selected" : "" %>>내용</option>
+					<option value="all" <%= "all".equals(displayType) ? "selected" : "" %>>제목+내용</option>
 				</select> <input type="text" name="keyword"
-					value="<%= (keyword != null) ? keyword : "" %>">
+					value="<%= displayKeyword %>">
 				<button type="submit" class="btn-search">검색</button>
 
-				<% if(keyword != null && !keyword.isEmpty()) { %>
+				<% if(!displayKeyword.isEmpty() || categoryId != null) { %>
 				<a href="productList.jsp"
 					style="text-decoration: none; font-size: 12px; color: #999; align-self: center;">초기화</a>
 				<% } %>

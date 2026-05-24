@@ -35,7 +35,9 @@
     </div>
 
     <% if (!statsError.isEmpty()) { %>
-        <p class="form-error-text"><%= statsError %></p>
+        <script>
+            alert("<%= escapeScript(statsError) %>");
+        </script>
     <% } %>
 
     <section class="admin-summary">

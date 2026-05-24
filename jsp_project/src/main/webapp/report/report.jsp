@@ -39,9 +39,23 @@
         <h1>신고하기</h1>
         <p><strong><%= escapeHtml(product.getTitle()) %></strong> 상품을 신고합니다.</p>
         <% if ("empty".equals(error)) { %>
-            <p class="message error">신고 사유를 선택해 주세요.</p>
+            <script>
+                (() => {
+                    alert("신고 사유를 선택해 주세요.");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("error");
+                    window.history.replaceState({}, "", url);
+                })();
+            </script>
         <% } else if ("fail".equals(error)) { %>
-            <p class="message error">신고 등록에 실패했습니다.</p>
+            <script>
+                (() => {
+                    alert("신고 등록에 실패했습니다.");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("error");
+                    window.history.replaceState({}, "", url);
+                })();
+            </script>
         <% } %>
         <form class="form-grid" action="<%= contextPath %>/report/reportProcess.jsp" method="post">
             <input type="hidden" name="targetType" value="PRODUCT">

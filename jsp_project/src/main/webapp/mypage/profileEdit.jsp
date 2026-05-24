@@ -21,11 +21,32 @@
     <section class="auth-panel">
         <h1>내 정보 수정</h1>
         <% if ("empty".equals(error)) { %>
-            <p class="message error">닉네임과 동네는 필수 정보입니다.</p>
+            <script>
+                (() => {
+                    alert("닉네임과 동네는 필수 정보입니다.");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("error");
+                    window.history.replaceState({}, "", url);
+                })();
+            </script>
         <% } else if ("phoneDuplicate".equals(error)) { %>
-            <p class="message error">이미 사용된 연락처입니다.</p>
+            <script>
+                (() => {
+                    alert("이미 사용된 연락처입니다.");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("error");
+                    window.history.replaceState({}, "", url);
+                })();
+            </script>
         <% } else if ("fail".equals(error)) { %>
-            <p class="message error">정보 수정에 실패했습니다.</p>
+            <script>
+                (() => {
+                    alert("정보 수정에 실패했습니다.");
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("error");
+                    window.history.replaceState({}, "", url);
+                })();
+            </script>
         <% } %>
         <form class="form-grid" action="<%= contextPath %>/mypage/profileEditProcess.jsp" method="post">
             <div class="field">

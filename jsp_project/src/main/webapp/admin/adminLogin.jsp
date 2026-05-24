@@ -31,7 +31,14 @@
 
 	        <%-- 에러가 있을 때만 안내 문구 표시 --%>
 	        <% if (!errorMessage.isEmpty()) { %>
-	            <p class="form-error-text"><%= errorMessage %></p>
+	            <script>
+	                (() => {
+	                    alert("<%= escapeScript(errorMessage) %>");
+	                    const url = new URL(window.location.href);
+	                    url.searchParams.delete("error");
+	                    window.history.replaceState({}, "", url);
+	                })();
+	            </script>
 	        <% } %>
 
 	        <%-- 관리자 계정 확인은 처리 페이지에서 진행 --%>

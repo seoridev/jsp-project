@@ -19,5 +19,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="src/main/webapp/WEB-INF/lib/lombok.jar"/>
+	<classpathentry exported="true" kind="lib" path="src/main/webapp/WEB-INF/lib/gson-2.11.0.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
