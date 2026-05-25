@@ -35,11 +35,9 @@
 
     CafeBoardDAO boardDao = new CafeBoardDAO();
     List<CafeBoardDTO> boards = boardDao.selectBoardsByCafeId(cafeId);
-    if (boardId <= 0 && !boards.isEmpty()) {
-        boardId = boards.get(0).getBoardId();
-    }
-    CafeBoardDTO selectedBoard = boardDao.selectBoardById(boardId);
-    if (selectedBoard == null || selectedBoard.getCafeId() != cafeId) {
+    boolean allBoards = boardId <= 0;
+    CafeBoardDTO selectedBoard = allBoards ? null : boardDao.selectBoardById(boardId);
+    if (!allBoards && (selectedBoard == null || selectedBoard.getCafeId() != cafeId)) {
         response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId);
         return;
     }
@@ -49,7 +47,18 @@
     boolean activeMember = currentLoginId != null && memberDao.isActiveMember(cafeId, currentLoginId);
     boolean manager = currentLoginId != null && memberDao.isCafeManagerOrOwner(cafeId, currentLoginId);
     boolean canRead = "PUBLIC".equals(cafe.getVisibility()) || activeMember;
-    boolean canWrite = activeMember && ("MEMBER".equals(selectedBoard.getWritePermission()) || manager);
+    int writeBoardId = 0;
+    if (activeMember) {
+        for (CafeBoardDTO board : boards) {
+            if (manager || "MEMBER".equals(board.getWritePermission())) {
+                writeBoardId = board.getBoardId();
+                break;
+            }
+        }
+    }
+    boolean canWrite = allBoards
+            ? writeBoardId > 0
+            : activeMember && ("MEMBER".equals(selectedBoard.getWritePermission()) || manager);
 
     CafePostDAO postDao = new CafePostDAO();
     int totalCount = canRead ? postDao.countPosts(cafeId, boardId, keyword) : 0;
@@ -63,72 +72,40 @@
         postListRedirect += "&keyword=" + keywordParam;
     }
     String encodedPostListRedirect = java.net.URLEncoder.encode(postListRedirect, "UTF-8");
+    int pageBlockSize = 10;
+    int pageBlockStart = ((pageNo - 1) / pageBlockSize) * pageBlockSize + 1;
+    int pageBlockEnd = Math.min(pageBlockStart + pageBlockSize - 1, totalPages);
+    int prevBlockPage = pageBlockStart - pageBlockSize;
+    int nextBlockPage = pageBlockEnd + 1;
 %>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= escapeHtml(selectedBoard.getBoardName()) %> | <%= escapeHtml(cafe.getCafeName()) %></title>
+    <title><%= allBoards ? "전체글 보기" : escapeHtml(selectedBoard.getBoardName()) %> | <%= escapeHtml(cafe.getCafeName()) %></title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
 <main class="page-shell community-shell">
-    <section class="cafe-gate">
-        <div class="cafe-cover-band">
-            <span class="cafe-cover-label"><%= escapeHtml(cafe.getCategory()) %></span>
-        </div>
-        <div class="cafe-gate-content">
-            <div class="cafe-avatar cafe-gate-avatar"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></div>
-            <div class="cafe-gate-copy">
-                <div class="cafe-title-row">
-                    <h1><%= escapeHtml(cafe.getCafeName()) %></h1>
-                    <span class="cafe-badge"><%= escapeHtml(cafe.getVisibility()) %></span>
-                </div>
-                <p><%= escapeHtml(cafe.getDescription()) %></p>
-                <div class="cafe-meta-line">
-                    <span><%= escapeHtml(cafe.getCategory()) %></span>
-                    <span><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></span>
-                </div>
-            </div>
-        </div>
-    </section>
+    <%
+        request.setAttribute("cafeIncludeCafe", cafe);
+        request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
+        request.setAttribute("cafeIncludeCurrentBoardId", Integer.valueOf(allBoards ? 0 : boardId));
+    %>
+    <%@ include file="includes/cafeHero.jsp" %>
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <div class="cafe-box">
-                <div class="cafe-section-title">카페 활동</div>
-                <div class="cafe-box-body cafe-action-stack">
-                    <% if (!loggedIn) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= encodedPostListRedirect %>">로그인 후 가입</a>
-                    <% } else if (canWrite) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">글쓰기</a>
-                    <% } else if (activeMember) { %>
-                        <span class="status-badge is-active">가입중</span>
-                    <% } else { %>
-                        <a class="button btn-main" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeId %>">카페 가입</a>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="cafe-box cafe-info-box">
-                <div class="cafe-section-title">내 카페 정보</div>
-                <div class="cafe-box-body">
-                    <ul class="cafe-stat-list">
-                        <li><span>내 등급</span><strong><%= manager ? "관리자" : (activeMember ? "가입중" : "방문자") %></strong></li>
-                        <li><span>지역</span><strong><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></strong></li>
-                        <li><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></li>
-                    </ul>
-                </div>
-            </div>
+            <%@ include file="includes/cafeSideProfile.jsp" %>
 
             <div class="cafe-box">
                 <div class="cafe-section-title">게시판 목록</div>
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
                     <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boards.get(0).getBoardId() %>">전체글 보기</a>
+                        <a class="cafe-menu-item <%= allBoards ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO board : boards) { %>
                         <a class="cafe-menu-item <%= board.getBoardId() == boardId ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
@@ -162,23 +139,14 @@
         <section class="cafe-main">
             <div class="cafe-box">
                 <div class="cafe-section-title">
-                    <span><%= escapeHtml(selectedBoard.getBoardName()) %></span>
+                    <span><%= allBoards ? "전체글 보기" : escapeHtml(selectedBoard.getBoardName()) %></span>
                     <% if (canWrite) { %>
-                        <a class="button btn-main btn-small" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">글쓰기</a>
+                        <a class="button btn-main btn-small" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= allBoards ? writeBoardId : boardId %>">글쓰기</a>
                     <% } %>
                 </div>
                 <div class="cafe-box-body">
-                    <p class="community-meta"><%= escapeHtml(selectedBoard.getDescription()) %></p>
+                    <p class="community-meta"><%= allBoards ? "카페에 올라온 모든 게시글입니다." : escapeHtml(selectedBoard.getDescription()) %></p>
                 </div>
-                <form class="board-search-bar" action="<%= contextPath %>/community/postList.jsp" method="get">
-                    <strong>글 검색</strong>
-                    <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                    <input type="hidden" name="boardId" value="<%= boardId %>">
-                    <input type="hidden" name="page" value="1">
-                    <input name="keyword" placeholder="제목 또는 내용 검색" value="<%= escapeHtml(keyword) %>">
-                    <button class="btn-sub btn-small" type="submit">검색</button>
-                </form>
-
                 <% if ("success".equals(request.getParameter("delete"))) { %>
                     <p class="notice-toast">게시글이 삭제되었습니다.</p>
                 <% } %>
@@ -216,15 +184,30 @@
                             <% } %>
                         </tbody>
                     </table>
+                    <form class="board-search-bar" action="<%= contextPath %>/community/postList.jsp" method="get">
+                        <strong>글 검색</strong>
+                        <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                        <input type="hidden" name="boardId" value="<%= boardId %>">
+                        <input type="hidden" name="page" value="1">
+                        <input name="keyword" placeholder="제목 또는 내용 검색" value="<%= escapeHtml(keyword) %>">
+                        <button class="btn-sub btn-small" type="submit">검색</button>
+                    </form>
                     <div class="pagination">
-                        <% if (pageNo > 1) { %>
-                            <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo - 1 %>">이전</a>
+                        <% if (prevBlockPage >= 1) { %>
+                            <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= prevBlockPage %>">이전</a>
+                        <% } else { %>
+                            <span class="is-disabled">이전</span>
                         <% } %>
-                        <span class="community-meta"><%= pageNo %> / <%= totalPages %> 페이지 · 총 <%= totalCount %>개</span>
-                        <% if (pageNo < totalPages) { %>
-                            <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageNo + 1 %>">다음</a>
+                        <% for (int pageIndex = pageBlockStart; pageIndex <= pageBlockEnd; pageIndex++) { %>
+                            <a class="<%= pageIndex == pageNo ? "is-current" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageIndex %>"><%= pageIndex %></a>
+                        <% } %>
+                        <% if (nextBlockPage <= totalPages) { %>
+                            <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= nextBlockPage %>">다음</a>
+                        <% } else { %>
+                            <span class="is-disabled">다음</span>
                         <% } %>
                     </div>
+                    <p class="community-meta board-result-count">총 <%= totalCount %>개</p>
                 <% } %>
             </div>
         </section>

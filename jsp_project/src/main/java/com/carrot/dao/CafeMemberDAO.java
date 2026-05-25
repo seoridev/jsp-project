@@ -79,15 +79,36 @@ public class CafeMemberDAO extends BaseDAO {
     }
 
     public List<CafeMemberDTO> selectCafeMembers(int cafeId) {
+        return selectCafeMembers(cafeId, null, null, null);
+    }
+
+    public List<CafeMemberDTO> selectCafeMembers(int cafeId, String keyword, String role, String status) {
+        List<Object> params = new ArrayList<>();
         String sql = "SELECT cm.*, m.nickname, m.region "
                 + "FROM cafe_member cm LEFT JOIN member m ON cm.member_id = m.login_id "
-                + "WHERE cm.cafe_id = ? "
+                + "WHERE cm.cafe_id = ? ";
+        params.add(cafeId);
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql += "AND (LOWER(cm.member_id) LIKE ? OR LOWER(NVL(m.nickname, '')) LIKE ?) ";
+            String pattern = "%" + keyword.trim().toLowerCase() + "%";
+            params.add(pattern);
+            params.add(pattern);
+        }
+        if (isValidRole(role)) {
+            sql += "AND cm.role = ? ";
+            params.add(role.trim().toUpperCase());
+        }
+        if (isValidStatus(status)) {
+            sql += "AND cm.status = ? ";
+            params.add(status.trim().toUpperCase());
+        }
+        sql += ""
                 + "ORDER BY CASE cm.status "
                 + "WHEN 'ACTIVE' THEN 1 WHEN 'PENDING' THEN 2 WHEN 'REJECTED' THEN 3 "
                 + "WHEN 'BANNED' THEN 4 WHEN 'LEFT' THEN 5 ELSE 6 END, "
                 + "CASE cm.role WHEN 'OWNER' THEN 1 WHEN 'MANAGER' THEN 2 ELSE 3 END, "
                 + "cm.joined_at DESC";
-        return selectMembersBySql(sql, cafeId);
+        return selectMembersBySql(sql, params);
     }
 
     public boolean approveMember(int cafeId, String memberId) {
@@ -153,6 +174,72 @@ public class CafeMemberDAO extends BaseDAO {
                 conn.commit();
                 return true;
             }
+        } catch (Exception e) {
+            rollbackQuietly(conn);
+            e.printStackTrace();
+        } finally {
+            closeQuietly(conn);
+        }
+        return false;
+    }
+
+    public boolean updateMemberRole(int cafeId, String memberId, String role) {
+        if (!"MANAGER".equals(role) && !"MEMBER".equals(role)) {
+            return false;
+        }
+        String sql = "UPDATE cafe_member SET role = ?, updated_at = SYSTIMESTAMP "
+                + "WHERE cafe_id = ? AND member_id = ? AND role <> 'OWNER'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, role);
+            pstmt.setInt(2, cafeId);
+            pstmt.setString(3, memberId);
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean setMemberStatus(int cafeId, String memberId, String status) {
+        if (!"ACTIVE".equals(status) && !"LEFT".equals(status) && !"BANNED".equals(status)) {
+            return false;
+        }
+
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            CafeMemberDTO current = selectCafeMember(conn, cafeId, memberId);
+            if (current == null || "OWNER".equals(current.getRole()) || status.equals(current.getStatus())) {
+                conn.rollback();
+                return false;
+            }
+
+            String sql = "UPDATE cafe_member SET status = ?, updated_at = SYSTIMESTAMP "
+                    + "WHERE cafe_id = ? AND member_id = ? AND role <> 'OWNER'";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, status);
+                pstmt.setInt(2, cafeId);
+                pstmt.setString(3, memberId);
+                boolean updated = pstmt.executeUpdate() > 0;
+                if (!updated) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            int activeDelta = 0;
+            if ("ACTIVE".equals(current.getStatus()) && !"ACTIVE".equals(status)) {
+                activeDelta = -1;
+            } else if (!"ACTIVE".equals(current.getStatus()) && "ACTIVE".equals(status)) {
+                activeDelta = 1;
+            }
+            if (activeDelta != 0) {
+                updateMemberCount(conn, cafeId, activeDelta);
+            }
+            conn.commit();
+            return true;
         } catch (Exception e) {
             rollbackQuietly(conn);
             e.printStackTrace();
@@ -237,6 +324,22 @@ public class CafeMemberDAO extends BaseDAO {
         return null;
     }
 
+    private CafeMemberDTO selectCafeMember(Connection conn, int cafeId, String memberId) throws Exception {
+        String sql = "SELECT cm.*, m.nickname, m.region "
+                + "FROM cafe_member cm LEFT JOIN member m ON cm.member_id = m.login_id "
+                + "WHERE cm.cafe_id = ? AND cm.member_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, memberId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapMember(rs);
+                }
+            }
+        }
+        return null;
+    }
+
     private void updateMemberCount(Connection conn, int cafeId, int amount) throws Exception {
         String sql = "UPDATE cafe SET member_count = GREATEST(member_count + ?, 0) WHERE cafe_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -247,9 +350,22 @@ public class CafeMemberDAO extends BaseDAO {
     }
 
     private List<CafeMemberDTO> selectMembersBySql(String sql, int cafeId) {
+        List<Object> params = new ArrayList<>();
+        params.add(cafeId);
+        return selectMembersBySql(sql, params);
+    }
+
+    private List<CafeMemberDTO> selectMembersBySql(String sql, List<Object> params) {
         List<CafeMemberDTO> members = new ArrayList<>();
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, cafeId);
+            for (int i = 0; i < params.size(); i++) {
+                Object param = params.get(i);
+                if (param instanceof Integer) {
+                    pstmt.setInt(i + 1, (Integer) param);
+                } else {
+                    pstmt.setString(i + 1, String.valueOf(param));
+                }
+            }
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     members.add(mapMember(rs));
@@ -259,6 +375,23 @@ public class CafeMemberDAO extends BaseDAO {
             e.printStackTrace();
         }
         return members;
+    }
+
+    private boolean isValidRole(String role) {
+        if (role == null || role.trim().isEmpty() || "ALL".equalsIgnoreCase(role)) {
+            return false;
+        }
+        String normalized = role.trim().toUpperCase();
+        return "OWNER".equals(normalized) || "MANAGER".equals(normalized) || "MEMBER".equals(normalized);
+    }
+
+    private boolean isValidStatus(String status) {
+        if (status == null || status.trim().isEmpty() || "ALL".equalsIgnoreCase(status)) {
+            return false;
+        }
+        String normalized = status.trim().toUpperCase();
+        return "PENDING".equals(normalized) || "ACTIVE".equals(normalized) || "REJECTED".equals(normalized)
+                || "BANNED".equals(normalized) || "LEFT".equals(normalized);
     }
 
     private void rollbackQuietly(Connection conn) {

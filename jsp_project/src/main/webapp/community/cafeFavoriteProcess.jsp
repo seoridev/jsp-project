@@ -14,6 +14,7 @@
 %>
 <%
     int cafeId = parseIntParam(request.getParameter("cafeId"));
+    String redirect = request.getParameter("redirect");
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
 
@@ -23,6 +24,10 @@
     }
 
     boolean toggled = new CafeFavoriteDAO().toggleFavorite(cafeId, currentLoginId);
-    response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId="
-            + cafeId + (toggled ? "&favorite=success" : "&error=favoriteFail"));
+    if (redirect == null || !redirect.startsWith("/community/") || redirect.contains("\r") || redirect.contains("\n")) {
+        redirect = "/community/cafeDetail.jsp?cafeId=" + cafeId;
+    }
+    response.sendRedirect(request.getContextPath() + redirect
+            + (redirect.indexOf('?') >= 0 ? "&" : "?")
+            + (toggled ? "favorite=success" : "error=favoriteFail"));
 %>

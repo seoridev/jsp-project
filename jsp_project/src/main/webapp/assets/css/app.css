@@ -710,7 +710,8 @@ button.primary {
     margin-top: 16px;
 }
 
-.pagination a {
+.pagination a,
+.pagination span {
     display: inline-grid;
     place-items: center;
     min-width: 38px;
@@ -721,6 +722,11 @@ button.primary {
     background: #fff;
     font-size: 14px;
     font-weight: 800;
+}
+
+.pagination span.is-disabled {
+    color: #a79d90;
+    background: #f6f1eb;
 }
 
 .pagination a.is-current {
@@ -1763,6 +1769,15 @@ button.btn-danger,
     padding: 10px 12px;
 }
 
+.post-board-table + .board-search-bar {
+    margin-top: 14px;
+}
+
+.board-result-count {
+    margin: 8px 0 0;
+    text-align: center;
+}
+
 .cafe-search-bar input,
 .board-search-bar input,
 .cafe-filter-bar input,
@@ -2123,6 +2138,21 @@ button.btn-danger {
     font-size: 16px;
 }
 
+.write-board-row {
+    display: grid;
+    grid-template-columns: 180px;
+}
+
+.write-board-select {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #ded4c8;
+    border-radius: 4px;
+    background: #fff;
+    padding: 0 10px;
+    font-weight: 700;
+}
+
 .write-content-area {
     min-height: 320px;
     padding: 12px;
@@ -2219,9 +2249,9 @@ button.btn-danger {
 .cafe-gate-content {
     position: relative;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 18px;
-    align-items: end;
+    align-items: start;
     padding: 0 20px 20px;
 }
 
@@ -2569,6 +2599,10 @@ button.btn-danger {
 }
 
 @media (max-width: 560px) {
+    .write-board-row {
+        grid-template-columns: 1fr;
+    }
+
     .cafe-cover-band {
         min-height: 120px;
     }
@@ -2673,6 +2707,10 @@ button.btn-danger {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+}
+
+.member-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .manage-summary-card {
@@ -2830,6 +2868,107 @@ button.btn-danger {
     white-space: nowrap;
 }
 
+.member-directory-table {
+    min-width: 940px;
+}
+
+.member-directory-table th:nth-child(4),
+.member-directory-table td:nth-child(4) {
+    width: 170px;
+}
+
+.member-directory-table th:nth-child(5),
+.member-directory-table td:nth-child(5) {
+    width: 170px;
+}
+
+.member-directory-table th:nth-child(6),
+.member-directory-table td:nth-child(6) {
+    width: 86px;
+}
+
+.member-filter-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 150px 150px 86px 86px;
+    gap: 10px;
+    align-items: end;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee7dc;
+    background: #fff;
+}
+
+.member-filter-form label {
+    display: grid;
+    gap: 5px;
+    color: #5f574f;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.member-filter-form input,
+.member-filter-form select {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid #d7d0c5;
+    border-radius: 4px;
+    background: #fffdf9;
+    padding: 0 9px;
+    color: #202124;
+    font: inherit;
+}
+
+.member-inline-form {
+    display: grid;
+    grid-template-columns: 96px 54px;
+    gap: 6px;
+    align-items: center;
+    margin: 0;
+    min-width: 156px;
+}
+
+.member-manage-row {
+    cursor: context-menu;
+}
+
+.member-context-menu {
+    position: absolute;
+    z-index: 50;
+    min-width: 120px;
+    padding: 6px;
+    border: 1px solid #d8d0c6;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(42, 35, 28, .16);
+}
+
+.member-context-menu button {
+    display: block;
+    width: 100%;
+    min-height: 32px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    padding: 0 10px;
+    color: #3a332d;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+}
+
+.member-context-menu button[hidden] {
+    display: none;
+}
+
+.member-context-menu button:hover {
+    background: #fff4e8;
+    color: #d95c00;
+}
+
+.member-context-menu button.is-danger:hover {
+    background: #fff1f0;
+    color: #b42318;
+}
+
 .manage-table-check {
     display: inline-flex;
     align-items: center;
@@ -2904,6 +3043,18 @@ button.btn-danger {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+@media (max-width: 900px) {
+    .manage-layout,
+    .member-summary-grid,
+    .member-filter-form {
+        grid-template-columns: 1fr;
+    }
+
+    .manage-sidebar {
+        position: static;
+    }
 }
 
 .board-admin-layout {

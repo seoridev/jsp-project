@@ -24,6 +24,7 @@
     String postDetailRedirect = java.net.URLEncoder.encode("/community/postDetail.jsp?postId=" + postId, "UTF-8");
     CafePostDAO postDao = new CafePostDAO();
     CafePostDTO post = postDao.selectPostById(postId);
+    int cafeId = post == null ? 0 : post.getCafeId();
     boolean deletedPostFail = post == null && "deleteFail".equals(request.getParameter("error"));
     if (post == null && !deletedPostFail) {
         response.sendRedirect(request.getContextPath() + "/community/communityHome.jsp?error=noPost");
@@ -78,58 +79,23 @@
             </div>
         </section>
     <% } else { %>
-    <section class="cafe-gate">
-        <div class="cafe-cover-band">
-            <span class="cafe-cover-label"><%= escapeHtml(cafe.getCategory()) %></span>
-        </div>
-        <div class="cafe-gate-content">
-            <div class="cafe-avatar cafe-gate-avatar"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></div>
-            <div class="cafe-gate-copy">
-                <div class="cafe-title-row">
-                    <h1><%= escapeHtml(cafe.getCafeName()) %></h1>
-                    <span class="cafe-badge"><%= escapeHtml(cafe.getVisibility()) %></span>
-                </div>
-                <p><%= escapeHtml(cafe.getDescription()) %></p>
-                <div class="cafe-meta-line">
-                    <span><%= escapeHtml(cafe.getCategory()) %></span>
-                    <span><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></span>
-                </div>
-            </div>
-        </div>
-    </section>
+    <%
+        request.setAttribute("cafeIncludeCafe", cafe);
+        request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
+        request.setAttribute("cafeIncludeCurrentBoardId", Integer.valueOf(post.getBoardId()));
+    %>
+    <%@ include file="includes/cafeHero.jsp" %>
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <div class="cafe-box">
-                <div class="cafe-section-title">카페 활동</div>
-                <div class="cafe-box-body cafe-action-stack">
-                    <% if (!loggedIn) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= postDetailRedirect %>">로그인 후 가입</a>
-                    <% } else if (activeMember) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>">글쓰기</a>
-                    <% } else { %>
-                        <a class="button btn-main" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= post.getCafeId() %>">카페 가입</a>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="cafe-box cafe-info-box">
-                <div class="cafe-section-title">내 카페 정보</div>
-                <div class="cafe-box-body">
-                    <ul class="cafe-stat-list">
-                        <li><span>내 등급</span><strong><%= manager ? "관리자" : (activeMember ? "가입중" : "방문자") %></strong></li>
-                        <li><span>지역</span><strong><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></strong></li>
-                        <li><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></li>
-                    </ul>
-                </div>
-            </div>
+            <%@ include file="includes/cafeSideProfile.jsp" %>
 
             <div class="cafe-box">
                 <div class="cafe-section-title">게시판 목록</div>
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
                     <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= boards.get(0).getBoardId() %>">전체글 보기</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO board : boards) { %>
                         <a class="cafe-menu-item <%= board.getBoardId() == post.getBoardId() ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= board.getBoardId() %>">

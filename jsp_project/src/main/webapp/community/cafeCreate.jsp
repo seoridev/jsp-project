@@ -10,20 +10,26 @@
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
-<main class="auth-wrap">
-    <section class="auth-panel community-write-panel">
-        <p class="eyebrow">커뮤니티</p>
-        <h1>카페 만들기</h1>
-        <p>이웃과 주제별 이야기를 나눌 동네 공간을 만들어보세요.</p>
+<main class="cafe-write-wrap">
+    <section class="cafe-write-panel">
+        <div class="cafe-write-head">
+            <p class="breadcrumb">
+                <a href="<%= contextPath %>/community/communityHome.jsp">커뮤니티</a>
+                <span>&gt;</span>
+                <span>카페 만들기</span>
+            </p>
+            <h1>카페 만들기</h1>
+            <p class="community-meta">지역과 주제가 드러나는 카페 정보를 입력하세요.</p>
+        </div>
         <% if ("duplicate".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">이미 사용 중인 카페명입니다.</p>
         <% } else if ("fail".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">카페 생성에 실패했습니다.</p>
         <% } %>
-        <form class="form-grid" action="<%= contextPath %>/community/cafeCreateProcess.jsp" method="post">
+        <form class="cafe-write-form" action="<%= contextPath %>/community/cafeCreateProcess.jsp" method="post">
             <div class="field">
                 <label for="cafeName">카페명</label>
-                <input id="cafeName" name="cafeName" maxlength="100" required>
+                <input id="cafeName" class="write-title-input" name="cafeName" maxlength="100" required>
             </div>
             <div class="field">
                 <label for="description">소개</label>
@@ -51,9 +57,9 @@
                     <option value="APPROVAL">승인 가입</option>
                 </select>
             </div>
-            <div class="form-actions horizontal">
-                <button class="btn-primary" type="submit">생성하기</button>
-                <a class="button btn-secondary" href="<%= contextPath %>/community/communityHome.jsp">취소</a>
+            <div class="write-actions">
+                <a class="button btn-sub" href="<%= contextPath %>/community/communityHome.jsp">취소</a>
+                <button class="btn-main" type="submit">생성하기</button>
             </div>
         </form>
     </section>

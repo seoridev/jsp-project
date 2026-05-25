@@ -199,7 +199,6 @@
                                             <input type="checkbox" name="isNotice" value="Y" <%= "Y".equals(selectedBoard.getIsNotice()) ? "checked" : "" %>>
                                             공지 게시판으로 사용
                                         </label>
-                                        <p class="manage-form-note">표시 순서는 왼쪽 목록의 ↑ ↓ 버튼으로 변경합니다.</p>
                                     </div>
                                 </div>
 

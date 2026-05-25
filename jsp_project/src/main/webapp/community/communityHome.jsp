@@ -22,107 +22,121 @@
 <body>
 <%@ include file="../common/header.jsp" %>
 <main class="page-shell community-shell">
-    <section class="community-hero">
-        <div class="community-hero-copy">
-            <p class="eyebrow">동네 커뮤니티</p>
-            <h1>관심 카페를 찾고 이웃과 이야기를 나누세요.</h1>
-            <p>지역과 주제별 카페를 둘러보고, 새 글과 활발한 대화에 바로 참여해보세요.</p>
-            <form class="community-search" action="<%= contextPath %>/community/cafeList.jsp" method="get">
-                <label class="visually-hidden" for="keyword">카페 검색</label>
-                <input id="keyword" name="keyword" placeholder="카페명이나 소개글 검색">
-                <button class="btn-primary" type="submit">검색</button>
-            </form>
-            <div class="community-hero-actions">
-                <a class="button btn-secondary" href="<%= contextPath %>/community/cafeList.jsp">카페 둘러보기</a>
-                <% if (loggedIn) { %>
-                    <a class="button btn-primary" href="<%= contextPath %>/community/cafeCreate.jsp">카페 만들기</a>
-                <% } else { %>
-                    <a class="button btn-primary" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 만들기</a>
+    <section class="cafe-top">
+        <p class="eyebrow">동네마켓 커뮤니티</p>
+        <h1>카페</h1>
+        <p>지역과 관심사별 카페를 찾고, 게시판에서 이야기를 나눠보세요.</p>
+    </section>
+
+    <form class="cafe-search-bar" action="<%= contextPath %>/community/cafeList.jsp" method="get">
+        <strong>카페 검색</strong>
+        <input id="keyword" name="keyword" placeholder="카페명 또는 소개글 검색">
+        <button class="btn-main btn-small" type="submit">검색</button>
+    </form>
+
+    <section class="cafe-portal-grid">
+        <aside class="cafe-box">
+            <div class="cafe-section-title">카페 카테고리</div>
+            <nav class="cafe-category-list" aria-label="카페 카테고리">
+                <a href="<%= contextPath %>/community/cafeList.jsp?category=동네소식">동네소식</a>
+                <a href="<%= contextPath %>/community/cafeList.jsp?category=맛집">맛집</a>
+                <a href="<%= contextPath %>/community/cafeList.jsp?category=반려동물">반려동물</a>
+                <a href="<%= contextPath %>/community/cafeList.jsp?category=취미">취미</a>
+                <a href="<%= contextPath %>/community/cafeList.jsp?category=육아">육아</a>
+            </nav>
+        </aside>
+
+        <section class="cafe-box">
+            <div class="cafe-section-title">
+                <span>인기 카페</span>
+                <a class="btn-text" href="<%= contextPath %>/community/cafeList.jsp?sort=popular">전체보기</a>
+            </div>
+            <div class="cafe-rank-list">
+                <% int rank = 1; %>
+                <% for (CafeDTO cafe : popularCafes) { %>
+                    <a class="cafe-rank-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
+                        <span class="cafe-rank-number"><%= rank++ %></span>
+                        <span class="cafe-list-copy">
+                            <strong><%= escapeHtml(cafe.getCafeName()) %></strong>
+                            <span class="cafe-meta-line">
+                                <span><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %></span>
+                                <span><%= escapeHtml(cafe.getCategory()) %></span>
+                                <span>회원 <%= cafe.getMemberCount() %></span>
+                                <span>글 <%= cafe.getPostCount() %></span>
+                            </span>
+                        </span>
+                        <span class="btn-sub btn-small">방문</span>
+                    </a>
                 <% } %>
             </div>
-        </div>
-        <aside class="community-hero-side">
-            <span class="community-badge">지금 인기</span>
-            <% int heroCount = 0; %>
-            <% for (CafeDTO cafe : popularCafes) { %>
-                <% if (heroCount++ >= 3) { break; } %>
-                <a class="community-stat-card" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
-                    <strong><%= escapeHtml(cafe.getCafeName()) %></strong>
-                    <span><%= escapeHtml(cafe.getRegion()) %> · 회원 <%= cafe.getMemberCount() %>명</span>
-                </a>
-            <% } %>
+        </section>
+
+        <aside class="cafe-box cafe-info-box">
+            <div class="cafe-section-title">커뮤니티 안내</div>
+            <div class="cafe-box-body cafe-action-stack">
+                <% if (loggedIn) { %>
+                    <a class="button btn-main" href="<%= contextPath %>/community/cafeCreate.jsp">카페 만들기</a>
+                <% } else { %>
+                    <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired">로그인 후 만들기</a>
+                <% } %>
+                <a class="button btn-sub" href="<%= contextPath %>/community/cafeList.jsp">카페 둘러보기</a>
+                <p class="community-meta">카페 검색, 추천 카페, 최근 글을 게시판처럼 조밀하게 정리했습니다.</p>
+            </div>
         </aside>
     </section>
 
-    <section class="community-section">
-        <div class="section-title-row">
-            <div>
-                <p class="eyebrow">추천 카페</p>
-                <h2>인기 카페</h2>
-            </div>
-            <a class="button btn-ghost" href="<%= contextPath %>/community/cafeList.jsp?sort=popular">전체 보기</a>
-        </div>
-        <div class="community-grid">
-            <% for (CafeDTO cafe : popularCafes) { %>
-                <a class="community-cafe-card" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
-                    <div class="community-card-cover cover-tone-<%= cafe.getCafeId() % 4 %>">
-                        <span><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></span>
-                    </div>
-                    <div class="community-card-body">
-                        <span class="community-badge"><%= escapeHtml(cafe.getCategory()) %></span>
-                        <h3><%= escapeHtml(cafe.getCafeName()) %></h3>
+    <section class="cafe-box">
+        <div class="cafe-section-title">새 카페</div>
+        <div class="cafe-directory-list">
+            <% for (CafeDTO cafe : recentCafes) { %>
+                <a class="cafe-directory-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
+                    <span class="cafe-initial"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></span>
+                    <span class="cafe-list-copy">
+                        <strong><%= escapeHtml(cafe.getCafeName()) %></strong>
                         <p><%= escapeHtml(cafe.getDescription()) %></p>
-                        <div class="community-meta-row">
-                            <span><%= escapeHtml(cafe.getRegion()) %></span>
-                            <span>회원 <%= cafe.getMemberCount() %>명</span>
-                            <span>글 <%= cafe.getPostCount() %>개</span>
-                        </div>
-                        <span class="community-card-cta">카페 입장</span>
-                    </div>
+                        <span class="cafe-meta-line">
+                            <span><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %></span>
+                            <span><%= escapeHtml(cafe.getCategory()) %></span>
+                            <span>회원 <%= cafe.getMemberCount() %></span>
+                        </span>
+                    </span>
+                    <span class="btn-sub btn-small">방문</span>
                 </a>
             <% } %>
         </div>
     </section>
 
-    <section class="community-two-column">
-        <div class="community-section">
-            <div class="section-title-row">
-                <h2>새 카페</h2>
-            </div>
-            <div class="community-grid compact">
-                <% for (CafeDTO cafe : recentCafes) { %>
-                    <a class="community-cafe-card" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
-                        <div class="community-card-cover cover-tone-<%= cafe.getCafeId() % 4 %>"></div>
-                        <div class="community-card-body">
-                            <span class="community-badge"><%= escapeHtml(cafe.getCategory()) %></span>
-                            <h3><%= escapeHtml(cafe.getCafeName()) %></h3>
-                            <div class="community-meta-row">
-                                <span><%= escapeHtml(cafe.getRegion()) %></span>
-                                <span>회원 <%= cafe.getMemberCount() %>명</span>
-                            </div>
-                        </div>
-                    </a>
-                <% } %>
-            </div>
-        </div>
-        <div class="community-section">
-            <div class="section-title-row">
-                <h2>최근 글</h2>
-            </div>
-            <div class="post-feed-list">
+    <section class="cafe-box">
+        <div class="cafe-section-title">최근 올라온 글</div>
+        <table class="post-board-table">
+            <colgroup>
+                <col class="col-type">
+                <col>
+                <col class="col-author">
+                <col class="col-count">
+                <col class="col-count">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>제목</th>
+                    <th>카페</th>
+                    <th>댓글</th>
+                    <th>좋아요</th>
+                </tr>
+            </thead>
+            <tbody>
                 <% for (CafePostDTO post : recentPosts) { %>
-                    <a class="post-feed-item" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>">
-                        <div class="post-title-row">
-                            <strong><%= escapeHtml(post.getTitle()) %></strong>
-                        </div>
-                        <div class="post-meta">
-                            <span><%= escapeHtml(post.getCafeName()) %></span>
-                            <span>댓글 <%= post.getCommentCount() %>개</span>
-                        </div>
-                    </a>
+                    <tr>
+                        <td><span class="<%= "Y".equals(post.getIsNotice()) ? "notice-badge" : "board-badge is-normal" %>"><%= "Y".equals(post.getIsNotice()) ? "공지" : "일반" %></span></td>
+                        <td class="post-title-cell"><a href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>"><%= escapeHtml(post.getTitle()) %></a></td>
+                        <td><%= escapeHtml(post.getCafeName()) %></td>
+                        <td><%= post.getCommentCount() %></td>
+                        <td><%= post.getLikeCount() %></td>
+                    </tr>
                 <% } %>
-            </div>
-        </div>
+            </tbody>
+        </table>
     </section>
 </main>
 <%@ include file="../common/footer.jsp" %>

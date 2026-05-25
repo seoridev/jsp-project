@@ -47,7 +47,7 @@
             <% } %>
             <% for (CafeDTO cafe : joinedCafes) { %>
                 <a class="community-row" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
-                    <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
+                    <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
                     <span class="community-meta">회원 <%= cafe.getMemberCount() %> · 글 <%= cafe.getPostCount() %></span>
                 </a>
             <% } %>
@@ -62,7 +62,7 @@
             <% } %>
             <% for (CafeDTO cafe : ownedCafes) { %>
                 <a class="community-row" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
-                    <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
+                    <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
                     <span class="community-meta">회원 <%= cafe.getMemberCount() %> · 글 <%= cafe.getPostCount() %></span>
                 </a>
             <% } %>
@@ -77,7 +77,7 @@
             <% } %>
             <% for (CafeDTO cafe : favoriteCafes) { %>
                 <a class="community-row" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
-                    <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
+                    <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
                     <span class="community-meta">회원 <%= cafe.getMemberCount() %> · 글 <%= cafe.getPostCount() %></span>
                 </a>
             <% } %>

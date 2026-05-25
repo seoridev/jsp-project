@@ -46,52 +46,23 @@
 <body>
 <%@ include file="../common/header.jsp" %>
 <main class="page-shell community-shell">
-    <section class="cafe-gate">
-        <div class="cafe-cover-band">
-            <span class="cafe-cover-label"><%= escapeHtml(cafe.getCategory()) %></span>
-        </div>
-        <div class="cafe-gate-content">
-            <div class="cafe-avatar cafe-gate-avatar"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></div>
-            <div class="cafe-gate-copy">
-                <div class="cafe-title-row">
-                    <h1><%= escapeHtml(cafe.getCafeName()) %></h1>
-                    <span class="cafe-badge"><%= escapeHtml(cafe.getVisibility()) %></span>
-                </div>
-                <p><%= escapeHtml(cafe.getDescription()) %></p>
-                <div class="cafe-meta-line">
-                    <span><%= escapeHtml(cafe.getCategory()) %></span>
-                    <span><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></span>
-                </div>
-            </div>
-        </div>
-    </section>
+    <%
+        request.setAttribute("cafeIncludeCafe", cafe);
+        request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
+        request.setAttribute("cafeIncludeCurrentBoardId", Integer.valueOf(boardId));
+    %>
+    <%@ include file="includes/cafeHero.jsp" %>
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <div class="cafe-box">
-                <div class="cafe-section-title">카페 활동</div>
-                <div class="cafe-box-body cafe-action-stack">
-                    <span class="status-badge is-active">글 작성 중</span>
-                </div>
-            </div>
-
-            <div class="cafe-box cafe-info-box">
-                <div class="cafe-section-title">내 카페 정보</div>
-                <div class="cafe-box-body">
-                    <ul class="cafe-stat-list">
-                        <li><span>내 등급</span><strong><%= manager ? "관리자" : "가입중" %></strong></li>
-                        <li><span>지역</span><strong><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></strong></li>
-                        <li><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></li>
-                    </ul>
-                </div>
-            </div>
+            <%@ include file="includes/cafeSideProfile.jsp" %>
 
             <div class="cafe-box">
                 <div class="cafe-section-title">게시판 목록</div>
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
                     <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boards.get(0).getBoardId() %>">전체글 보기</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO cafeBoard : boards) { %>
                         <a class="cafe-menu-item <%= cafeBoard.getBoardId() == boardId ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= cafeBoard.getBoardId() %>">
@@ -127,16 +98,22 @@
         <section class="cafe-main">
             <section class="cafe-write-panel">
                 <div class="cafe-write-head">
-                    <p class="breadcrumb">
-                        <a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a>
-                        <span>&gt;</span>
-                        <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>"><%= escapeHtml(board.getBoardName()) %></a>
-                    </p>
                     <h1>글쓰기</h1>
                 </div>
                 <form class="cafe-write-form" action="<%= contextPath %>/community/postWriteProcess.jsp" method="post">
                     <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                    <input type="hidden" name="boardId" value="<%= boardId %>">
+                    <div class="write-board-row">
+                        <label class="visually-hidden" for="boardSelect">게시판 선택</label>
+                        <select id="boardSelect" class="write-board-select" name="boardId" required>
+                            <% for (CafeBoardDTO cafeBoard : boards) {
+                                boolean canSelectBoard = manager || "MEMBER".equals(cafeBoard.getWritePermission());
+                                if (canSelectBoard) {
+                            %>
+                                <option value="<%= cafeBoard.getBoardId() %>" <%= cafeBoard.getBoardId() == boardId ? "selected" : "" %>><%= escapeHtml(cafeBoard.getBoardName()) %></option>
+                            <%  }
+                            } %>
+                        </select>
+                    </div>
                     <label class="visually-hidden" for="title">제목</label>
                     <input id="title" class="write-title-input" name="title" maxlength="200" placeholder="제목을 입력하세요." required>
                     <label class="visually-hidden" for="content">내용</label>

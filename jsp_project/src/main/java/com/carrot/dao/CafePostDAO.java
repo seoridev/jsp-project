@@ -53,10 +53,13 @@ public class CafePostDAO extends BaseDAO {
         List<CafePostDTO> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder(baseSelect()
-                + " WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + " WHERE cp.cafe_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
                 + "AND c.status = 'ACTIVE'");
         params.add(cafeId);
-        params.add(boardId);
+        if (boardId > 0) {
+            sql.append(" AND cp.board_id = ?");
+            params.add(boardId);
+        }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(DBMS_LOB.SUBSTR(cp.content, 4000, 1)) LIKE ?)");
@@ -88,10 +91,13 @@ public class CafePostDAO extends BaseDAO {
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM cafe_post cp "
                 + "JOIN cafe c ON cp.cafe_id = c.cafe_id "
-                + "WHERE cp.cafe_id = ? AND cp.board_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
+                + "WHERE cp.cafe_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
                 + "AND c.status = 'ACTIVE'");
         params.add(cafeId);
-        params.add(boardId);
+        if (boardId > 0) {
+            sql.append(" AND cp.board_id = ?");
+            params.add(boardId);
+        }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (LOWER(cp.title) LIKE ? OR LOWER(DBMS_LOB.SUBSTR(cp.content, 4000, 1)) LIKE ?)");
