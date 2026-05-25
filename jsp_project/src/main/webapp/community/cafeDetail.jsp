@@ -1,10 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
+<%@ page import="com.carrot.dao.CafeCommentDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
+<%@ page import="com.carrot.dao.CafePostLikeDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafeMemberDTO" %>
@@ -16,6 +19,27 @@
         } catch (NumberFormatException e) {
             return 0;
         }
+    }
+
+    private String formatCafeDate(java.time.LocalDateTime value) {
+        return value == null ? "" : value.format(DateTimeFormatter.ofPattern("yyyy.MM.dd."));
+    }
+
+    private String formatCafeRole(String role) {
+        if ("OWNER".equals(role)) {
+            return "관리자";
+        }
+        if ("MANAGER".equals(role)) {
+            return "매니저";
+        }
+        if ("MEMBER".equals(role)) {
+            return "멤버";
+        }
+        return role == null ? "방문자" : role;
+    }
+
+    private String formatCount(int value, String unit) {
+        return String.format("%,d%s", value, unit);
     }
 %>
 <%
@@ -36,9 +60,20 @@
     boolean ownerOrManager = activeMember && ("OWNER".equals(myMember.getRole()) || "MANAGER".equals(myMember.getRole()));
     boolean favoriteCafe = currentLoginId != null && new CafeFavoriteDAO().existsFavorite(cafeId, currentLoginId);
     boolean canRead = "PUBLIC".equals(cafe.getVisibility()) || activeMember;
+    String cafeImagePath = cafe.getImagePath();
+    boolean hasCafeImage = cafeImagePath != null && !cafeImagePath.trim().isEmpty();
+    String cafeImageUrl = hasCafeImage
+            ? request.getContextPath() + (cafeImagePath.startsWith("/") ? cafeImagePath : "/" + cafeImagePath)
+            : "";
+    String createdDate = formatCafeDate(cafe.getCreatedAt());
+    String joinedDate = myMember == null ? "" : formatCafeDate(myMember.getJoinedAt());
 
+    CafePostDAO postDao = new CafePostDAO();
     List<CafeBoardDTO> boards = new CafeBoardDAO().selectBoardsByCafeId(cafeId);
-    List<CafePostDTO> posts = canRead ? new CafePostDAO().selectRecentPostsByCafeId(cafeId, 10) : java.util.Collections.emptyList();
+    List<CafePostDTO> posts = canRead ? postDao.selectRecentPostsByCafeId(cafeId, 10) : java.util.Collections.emptyList();
+    int myCafePostCount = currentLoginId != null ? postDao.countPostsByWriterInCafe(cafeId, currentLoginId) : 0;
+    int myCafeCommentCount = currentLoginId != null ? new CafeCommentDAO().countCommentsByWriterInCafe(cafeId, currentLoginId) : 0;
+    int myCafeLikeCount = currentLoginId != null ? new CafePostLikeDAO().countLikesByMemberInCafe(cafeId, currentLoginId) : 0;
     int writeBoardId = 0;
     if (activeMember) {
         for (CafeBoardDTO board : boards) {
@@ -56,7 +91,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= escapeHtml(cafe.getCafeName()) %> | 커뮤니티</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=20260525-cafe-side-profile-2">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
@@ -97,7 +132,7 @@
                 <p><%= escapeHtml(cafe.getDescription()) %></p>
                 <div class="cafe-meta-line">
                     <span><%= escapeHtml(cafe.getCategory()) %></span>
-                    <span><%= escapeHtml(cafe.getRegion()) %></span>
+                    <span><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></span>
                 </div>
             </div>
         </div>
@@ -105,36 +140,77 @@
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <% if (!activeMember || !"OWNER".equals(myMember.getRole())) { %>
-                <div class="cafe-box">
-                    <div class="cafe-section-title">카페 활동</div>
-                    <div class="cafe-box-body cafe-action-stack">
-                        <% if (!loggedIn) { %>
-                            <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeDetailRedirect %>">로그인 후 가입</a>
-                        <% } else if (pendingMember) { %>
-                            <span class="status-badge is-stopped">승인 대기</span>
-                        <% } else if (!activeMember) { %>
-                            <a class="button btn-main" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeId %>">카페 가입</a>
+            <div class="cafe-side-profile" data-cafe-side-profile>
+                <div class="cafe-side-tabs" role="tablist" aria-label="카페 정보">
+                    <button class="is-active" type="button" data-cafe-tab="info" role="tab" aria-selected="true">카페정보</button>
+                    <button type="button" data-cafe-tab="activity" role="tab" aria-selected="false">나의활동</button>
+                </div>
+                <div class="cafe-side-panel is-active" data-cafe-panel="info" role="tabpanel">
+                    <div class="cafe-side-head">
+                        <% if (hasCafeImage) { %>
+                            <img class="cafe-side-image" src="<%= escapeHtml(cafeImageUrl) %>" alt="">
                         <% } else { %>
-                            <form action="<%= contextPath %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
-                                <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                                <button class="btn-danger btn-small" type="submit">카페 탈퇴</button>
-                            </form>
+                            <div class="cafe-side-image is-initial"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></div>
                         <% } %>
+                        <div class="cafe-side-copy">
+                            <div class="cafe-side-name-row">
+                                <strong><%= escapeHtml(cafe.getCafeName()) %></strong>
+                                <% if (ownerOrManager) { %>
+                                    <span><%= formatCafeRole(myMember.getRole()) %></span>
+                                <% } %>
+                            </div>
+                            <% if (!createdDate.isEmpty()) { %>
+                                <p><%= createdDate %> 개설</p>
+                            <% } %>
+                            <p><%= escapeHtml(cafe.getDescription()) %></p>
+                        </div>
+                    </div>
+                    <div class="cafe-side-meta">
+                        <div><span>지역</span><strong><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></strong></div>
+                        <div><span>회원</span><strong><%= cafe.getMemberCount() %>명</strong></div>
+                        <div><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></div>
                     </div>
                 </div>
-            <% } %>
-
-            <div class="cafe-box cafe-info-box">
-                <div class="cafe-section-title">내 카페 정보</div>
-                <div class="cafe-box-body">
-                    <ul class="cafe-stat-list">
-                        <li><span>내 등급</span><strong><%= activeMember ? escapeHtml(myMember.getRole()) : (pendingMember ? "승인 대기" : "방문자") %></strong></li>
-                        <li><span>지역</span><strong><%= escapeHtml(cafe.getRegion()) %></strong></li>
-                        <li><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></li>
-                    </ul>
-                    <% if (activeMember && writeBoardId > 0) { %>
-                        <a class="button btn-main cafe-info-write" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
+                <div class="cafe-side-panel" data-cafe-panel="activity" role="tabpanel" hidden>
+                    <% if (!loggedIn) { %>
+                        <div class="cafe-side-empty">로그인 후 나의활동을 볼 수 있습니다.</div>
+                    <% } else { %>
+                        <div class="cafe-side-head">
+                            <div class="cafe-side-image is-user"><%= escapeHtml(loginNickname == null || loginNickname.isEmpty() ? currentLoginId.substring(0, 1) : loginNickname.substring(0, 1)) %></div>
+                            <div class="cafe-side-copy">
+                                <strong><%= escapeHtml(loginNickname == null || loginNickname.isEmpty() ? currentLoginId : loginNickname) %></strong>
+                                <% if (!joinedDate.isEmpty()) { %>
+                                    <p><%= joinedDate %> 가입</p>
+                                <% } else { %>
+                                    <p><%= activeMember ? "가입 정보 없음" : (pendingMember ? "승인 대기" : "카페 미가입") %></p>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div class="cafe-side-meta">
+                            <div><span>내 등급</span><strong><%= activeMember ? formatCafeRole(myMember.getRole()) : (pendingMember ? "승인 대기" : "방문자") %></strong></div>
+                            <div><span>내가 쓴 게시글</span><strong><%= formatCount(myCafePostCount, "개") %></strong></div>
+                            <div><span>내가 쓴 댓글</span><strong><%= formatCount(myCafeCommentCount, "개") %></strong></div>
+                            <div><span>내가 보낸 좋아요</span><strong><%= formatCount(myCafeLikeCount, "개") %></strong></div>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="cafe-side-actions">
+                    <% if (!loggedIn) { %>
+                        <a class="button cafe-side-primary" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeDetailRedirect %>">로그인 후 가입</a>
+                    <% } else if (pendingMember) { %>
+                        <span class="status-badge is-stopped">승인 대기</span>
+                    <% } else if (!activeMember) { %>
+                        <a class="button cafe-side-primary" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeId %>">카페 가입</a>
+                    <% } else if (writeBoardId > 0) { %>
+                        <a class="button cafe-side-primary" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">카페 글쓰기</a>
+                    <% } else { %>
+                        <span class="status-badge is-stopped">글쓰기 권한 없음</span>
+                    <% } %>
+                    <% if (activeMember && !"OWNER".equals(myMember.getRole())) { %>
+                        <form action="<%= contextPath %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
+                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                            <button class="button cafe-side-secondary" type="submit">카페 탈퇴</button>
+                        </form>
                     <% } %>
                 </div>
             </div>
@@ -207,6 +283,30 @@
         </div>
     <% } %>
 </main>
+<script>
+document.querySelectorAll("[data-cafe-side-profile]").forEach(function (profile) {
+    var tabs = profile.querySelectorAll("[data-cafe-tab]");
+    var panels = profile.querySelectorAll("[data-cafe-panel]");
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener("click", function () {
+            var target = tab.getAttribute("data-cafe-tab");
+
+            tabs.forEach(function (item) {
+                var active = item === tab;
+                item.classList.toggle("is-active", active);
+                item.setAttribute("aria-selected", active ? "true" : "false");
+            });
+
+            panels.forEach(function (panel) {
+                var active = panel.getAttribute("data-cafe-panel") === target;
+                panel.classList.toggle("is-active", active);
+                panel.hidden = !active;
+            });
+        });
+    });
+});
+</script>
 <%@ include file="../common/footer.jsp" %>
 </body>
 </html>

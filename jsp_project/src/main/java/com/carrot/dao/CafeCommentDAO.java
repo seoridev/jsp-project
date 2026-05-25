@@ -109,6 +109,24 @@ public class CafeCommentDAO extends BaseDAO {
         return list;
     }
 
+    public int countCommentsByWriterInCafe(int cafeId, String writerId) {
+        String sql = "SELECT COUNT(*) FROM cafe_comment cc "
+                + "JOIN cafe_post cp ON cc.post_id = cp.post_id "
+                + "WHERE cp.cafe_id = ? AND cc.writer_id = ? AND cc.is_deleted = 'N' "
+                + "AND cp.is_deleted = 'N' AND cp.is_hidden = 'N'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, writerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public boolean deleteComment(int commentId, String memberId, boolean manager) {
         CafeCommentDTO comment = selectCommentById(commentId);
         if (comment == null || "Y".equals(comment.getIsDeleted())

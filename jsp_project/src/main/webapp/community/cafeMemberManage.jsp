@@ -136,7 +136,7 @@
                                 <tr>
                                     <td><strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong></td>
                                     <td><%= escapeHtml(member.getMemberId()) %></td>
-                                    <td><%= escapeHtml(member.getRegion()) %></td>
+                                    <td><%= escapeHtml(formatKoreanSigungu(member.getRegion())) %></td>
                                     <td><%= escapeHtml(formatDateTime(member.getJoinedAt())) %></td>
                                     <td><span class="status-badge is-pending">승인 필요</span></td>
                                     <td>
@@ -190,7 +190,7 @@
                                 <tr>
                                     <td><strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong></td>
                                     <td><%= escapeHtml(member.getMemberId()) %></td>
-                                    <td><%= escapeHtml(member.getRegion()) %></td>
+                                    <td><%= escapeHtml(formatKoreanSigungu(member.getRegion())) %></td>
                                     <td><%= escapeHtml(formatDateTime(member.getJoinedAt())) %></td>
                                     <td><span class="status-badge"><%= escapeHtml(member.getRole()) %></span></td>
                                     <td><span class="status-badge<%= statusClass(member.getStatus()) %>"><%= escapeHtml(statusText(member.getStatus())) %></span></td>

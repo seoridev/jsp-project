@@ -65,6 +65,24 @@ public class CafePostLikeDAO extends BaseDAO {
         return 0;
     }
 
+    public int countLikesByMemberInCafe(int cafeId, String memberId) {
+        String sql = "SELECT COUNT(*) FROM cafe_post_like cpl "
+                + "JOIN cafe_post cp ON cpl.post_id = cp.post_id "
+                + "WHERE cp.cafe_id = ? AND cpl.member_id = ? "
+                + "AND cp.is_deleted = 'N' AND cp.is_hidden = 'N'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, memberId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     private boolean existsLike(Connection conn, int postId, String memberId) throws Exception {
         String sql = "SELECT 1 FROM cafe_post_like WHERE post_id = ? AND member_id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {

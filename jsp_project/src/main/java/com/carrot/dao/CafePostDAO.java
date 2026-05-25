@@ -167,6 +167,22 @@ public class CafePostDAO extends BaseDAO {
         return list;
     }
 
+    public int countPostsByWriterInCafe(int cafeId, String writerId) {
+        String sql = "SELECT COUNT(*) FROM cafe_post "
+                + "WHERE cafe_id = ? AND writer_id = ? AND is_deleted = 'N' AND is_hidden = 'N'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, cafeId);
+            pstmt.setString(2, writerId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public List<CafePostDTO> selectAllPostsForAdmin() {
         List<CafePostDTO> list = new ArrayList<>();
         String sql = baseSelect()

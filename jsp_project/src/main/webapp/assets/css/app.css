@@ -2265,13 +2265,6 @@ button.btn-danger {
     grid-template-columns: 240px minmax(0, 1fr);
 }
 
-.cafe-info-box .cafe-info-write {
-    display: flex;
-    width: 100%;
-    margin-top: 12px;
-    max-width: none;
-}
-
 .cafe-action-stack .button,
 .cafe-action-stack button,
 .cafe-action-stack form {
@@ -2281,6 +2274,187 @@ button.btn-danger {
 .cafe-action-stack .status-badge {
     justify-content: center;
     min-height: 36px;
+}
+
+.cafe-side-profile {
+    padding: 10px 12px 12px;
+    border: 1px solid #e5ded3;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.cafe-side-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 2px solid #d95c00;
+    border-bottom: 1px solid #eee7dc;
+}
+
+.cafe-side-tabs button {
+    min-height: 38px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #8b8177;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.cafe-side-tabs button + button {
+    border-left: 1px solid #eee7dc;
+}
+
+.cafe-side-tabs button.is-active {
+    color: #202124;
+}
+
+.cafe-side-panel {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee7dc;
+}
+
+.cafe-side-head {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 9px;
+    align-items: center;
+}
+
+.cafe-side-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #fff7ed;
+    color: #d95c00;
+    font-size: 24px;
+    font-weight: 900;
+    object-fit: cover;
+}
+
+.cafe-side-image.is-user {
+    border-radius: 0;
+    background: #111;
+    color: #fff;
+}
+
+.cafe-side-copy {
+    min-width: 0;
+}
+
+.cafe-side-copy strong,
+.cafe-side-name-row strong {
+    display: block;
+    overflow: hidden;
+    color: #202124;
+    font-size: 13px;
+    font-weight: 900;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cafe-side-copy p {
+    overflow: hidden;
+    margin: 4px 0 0;
+    color: #756b61;
+    font-size: 12px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cafe-side-name-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    min-width: 0;
+}
+
+.cafe-side-name-row span {
+    flex: 0 0 auto;
+    padding: 1px 4px;
+    border: 1px solid #ffd4b8;
+    border-radius: 2px;
+    background: #fff7ed;
+    color: #d95c00;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.cafe-side-meta {
+    display: grid;
+    gap: 4px;
+    margin-top: 11px;
+}
+
+.cafe-side-meta div {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    color: #756b61;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.cafe-side-meta span {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.cafe-side-meta strong {
+    flex: 0 0 auto;
+    color: #202124;
+    font-weight: 800;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.cafe-side-empty {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    color: #756b61;
+    font-size: 12px;
+}
+
+.cafe-side-actions {
+    display: grid;
+    gap: 8px;
+    padding-top: 10px;
+}
+
+.cafe-side-actions form {
+    margin: 0;
+}
+
+.cafe-side-actions .status-badge {
+    justify-content: center;
+    min-height: 38px;
+}
+
+.cafe-side-primary,
+.button.cafe-side-primary {
+    width: 100%;
+    min-height: 38px;
+    border-color: #ff6f0f;
+    border-radius: 4px;
+    background: #ff6f0f;
+    color: #fff;
+    font-size: 13px;
+}
+
+.cafe-side-secondary,
+.button.cafe-side-secondary {
+    width: 100%;
+    min-height: 36px;
+    border-color: #ded6ca;
+    border-radius: 4px;
+    background: #fff;
+    color: #3a332d;
+    font-size: 12px;
 }
 
 .cafe-post-list {

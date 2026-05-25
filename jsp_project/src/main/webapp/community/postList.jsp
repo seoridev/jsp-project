@@ -89,7 +89,7 @@
                 <p><%= escapeHtml(cafe.getDescription()) %></p>
                 <div class="cafe-meta-line">
                     <span><%= escapeHtml(cafe.getCategory()) %></span>
-                    <span><%= escapeHtml(cafe.getRegion()) %></span>
+                    <span><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></span>
                 </div>
             </div>
         </div>
@@ -117,7 +117,7 @@
                 <div class="cafe-box-body">
                     <ul class="cafe-stat-list">
                         <li><span>내 등급</span><strong><%= manager ? "관리자" : (activeMember ? "가입중" : "방문자") %></strong></li>
-                        <li><span>지역</span><strong><%= escapeHtml(cafe.getRegion()) %></strong></li>
+                        <li><span>지역</span><strong><%= escapeHtml(formatKoreanSigungu(cafe.getRegion())) %></strong></li>
                         <li><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></li>
                     </ul>
                 </div>
