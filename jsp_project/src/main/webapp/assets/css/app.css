@@ -2170,6 +2170,39 @@ button.btn-danger {
         #3d8b65;
 }
 
+.cafe-title-favorite-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.cafe-favorite-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #f4b400 !important;
+    font-size: 24px;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.cafe-favorite-toggle.is-active {
+    color: #f4b400 !important;
+    opacity: 1;
+}
+
+.cafe-favorite-toggle:not(.is-active) {
+    opacity: 0.72;
+}
+
 .cafe-cover-label {
     display: inline-flex;
     align-items: center;
@@ -2230,6 +2263,13 @@ button.btn-danger {
 
 .cafe-detail-layout {
     grid-template-columns: 240px minmax(0, 1fr);
+}
+
+.cafe-info-box .cafe-info-write {
+    display: flex;
+    width: 100%;
+    margin-top: 12px;
+    max-width: none;
 }
 
 .cafe-action-stack .button,
@@ -2311,6 +2351,24 @@ button.btn-danger {
 .cafe-private-guide p {
     margin: 8px 0 0;
     color: #756b61;
+}
+
+.cafe-report-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.cafe-report-link {
+    color: #8b8177;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.cafe-report-link:hover {
+    color: #b42318;
 }
 
 @media (max-width: 900px) {

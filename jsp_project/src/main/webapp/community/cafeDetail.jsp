@@ -83,6 +83,16 @@
                 <div class="cafe-title-row">
                     <h1><%= escapeHtml(cafe.getCafeName()) %></h1>
                     <span class="cafe-badge"><%= escapeHtml(cafe.getVisibility()) %></span>
+                    <% if (loggedIn) { %>
+                        <form class="cafe-title-favorite-form" action="<%= contextPath %>/community/cafeFavoriteProcess.jsp" method="post">
+                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                            <button class="cafe-favorite-toggle <%= favoriteCafe ? "is-active" : "" %>" type="submit" aria-label="<%= favoriteCafe ? "즐겨찾기 해제" : "즐겨찾기" %>">
+                                <%= favoriteCafe ? "★" : "☆" %>
+                            </button>
+                        </form>
+                    <% } else { %>
+                        <a class="cafe-favorite-toggle" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeDetailRedirect %>" aria-label="로그인 후 즐겨찾기">☆</a>
+                    <% } %>
                 </div>
                 <p><%= escapeHtml(cafe.getDescription()) %></p>
                 <div class="cafe-meta-line">
@@ -95,35 +105,25 @@
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <div class="cafe-box">
-                <div class="cafe-section-title">카페 활동</div>
-                <div class="cafe-box-body cafe-action-stack">
-                    <% if (!loggedIn) { %>
-                        <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeDetailRedirect %>">로그인 후 가입</a>
-                    <% } else if (activeMember) { %>
-                        <% if (writeBoardId > 0) { %>
-                            <a class="button btn-main" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
+            <% if (!activeMember || !"OWNER".equals(myMember.getRole())) { %>
+                <div class="cafe-box">
+                    <div class="cafe-section-title">카페 활동</div>
+                    <div class="cafe-box-body cafe-action-stack">
+                        <% if (!loggedIn) { %>
+                            <a class="button btn-main" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeDetailRedirect %>">로그인 후 가입</a>
+                        <% } else if (pendingMember) { %>
+                            <span class="status-badge is-stopped">승인 대기</span>
+                        <% } else if (!activeMember) { %>
+                            <a class="button btn-main" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeId %>">카페 가입</a>
+                        <% } else { %>
+                            <form action="<%= contextPath %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
+                                <input type="hidden" name="cafeId" value="<%= cafeId %>">
+                                <button class="btn-danger btn-small" type="submit">카페 탈퇴</button>
+                            </form>
                         <% } %>
-                    <% } else if (pendingMember) { %>
-                        <span class="status-badge is-stopped">승인 대기</span>
-                    <% } else { %>
-                        <a class="button btn-main" href="<%= contextPath %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeId %>">카페 가입</a>
-                    <% } %>
-                    <% if (loggedIn) { %>
-                        <form action="<%= contextPath %>/community/cafeFavoriteProcess.jsp" method="post">
-                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                            <button class="btn-sub" type="submit"><%= favoriteCafe ? "즐겨찾기 해제" : "즐겨찾기" %></button>
-                        </form>
-                        <a class="button btn-sub" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE&targetId=<%= cafeId %>">신고</a>
-                    <% } %>
-                    <% if (activeMember && !"OWNER".equals(myMember.getRole())) { %>
-                        <form action="<%= contextPath %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
-                            <input type="hidden" name="cafeId" value="<%= cafeId %>">
-                            <button class="btn-danger btn-small" type="submit">카페 탈퇴</button>
-                        </form>
-                    <% } %>
+                    </div>
                 </div>
-            </div>
+            <% } %>
 
             <div class="cafe-box cafe-info-box">
                 <div class="cafe-section-title">내 카페 정보</div>
@@ -133,6 +133,9 @@
                         <li><span>지역</span><strong><%= escapeHtml(cafe.getRegion()) %></strong></li>
                         <li><span>공개</span><strong><%= escapeHtml(cafe.getVisibility()) %></strong></li>
                     </ul>
+                    <% if (activeMember && writeBoardId > 0) { %>
+                        <a class="button btn-main cafe-info-write" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
+                    <% } %>
                 </div>
             </div>
 
@@ -175,9 +178,6 @@
         <section class="cafe-main cafe-box">
             <div class="cafe-section-title">
                 <span>최근 글</span>
-                <% if (activeMember && writeBoardId > 0) { %>
-                    <a class="button btn-main btn-small" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= writeBoardId %>">글쓰기</a>
-                <% } %>
             </div>
             <% if (!canRead) { %>
                 <div class="cafe-private-guide">
@@ -201,6 +201,11 @@
             <% } %>
         </section>
     </section>
+    <% if (loggedIn) { %>
+        <div class="cafe-report-row">
+            <a class="cafe-report-link" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE&targetId=<%= cafeId %>">이 카페 신고하기</a>
+        </div>
+    <% } %>
 </main>
 <%@ include file="../common/footer.jsp" %>
 </body>
