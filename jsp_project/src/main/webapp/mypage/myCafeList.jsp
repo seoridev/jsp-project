@@ -3,7 +3,7 @@
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeDAO cafeDao = new CafeDAO();
@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=mypage-community-1">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="admin-shell">
     <div class="admin-heading">
         <div>
@@ -29,7 +29,7 @@
         </div>
         <div class="admin-actions">
             <a class="button" href="<%= contextPath %>/mypage/mypage.jsp">마이페이지</a>
-            <a class="button primary" href="<%= contextPath %>/community/cafeCreate.jsp">카페 만들기</a>
+            <a class="button primary" href="<%= contextPath %>/community/cafe/cafeCreate.jsp">카페 만들기</a>
         </div>
     </div>
 
@@ -46,7 +46,7 @@
                 <p class="empty-cell">가입한 카페가 없습니다.</p>
             <% } %>
             <% for (CafeDTO cafe : joinedCafes) { %>
-                <a class="community-row" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
+                <a class="community-row" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
                     <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
                     <span class="community-meta">회원 <%= cafe.getMemberCount() %> · 글 <%= cafe.getPostCount() %></span>
                 </a>
@@ -61,7 +61,7 @@
                 <p class="empty-cell">운영 중인 카페가 없습니다.</p>
             <% } %>
             <% for (CafeDTO cafe : ownedCafes) { %>
-                <a class="community-row" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
+                <a class="community-row" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
                     <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
                     <span class="community-meta">회원 <%= cafe.getMemberCount() %> · 글 <%= cafe.getPostCount() %></span>
                 </a>
@@ -76,7 +76,7 @@
                 <p class="empty-cell">즐겨찾기한 카페가 없습니다.</p>
             <% } %>
             <% for (CafeDTO cafe : favoriteCafes) { %>
-                <a class="community-row" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
+                <a class="community-row" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
                     <span><strong><%= escapeHtml(cafe.getCafeName()) %></strong><br><small class="community-meta"><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %> · <%= escapeHtml(cafe.getCategory()) %></small></span>
                     <span class="community-meta">회원 <%= cafe.getMemberCount() %> · 글 <%= cafe.getPostCount() %></span>
                 </a>
@@ -84,6 +84,6 @@
         </div>
     </section>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

@@ -21,7 +21,7 @@
 %>
 <%
     int postId = parseIntParam(request.getParameter("postId"));
-    String postDetailRedirect = java.net.URLEncoder.encode("/community/postDetail.jsp?postId=" + postId, "UTF-8");
+    String postDetailRedirect = java.net.URLEncoder.encode("/community/post/postDetail.jsp?postId=" + postId, "UTF-8");
     CafePostDAO postDao = new CafePostDAO();
     CafePostDTO post = postDao.selectPostById(postId);
     int cafeId = post == null ? 0 : post.getCafeId();
@@ -49,7 +49,7 @@
         isWriter = currentLoginId != null && currentLoginId.equals(post.getWriterId());
         boolean canRead = cafe != null && ("PUBLIC".equals(cafe.getVisibility()) || activeMember);
         if (!canRead) {
-            response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + post.getCafeId() + "&error=private");
+            response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + post.getCafeId() + "&error=private");
             return;
         }
 
@@ -69,7 +69,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell community-shell">
     <% if (deletedPostFail) { %>
         <section class="cafe-box">
@@ -84,21 +84,21 @@
         request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
         request.setAttribute("cafeIncludeCurrentBoardId", Integer.valueOf(post.getBoardId()));
     %>
-    <%@ include file="includes/cafeHero.jsp" %>
+    <%@ include file="../includes/cafeHero.jsp" %>
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <%@ include file="includes/cafeSideProfile.jsp" %>
+            <%@ include file="../includes/cafeSideProfile.jsp" %>
 
             <div class="cafe-box">
                 <div class="cafe-section-title">게시판 목록</div>
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
-                    <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>">카페 홈</a>
+                    <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=0">전체글 보기</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO board : boards) { %>
-                        <a class="cafe-menu-item <%= board.getBoardId() == post.getBoardId() ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= board.getBoardId() %>">
+                        <a class="cafe-menu-item <%= board.getBoardId() == post.getBoardId() ? "active" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= board.getBoardId() %>">
                             <span><%= escapeHtml(board.getBoardName()) %></span>
                             <span><%= board.getPostCount() %></span>
                         </a>
@@ -119,8 +119,8 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= post.getCafeId() %>">게시판 관리</a>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= post.getCafeId() %>">회원 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= post.getCafeId() %>">게시판 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= post.getCafeId() %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
@@ -139,9 +139,9 @@
                 <% } %>
                 <div class="post-read-header">
                     <p class="breadcrumb">
-                        <a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>"><%= escapeHtml(post.getCafeName()) %></a>
+                        <a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>"><%= escapeHtml(post.getCafeName()) %></a>
                         <span>&gt;</span>
-                        <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>"><%= escapeHtml(post.getBoardName()) %></a>
+                        <a href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>"><%= escapeHtml(post.getBoardName()) %></a>
                     </p>
                     <% if ("Y".equals(post.getIsNotice())) { %><span class="notice-badge">공지</span><% } %>
                     <h1><%= escapeHtml(post.getTitle()) %></h1>
@@ -153,7 +153,7 @@
                     </div>
                     <% if (isWriter || manager) { %>
                         <div class="post-action-bar">
-                            <a class="button btn-sub btn-small" href="<%= contextPath %>/community/postUpdate.jsp?postId=<%= postId %>">수정</a>
+                            <a class="button btn-sub btn-small" href="<%= contextPath %>/community/post/postUpdate.jsp?postId=<%= postId %>">수정</a>
                             <button class="btn-danger btn-small" type="button" onclick="deletePost(<%= postId %>)">삭제</button>
                         </div>
                     <% } %>
@@ -161,13 +161,13 @@
                 <div class="post-body"><%= escapeHtml(post.getContent()) %></div>
                 <div class="post-action-bar">
                     <% if (activeMember) { %>
-                        <form action="<%= contextPath %>/community/postLikeProcess.jsp" method="post">
+                        <form action="<%= contextPath %>/community/post/postLikeProcess.jsp" method="post">
                             <input type="hidden" name="postId" value="<%= postId %>">
                             <button class="btn-sub btn-small" type="submit"><%= likedPost ? "좋아요 취소" : "좋아요" %></button>
                         </form>
                     <% } %>
                     <% if (loggedIn) { %>
-                        <a class="button btn-text" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_POST&targetId=<%= postId %>">신고</a>
+                        <a class="button btn-text" href="<%= contextPath %>/community/report/communityReport.jsp?targetType=CAFE_POST&targetId=<%= postId %>">신고</a>
                     <% } %>
                 </div>
             </section>
@@ -190,7 +190,7 @@
                                     <p><%= escapeHtml(comment.getContent()) %></p>
                                     <div class="comment-actions">
                                         <% if (loggedIn) { %>
-                                            <a class="button btn-text" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE_COMMENT&targetId=<%= comment.getCommentId() %>">신고</a>
+                                            <a class="button btn-text" href="<%= contextPath %>/community/report/communityReport.jsp?targetType=CAFE_COMMENT&targetId=<%= comment.getCommentId() %>">신고</a>
                                         <% } %>
                                         <% if (currentLoginId != null && (currentLoginId.equals(comment.getWriterId()) || manager)) { %>
                                             <button class="btn-danger btn-small" type="button" onclick="deleteComment(<%= comment.getCommentId() %>)">삭제</button>
@@ -201,7 +201,7 @@
                         <% } %>
                     </div>
                     <% if (activeMember) { %>
-                        <form class="comment-form" action="<%= contextPath %>/community/commentWriteProcess.jsp" method="post">
+                        <form class="comment-form" action="<%= contextPath %>/community/post/commentWriteProcess.jsp" method="post">
                             <input type="hidden" name="postId" value="<%= postId %>">
                             <label class="visually-hidden" for="commentContent">댓글 작성</label>
                             <textarea id="commentContent" name="content" maxlength="1000" placeholder="댓글을 입력하세요." required></textarea>
@@ -221,16 +221,16 @@
 <script>
     function deletePost(postId) {
         if (confirm("게시글을 삭제하시겠습니까?")) {
-            location.href = "<%= request.getContextPath() %>/community/postDeleteProcess.jsp?postId=" + postId;
+            location.href = "<%= request.getContextPath() %>/community/post/postDeleteProcess.jsp?postId=" + postId;
         }
     }
 
     function deleteComment(commentId) {
         if (confirm("댓글을 삭제하시겠습니까?")) {
-            location.href = "<%= request.getContextPath() %>/community/commentDeleteProcess.jsp?commentId=" + commentId;
+            location.href = "<%= request.getContextPath() %>/community/post/commentDeleteProcess.jsp?commentId=" + commentId;
         }
     }
 </script>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

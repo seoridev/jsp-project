@@ -24,7 +24,7 @@
                 <h1><%= com.carrot.util.HtmlEscaper.escape(cafeHeroCafe.getCafeName()) %></h1>
                 <span class="cafe-badge"><%= com.carrot.util.HtmlEscaper.escape(cafeHeroCafe.getVisibility()) %></span>
                 <% if (cafeHeroLoginId != null) { %>
-                    <form class="cafe-title-favorite-form" action="<%= request.getContextPath() %>/community/cafeFavoriteProcess.jsp" method="post">
+                    <form class="cafe-title-favorite-form" action="<%= request.getContextPath() %>/community/cafe/cafeFavoriteProcess.jsp" method="post">
                         <input type="hidden" name="cafeId" value="<%= cafeHeroCafeId %>">
                         <input type="hidden" name="redirect" value="<%= com.carrot.util.HtmlEscaper.escape(cafeHeroReturn) %>">
                         <button class="cafe-favorite-toggle <%= cafeHeroFavorite ? "is-active" : "" %>" type="submit" aria-label="<%= cafeHeroFavorite ? "즐겨찾기 해제" : "즐겨찾기" %>">

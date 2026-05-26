@@ -4,7 +4,7 @@
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -30,7 +30,7 @@
             && ("MEMBER".equals(board.getWritePermission()) || manager);
 
     if (!canWrite || title.isEmpty() || content.isEmpty()) {
-        response.sendRedirect(request.getContextPath() + "/community/postWrite.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&error=invalid");
+        response.sendRedirect(request.getContextPath() + "/community/post/postWrite.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&error=invalid");
         return;
     }
 
@@ -44,8 +44,8 @@
             .build());
 
     if (postId <= 0) {
-        response.sendRedirect(request.getContextPath() + "/community/postWrite.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&error=fail");
+        response.sendRedirect(request.getContextPath() + "/community/post/postWrite.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&error=fail");
         return;
     }
-    response.sendRedirect(request.getContextPath() + "/community/postDetail.jsp?postId=" + postId);
+    response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId=" + postId);
 %>

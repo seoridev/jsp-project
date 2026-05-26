@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell community-shell">
     <section class="cafe-top">
         <div class="section-title-row">
@@ -28,14 +28,14 @@
                 <p>카페명, 소개, 지역, 주제별로 동네 카페를 찾아보세요.</p>
             </div>
             <% if (loggedIn) { %>
-                <a class="button btn-main" href="<%= contextPath %>/community/cafeCreate.jsp">카페 만들기</a>
+                <a class="button btn-main" href="<%= contextPath %>/community/cafe/cafeCreate.jsp">카페 만들기</a>
             <% } %>
         </div>
     </section>
 
     <section class="cafe-box">
         <div class="cafe-section-title">검색 조건</div>
-        <form class="cafe-filter-bar" action="<%= contextPath %>/community/cafeList.jsp" method="get">
+        <form class="cafe-filter-bar" action="<%= contextPath %>/community/cafe/cafeList.jsp" method="get">
             <input name="keyword" placeholder="카페명 또는 소개글" value="<%= escapeHtml(keyword) %>">
             <input name="region" placeholder="지역" value="<%= escapeHtml(region) %>">
             <input name="category" placeholder="주제" value="<%= escapeHtml(category) %>">
@@ -54,7 +54,7 @@
                 <p class="empty-cell">검색 결과가 없습니다.</p>
             <% } %>
             <% for (CafeDTO cafe : cafes) { %>
-                <a class="cafe-directory-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
+                <a class="cafe-directory-item" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
                     <span class="cafe-initial"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></span>
                     <span class="cafe-list-copy">
                         <strong><%= escapeHtml(cafe.getCafeName()) %></strong>
@@ -72,6 +72,6 @@
         </div>
     </section>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

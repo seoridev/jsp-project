@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="cafe-write-wrap">
     <section class="cafe-write-panel">
         <div class="cafe-write-head">
@@ -26,7 +26,7 @@
         <% } else if ("fail".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">카페 생성에 실패했습니다.</p>
         <% } %>
-        <form class="cafe-write-form" action="<%= contextPath %>/community/cafeCreateProcess.jsp" method="post">
+        <form class="cafe-write-form" action="<%= contextPath %>/community/cafe/cafeCreateProcess.jsp" method="post">
             <div class="field">
                 <label for="cafeName">카페명</label>
                 <input id="cafeName" class="write-title-input" name="cafeName" maxlength="100" required>
@@ -64,6 +64,6 @@
         </form>
     </section>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

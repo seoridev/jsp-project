@@ -2,7 +2,7 @@
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value, int defaultValue) {
         try {
@@ -50,7 +50,7 @@
             && isWritePermission(writePermission)
             && isYn(isNotice);
     if (!valid) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId=" + cafeId + "&error=updateFail");
+        response.sendRedirect(request.getContextPath() + "/community/board/cafeBoardManage.jsp?cafeId=" + cafeId + "&error=updateFail");
         return;
     }
 
@@ -64,6 +64,6 @@
             .isNotice(isNotice)
             .displayOrder(displayOrder)
             .build());
-    response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
+    response.sendRedirect(request.getContextPath() + "/community/board/cafeBoardManage.jsp?cafeId="
             + cafeId + "&boardId=" + boardId + (updated ? "&update=success" : "&error=updateFail"));
 %>

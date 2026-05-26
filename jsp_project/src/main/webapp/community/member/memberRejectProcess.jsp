@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -18,11 +18,11 @@
 
     if (cafeId <= 0 || memberId == null || memberId.trim().isEmpty()
             || !memberDao.isCafeManagerOrOwner(cafeId, currentLoginId)) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId + "&error=manageDenied");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&error=manageDenied");
         return;
     }
 
-    boolean approved = memberDao.approveMember(cafeId, memberId);
-    response.sendRedirect(request.getContextPath() + "/community/cafeMemberManage.jsp?cafeId="
-            + cafeId + (approved ? "&approve=success" : "&error=approveFail"));
+    boolean rejected = memberDao.rejectMember(cafeId, memberId);
+    response.sendRedirect(request.getContextPath() + "/community/member/cafeMemberManage.jsp?cafeId="
+            + cafeId + (rejected ? "&reject=success" : "&error=rejectFail"));
 %>

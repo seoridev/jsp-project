@@ -2,7 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%
     String currentLoginId = (String) session.getAttribute("loginId");
     List<CafePostDTO> posts = new CafePostDAO().selectPostsByWriter(currentLoginId);
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=mypage-community-1">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="admin-shell">
     <div class="admin-heading">
         <div>
@@ -47,8 +47,8 @@
                 <% } %>
                 <% for (CafePostDTO post : posts) { %>
                     <tr>
-                        <td><a class="table-link" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>"><%= escapeHtml(post.getTitle()) %></a></td>
-                        <td><a class="table-link" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>"><%= escapeHtml(post.getCafeName()) %></a></td>
+                        <td><a class="table-link" href="<%= contextPath %>/community/post/postDetail.jsp?postId=<%= post.getPostId() %>"><%= escapeHtml(post.getTitle()) %></a></td>
+                        <td><a class="table-link" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>"><%= escapeHtml(post.getCafeName()) %></a></td>
                         <td><%= escapeHtml(post.getBoardName()) %></td>
                         <td><%= post.getViewCount() %></td>
                         <td><%= post.getCommentCount() %></td>
@@ -59,6 +59,6 @@
         </table>
     </div>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

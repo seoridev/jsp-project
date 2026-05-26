@@ -44,11 +44,11 @@
 %>
 <%
     int cafeId = parseIntParam(request.getParameter("cafeId"));
-    String cafeDetailRedirect = java.net.URLEncoder.encode("/community/cafeDetail.jsp?cafeId=" + cafeId, "UTF-8");
+    String cafeDetailRedirect = java.net.URLEncoder.encode("/community/cafe/cafeDetail.jsp?cafeId=" + cafeId, "UTF-8");
     CafeDAO cafeDao = new CafeDAO();
     CafeDTO cafe = cafeDao.selectCafeById(cafeId);
     if (cafe == null) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeList.jsp?error=noCafe");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
         return;
     }
 
@@ -98,7 +98,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=20260525-cafe-side-profile-3">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell community-shell">
     <% if ("success".equals(request.getParameter("created"))) { %>
         <p class="notice-toast">카페가 생성되었습니다.</p>
@@ -116,21 +116,21 @@
         request.setAttribute("cafeIncludeCafe", cafe);
         request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
     %>
-    <%@ include file="includes/cafeHero.jsp" %>
+    <%@ include file="../includes/cafeHero.jsp" %>
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <%@ include file="includes/cafeSideProfile.jsp" %>
+            <%@ include file="../includes/cafeSideProfile.jsp" %>
 
             <div class="cafe-box">
                 <div class="cafe-section-title">게시판 목록</div>
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
-                    <a class="cafe-menu-item active" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
+                    <a class="cafe-menu-item active" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO board : boards) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
                             <span><%= escapeHtml(board.getBoardName()) %></span>
                             <span><%= board.getPostCount() %></span>
                         </a>
@@ -151,8 +151,8 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
@@ -172,7 +172,7 @@
             <% } else { %>
                 <div class="cafe-post-list">
                     <% for (CafePostDTO post : posts) { %>
-                        <a class="cafe-post-item <%= "Y".equals(post.getIsNotice()) ? "is-notice" : "" %>" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>">
+                        <a class="cafe-post-item <%= "Y".equals(post.getIsNotice()) ? "is-notice" : "" %>" href="<%= contextPath %>/community/post/postDetail.jsp?postId=<%= post.getPostId() %>">
                             <span class="<%= "Y".equals(post.getIsNotice()) ? "notice-badge" : "board-badge is-normal" %>"><%= "Y".equals(post.getIsNotice()) ? "공지" : "일반" %></span>
                             <span class="cafe-post-board"><%= escapeHtml(post.getBoardName()) %></span>
                             <span class="cafe-post-title"><%= escapeHtml(post.getTitle()) %></span>
@@ -186,10 +186,10 @@
     </section>
     <% if (loggedIn) { %>
         <div class="cafe-report-row">
-            <a class="cafe-report-link" href="<%= contextPath %>/community/communityReport.jsp?targetType=CAFE&targetId=<%= cafeId %>">이 카페 신고하기</a>
+            <a class="cafe-report-link" href="<%= contextPath %>/community/report/communityReport.jsp?targetType=CAFE&targetId=<%= cafeId %>">이 카페 신고하기</a>
         </div>
     <% } %>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

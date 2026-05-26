@@ -3,7 +3,7 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -22,10 +22,10 @@
     String currentLoginId = (String) session.getAttribute("loginId");
 
     if (post == null || content.isEmpty() || !new CafeMemberDAO().isActiveMember(post.getCafeId(), currentLoginId)) {
-        response.sendRedirect(request.getContextPath() + "/community/postDetail.jsp?postId=" + postId + "&error=comment");
+        response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId=" + postId + "&error=comment");
         return;
     }
 
     new CafeCommentDAO().insertComment(postId, currentLoginId, content);
-    response.sendRedirect(request.getContextPath() + "/community/postDetail.jsp?postId=" + postId);
+    response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId=" + postId);
 %>

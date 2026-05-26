@@ -7,7 +7,7 @@
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
 <%@ page import="com.carrot.dto.ReportDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -38,17 +38,17 @@
     if ("CAFE".equals(targetType)) {
         CafeDTO cafe = new CafeDAO().selectCafeById(targetId);
         validTarget = cafe != null;
-        redirectUrl = request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + targetId;
+        redirectUrl = request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + targetId;
     } else if ("CAFE_POST".equals(targetType)) {
         CafePostDTO post = new CafePostDAO().selectPostById(targetId);
         validTarget = post != null;
-        redirectUrl = request.getContextPath() + "/community/postDetail.jsp?postId=" + targetId;
+        redirectUrl = request.getContextPath() + "/community/post/postDetail.jsp?postId=" + targetId;
     } else if ("CAFE_COMMENT".equals(targetType)) {
         CafeCommentDTO comment = new CafeCommentDAO().selectCommentById(targetId);
         CafePostDTO post = comment == null ? null : new CafePostDAO().selectPostById(comment.getPostId());
         validTarget = comment != null && !"Y".equals(comment.getIsDeleted()) && post != null;
         if (comment != null) {
-            redirectUrl = request.getContextPath() + "/community/postDetail.jsp?postId=" + comment.getPostId();
+            redirectUrl = request.getContextPath() + "/community/post/postDetail.jsp?postId=" + comment.getPostId();
         }
     }
 

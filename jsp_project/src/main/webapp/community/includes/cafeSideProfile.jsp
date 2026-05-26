@@ -148,14 +148,14 @@
         <% } else if (cafeSidePending) { %>
             <span class="status-badge is-stopped">승인 대기</span>
         <% } else if (!cafeSideActive) { %>
-            <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/cafeJoinProcess.jsp?cafeId=<%= cafeSideCafeId %>">카페 가입</a>
+            <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/cafe/cafeJoinProcess.jsp?cafeId=<%= cafeSideCafeId %>">카페 가입</a>
         <% } else if (cafeSideWriteBoardId > 0) { %>
-            <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/postWrite.jsp?cafeId=<%= cafeSideCafeId %>&boardId=<%= cafeSideWriteBoardId %>">카페 글쓰기</a>
+            <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/post/postWrite.jsp?cafeId=<%= cafeSideCafeId %>&boardId=<%= cafeSideWriteBoardId %>">카페 글쓰기</a>
         <% } else { %>
             <span class="status-badge is-stopped">글쓰기 권한 없음</span>
         <% } %>
         <% if (cafeSideActive && !"OWNER".equals(cafeSideMember.getRole())) { %>
-            <form action="<%= request.getContextPath() %>/community/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
+            <form action="<%= request.getContextPath() %>/community/cafe/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
                 <input type="hidden" name="cafeId" value="<%= cafeSideCafeId %>">
                 <button class="button cafe-side-secondary" type="submit">카페 탈퇴</button>
             </form>

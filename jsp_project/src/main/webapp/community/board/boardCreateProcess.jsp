@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value, int defaultValue) {
         try {
@@ -44,7 +44,7 @@
             && isWritePermission(writePermission)
             && isYn(isNotice);
     if (!valid) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId=" + cafeId + "&error=createFail");
+        response.sendRedirect(request.getContextPath() + "/community/board/cafeBoardManage.jsp?cafeId=" + cafeId + "&error=createFail");
         return;
     }
 
@@ -52,6 +52,6 @@
 
     int createdBoardId = boardDao.insertBoardAndReturnId(cafeId, boardName, description, readPermission,
             writePermission, isNotice, displayOrder);
-    response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
+    response.sendRedirect(request.getContextPath() + "/community/board/cafeBoardManage.jsp?cafeId="
             + cafeId + (createdBoardId > 0 ? "&boardId=" + createdBoardId + "&create=success" : "&error=createFail"));
 %>

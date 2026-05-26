@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeMemberDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -17,7 +17,7 @@
     String action = request.getParameter("action");
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeMemberDAO memberDao = new CafeMemberDAO();
-    String redirectUrl = request.getContextPath() + "/community/cafeMemberManage.jsp?cafeId=" + cafeId;
+    String redirectUrl = request.getContextPath() + "/community/member/cafeMemberManage.jsp?cafeId=" + cafeId;
 
     CafeMemberDTO currentMember = memberDao.selectCafeMember(cafeId, currentLoginId);
     CafeMemberDTO targetMember = memberDao.selectCafeMember(cafeId, memberId);

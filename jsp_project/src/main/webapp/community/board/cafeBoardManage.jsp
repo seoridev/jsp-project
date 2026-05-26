@@ -5,7 +5,7 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -19,13 +19,13 @@
     int cafeId = parseIntParam(request.getParameter("cafeId"));
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     if (cafe == null) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeList.jsp?error=noCafe");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
         return;
     }
 
     String currentLoginId = (String) session.getAttribute("loginId");
     if (!new CafeMemberDAO().isCafeManagerOrOwner(cafeId, currentLoginId)) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId + "&error=manageDenied");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&error=manageDenied");
         return;
     }
 
@@ -62,14 +62,14 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell manage-shell">
     <section class="manage-header">
         <div>
-            <p class="breadcrumb"><a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
+            <p class="breadcrumb"><a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
             <h1>게시판 관리</h1>
         </div>
-        <a class="button btn-sub" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
+        <a class="button btn-sub" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
     </section>
 
     <% if ("success".equals(request.getParameter("update"))) { %>
@@ -86,9 +86,9 @@
         <aside class="manage-sidebar">
             <div class="manage-sidebar-title">카페 관리</div>
             <nav class="manage-menu" aria-label="카페 관리 메뉴">
-                <a class="active" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
-                <a href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
-                <a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
+                <a class="active" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                <a href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
+                <a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
             </nav>
         </aside>
 
@@ -110,7 +110,7 @@
                         <h2>게시판 설정</h2>
                         <p>왼쪽에서 게시판을 선택하고 오른쪽에서 이름, 설명, 권한을 수정합니다.</p>
                     </div>
-                    <form class="inline-form" action="<%= contextPath %>/community/boardCreateProcess.jsp" method="post">
+                    <form class="inline-form" action="<%= contextPath %>/community/board/boardCreateProcess.jsp" method="post">
                         <input type="hidden" name="cafeId" value="<%= cafeId %>">
                         <input type="hidden" name="boardName" value="일반게시판">
                         <input type="hidden" name="description" value="">
@@ -133,7 +133,7 @@
                                 <p class="empty-cell">활성 게시판이 없습니다.</p>
                             <% } %>
                             <% for (CafeBoardDTO board : boards) { %>
-                                <a class="board-manage-item <%= board.getBoardId() == selectedBoardId ? "active" : "" %>" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
+                                <a class="board-manage-item <%= board.getBoardId() == selectedBoardId ? "active" : "" %>" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
                                     <span><%= escapeHtml(board.getBoardName()) %></span>
                                     <% if ("Y".equals(board.getIsNotice())) { %>
                                         <em>공지</em>
@@ -146,7 +146,7 @@
 
                     <section class="board-manage-detail">
                         <% if (selectedBoard != null) { %>
-                            <form class="board-setting-form" action="<%= contextPath %>/community/boardUpdateProcess.jsp" method="post">
+                            <form class="board-setting-form" action="<%= contextPath %>/community/board/boardUpdateProcess.jsp" method="post">
                                 <input type="hidden" name="cafeId" value="<%= cafeId %>">
                                 <input type="hidden" name="boardId" value="<%= selectedBoard.getBoardId() %>">
                                 <input type="hidden" name="displayOrder" value="<%= selectedBoard.getDisplayOrder() %>">
@@ -223,16 +223,16 @@
         if (!selectedBoardId) {
             return;
         }
-        location.href = "<%= request.getContextPath() %>/community/boardMoveProcess.jsp?boardId="
+        location.href = "<%= request.getContextPath() %>/community/board/boardMoveProcess.jsp?boardId="
                 + selectedBoardId + "&cafeId=<%= cafeId %>&direction=" + direction;
     }
 
     function hideBoard(boardId, cafeId) {
         if (confirm("게시판을 숨김 처리하시겠습니까?")) {
-            location.href = "<%= request.getContextPath() %>/community/boardHideProcess.jsp?boardId=" + boardId + "&cafeId=" + cafeId;
+            location.href = "<%= request.getContextPath() %>/community/board/boardHideProcess.jsp?boardId=" + boardId + "&cafeId=" + cafeId;
         }
     }
 </script>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

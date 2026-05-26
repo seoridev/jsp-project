@@ -2,7 +2,7 @@
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -24,18 +24,18 @@
             && board.getCafeId() == cafeId
             && new CafeMemberDAO().isCafeManagerOrOwner(cafeId, currentLoginId);
     if (!valid) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
+        response.sendRedirect(request.getContextPath() + "/community/board/cafeBoardManage.jsp?cafeId="
                 + cafeId + "&boardId=" + boardId + "&error=hideFail");
         return;
     }
 
     if (boardDao.hasActivePosts(boardId)) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
+        response.sendRedirect(request.getContextPath() + "/community/board/cafeBoardManage.jsp?cafeId="
                 + cafeId + "&boardId=" + boardId + "&error=hasPosts");
         return;
     }
 
     boolean hidden = boardDao.hideBoard(boardId, cafeId);
-    response.sendRedirect(request.getContextPath() + "/community/cafeBoardManage.jsp?cafeId="
+    response.sendRedirect(request.getContextPath() + "/community/board/cafeBoardManage.jsp?cafeId="
             + cafeId + (hidden ? "&hide=success" : "&error=hideFail"));
 %>

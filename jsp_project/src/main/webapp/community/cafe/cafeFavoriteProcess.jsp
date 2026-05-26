@@ -2,7 +2,7 @@
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -19,13 +19,13 @@
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
 
     if (cafe == null) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeList.jsp?error=noCafe");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
         return;
     }
 
     boolean toggled = new CafeFavoriteDAO().toggleFavorite(cafeId, currentLoginId);
     if (redirect == null || !redirect.startsWith("/community/") || redirect.contains("\r") || redirect.contains("\n")) {
-        redirect = "/community/cafeDetail.jsp?cafeId=" + cafeId;
+        redirect = "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId;
     }
     response.sendRedirect(request.getContextPath() + redirect
             + (redirect.indexOf('?') >= 0 ? "&" : "?")

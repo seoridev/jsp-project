@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%
     request.setCharacterEncoding("UTF-8");
 
@@ -14,13 +14,13 @@
     String joinType = "APPROVAL".equals(request.getParameter("joinType")) ? "APPROVAL" : "DIRECT";
 
     if (cafeName.isEmpty() || region.isEmpty() || category.isEmpty()) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeCreate.jsp?error=empty");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=empty");
         return;
     }
 
     CafeDAO cafeDao = new CafeDAO();
     if (cafeDao.isDuplicateCafeName(cafeName)) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeCreate.jsp?error=duplicate");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=duplicate");
         return;
     }
 
@@ -35,9 +35,9 @@
             .build());
 
     if (cafeId <= 0) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeCreate.jsp?error=fail");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=fail");
         return;
     }
 
-    response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId + "&created=success");
+    response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&created=success");
 %>

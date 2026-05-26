@@ -2,7 +2,7 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -19,7 +19,7 @@
     String title = request.getParameter("title") == null ? "" : request.getParameter("title").trim();
     String content = request.getParameter("content") == null ? "" : request.getParameter("content").trim();
     if (postId <= 0 || title.isEmpty() || title.length() > 200 || content.isEmpty()) {
-        response.sendRedirect(request.getContextPath() + "/community/postUpdate.jsp?postId=" + postId + "&error=fail");
+        response.sendRedirect(request.getContextPath() + "/community/post/postUpdate.jsp?postId=" + postId + "&error=fail");
         return;
     }
 
@@ -40,8 +40,8 @@
             .build(), currentLoginId, manager);
 
     if (!updated) {
-        response.sendRedirect(request.getContextPath() + "/community/postUpdate.jsp?postId=" + postId + "&error=fail");
+        response.sendRedirect(request.getContextPath() + "/community/post/postUpdate.jsp?postId=" + postId + "&error=fail");
         return;
     }
-    response.sendRedirect(request.getContextPath() + "/community/postDetail.jsp?postId=" + postId + "&update=success");
+    response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId=" + postId + "&update=success");
 %>

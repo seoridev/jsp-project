@@ -2,7 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
-<%@ include file="../common/adminSessionCheck.jsp" %>
+<%@ include file="../../common/adminSessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -41,7 +41,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-community-1">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="admin-shell">
     <div class="admin-heading">
         <div>
@@ -79,7 +79,7 @@
                 <% } %>
                 <% for (CafeDTO cafe : cafes) { %>
                     <tr>
-                        <td><a class="table-link" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>"><%= escapeHtml(cafe.getCafeName()) %></a></td>
+                        <td><a class="table-link" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>"><%= escapeHtml(cafe.getCafeName()) %></a></td>
                         <td><%= escapeHtml(cafe.getOwnerId()) %></td>
                         <td><%= escapeHtml(cafe.getRegion()) %></td>
                         <td><%= escapeHtml(cafe.getCategory()) %></td>
@@ -102,6 +102,6 @@
         </table>
     </div>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

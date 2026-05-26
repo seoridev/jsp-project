@@ -5,7 +5,7 @@
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -29,7 +29,7 @@
             && activeMember
             && ("MEMBER".equals(board.getWritePermission()) || manager);
     if (!canWrite) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId + "&error=noPermission");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&error=noPermission");
         return;
     }
 
@@ -44,28 +44,28 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell community-shell">
     <%
         request.setAttribute("cafeIncludeCafe", cafe);
         request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
         request.setAttribute("cafeIncludeCurrentBoardId", Integer.valueOf(boardId));
     %>
-    <%@ include file="includes/cafeHero.jsp" %>
+    <%@ include file="../includes/cafeHero.jsp" %>
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <%@ include file="includes/cafeSideProfile.jsp" %>
+            <%@ include file="../includes/cafeSideProfile.jsp" %>
 
             <div class="cafe-box">
                 <div class="cafe-section-title">게시판 목록</div>
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
-                    <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
+                    <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO cafeBoard : boards) { %>
-                        <a class="cafe-menu-item <%= cafeBoard.getBoardId() == boardId ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= cafeBoard.getBoardId() %>">
+                        <a class="cafe-menu-item <%= cafeBoard.getBoardId() == boardId ? "active" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= cafeBoard.getBoardId() %>">
                             <span><%= escapeHtml(cafeBoard.getBoardName()) %></span>
                             <span><%= cafeBoard.getPostCount() %></span>
                         </a>
@@ -88,8 +88,8 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
@@ -100,7 +100,7 @@
                 <div class="cafe-write-head">
                     <h1>글쓰기</h1>
                 </div>
-                <form class="cafe-write-form" action="<%= contextPath %>/community/postWriteProcess.jsp" method="post">
+                <form class="cafe-write-form" action="<%= contextPath %>/community/post/postWriteProcess.jsp" method="post">
                     <input type="hidden" name="cafeId" value="<%= cafeId %>">
                     <div class="write-board-row">
                         <label class="visually-hidden" for="boardSelect">게시판 선택</label>
@@ -122,7 +122,7 @@
                         <label class="check-row"><input type="checkbox" name="isNotice" value="Y"> 공지글</label>
                     <% } %>
                     <div class="write-actions">
-                        <a class="button btn-sub" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">취소</a>
+                        <a class="button btn-sub" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">취소</a>
                         <button class="btn-main" type="submit">등록</button>
                     </div>
                 </form>
@@ -130,6 +130,6 @@
         </section>
     </section>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

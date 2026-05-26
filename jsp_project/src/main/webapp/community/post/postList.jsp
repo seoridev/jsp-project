@@ -29,7 +29,7 @@
 
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     if (cafe == null) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeList.jsp?error=noCafe");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
         return;
     }
 
@@ -38,7 +38,7 @@
     boolean allBoards = boardId <= 0;
     CafeBoardDTO selectedBoard = allBoards ? null : boardDao.selectBoardById(boardId);
     if (!allBoards && (selectedBoard == null || selectedBoard.getCafeId() != cafeId)) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId);
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId);
         return;
     }
 
@@ -67,7 +67,7 @@
         pageNo = totalPages;
     }
     List<CafePostDTO> posts = canRead ? postDao.selectPosts(cafeId, boardId, keyword, pageNo, pageSize) : java.util.Collections.emptyList();
-    String postListRedirect = "/community/postList.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&page=" + pageNo;
+    String postListRedirect = "/community/post/postList.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&page=" + pageNo;
     if (keyword != null && !keyword.trim().isEmpty()) {
         postListRedirect += "&keyword=" + keywordParam;
     }
@@ -87,28 +87,28 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell community-shell">
     <%
         request.setAttribute("cafeIncludeCafe", cafe);
         request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
         request.setAttribute("cafeIncludeCurrentBoardId", Integer.valueOf(allBoards ? 0 : boardId));
     %>
-    <%@ include file="includes/cafeHero.jsp" %>
+    <%@ include file="../includes/cafeHero.jsp" %>
 
     <section class="cafe-layout cafe-detail-layout">
         <aside class="cafe-left">
-            <%@ include file="includes/cafeSideProfile.jsp" %>
+            <%@ include file="../includes/cafeSideProfile.jsp" %>
 
             <div class="cafe-box">
                 <div class="cafe-section-title">게시판 목록</div>
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
-                    <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
+                    <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item <%= allBoards ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
+                        <a class="cafe-menu-item <%= allBoards ? "active" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO board : boards) { %>
-                        <a class="cafe-menu-item <%= board.getBoardId() == boardId ? "active" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
+                        <a class="cafe-menu-item <%= board.getBoardId() == boardId ? "active" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= board.getBoardId() %>">
                             <span><%= escapeHtml(board.getBoardName()) %></span>
                             <span><%= board.getPostCount() %></span>
                         </a>
@@ -129,8 +129,8 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
@@ -141,7 +141,7 @@
                 <div class="cafe-section-title">
                     <span><%= allBoards ? "전체글 보기" : escapeHtml(selectedBoard.getBoardName()) %></span>
                     <% if (canWrite) { %>
-                        <a class="button btn-main btn-small" href="<%= contextPath %>/community/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= allBoards ? writeBoardId : boardId %>">글쓰기</a>
+                        <a class="button btn-main btn-small" href="<%= contextPath %>/community/post/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= allBoards ? writeBoardId : boardId %>">글쓰기</a>
                     <% } %>
                 </div>
                 <div class="cafe-box-body">
@@ -176,7 +176,7 @@
                             <% for (CafePostDTO post : posts) { %>
                                 <tr>
                                     <td><span class="<%= "Y".equals(post.getIsNotice()) ? "notice-badge" : "board-badge is-normal" %>"><%= "Y".equals(post.getIsNotice()) ? "공지" : "일반" %></span></td>
-                                    <td class="post-title-cell"><a href="<%= contextPath %>/community/postDetail.jsp?postId=<%= post.getPostId() %>"><%= escapeHtml(post.getTitle()) %></a></td>
+                                    <td class="post-title-cell"><a href="<%= contextPath %>/community/post/postDetail.jsp?postId=<%= post.getPostId() %>"><%= escapeHtml(post.getTitle()) %></a></td>
                                     <td><%= escapeHtml(post.getWriterNickname()) %></td>
                                     <td><%= post.getViewCount() %></td>
                                     <td><%= post.getCommentCount() %></td>
@@ -184,7 +184,7 @@
                             <% } %>
                         </tbody>
                     </table>
-                    <form class="board-search-bar" action="<%= contextPath %>/community/postList.jsp" method="get">
+                    <form class="board-search-bar" action="<%= contextPath %>/community/post/postList.jsp" method="get">
                         <strong>글 검색</strong>
                         <input type="hidden" name="cafeId" value="<%= cafeId %>">
                         <input type="hidden" name="boardId" value="<%= boardId %>">
@@ -194,15 +194,15 @@
                     </form>
                     <div class="pagination">
                         <% if (prevBlockPage >= 1) { %>
-                            <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= prevBlockPage %>">이전</a>
+                            <a href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= prevBlockPage %>">이전</a>
                         <% } else { %>
                             <span class="is-disabled">이전</span>
                         <% } %>
                         <% for (int pageIndex = pageBlockStart; pageIndex <= pageBlockEnd; pageIndex++) { %>
-                            <a class="<%= pageIndex == pageNo ? "is-current" : "" %>" href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageIndex %>"><%= pageIndex %></a>
+                            <a class="<%= pageIndex == pageNo ? "is-current" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= pageIndex %>"><%= pageIndex %></a>
                         <% } %>
                         <% if (nextBlockPage <= totalPages) { %>
-                            <a href="<%= contextPath %>/community/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= nextBlockPage %>">다음</a>
+                            <a href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>&keyword=<%= keywordParam %>&page=<%= nextBlockPage %>">다음</a>
                         <% } else { %>
                             <span class="is-disabled">다음</span>
                         <% } %>
@@ -213,6 +213,6 @@
         </section>
     </section>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

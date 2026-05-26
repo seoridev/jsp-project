@@ -2,7 +2,7 @@
 <%@ page import="com.carrot.dao.CafeCommentDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -25,10 +25,10 @@
     boolean manager = new CafeMemberDAO().isCafeManagerOrOwner(comment.getCafeId(), currentLoginId);
     boolean deleted = commentDao.deleteComment(commentId, currentLoginId, manager);
     if (deleted) {
-        response.sendRedirect(request.getContextPath() + "/community/postDetail.jsp?postId="
+        response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId="
                 + comment.getPostId() + "&commentDelete=success");
         return;
     }
-    response.sendRedirect(request.getContextPath() + "/community/postDetail.jsp?postId="
+    response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId="
             + comment.getPostId() + "&error=commentDeleteFail");
 %>

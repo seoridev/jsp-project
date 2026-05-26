@@ -5,7 +5,7 @@
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -37,7 +37,7 @@
             return;
         }
         targetTitle = cafe.getCafeName();
-        backUrl = request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafe.getCafeId();
+        backUrl = request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafe.getCafeId();
     } else if ("CAFE_POST".equals(targetType)) {
         CafePostDTO post = new CafePostDAO().selectPostById(targetId);
         if (post == null) {
@@ -45,7 +45,7 @@
             return;
         }
         targetTitle = post.getTitle();
-        backUrl = request.getContextPath() + "/community/postDetail.jsp?postId=" + post.getPostId();
+        backUrl = request.getContextPath() + "/community/post/postDetail.jsp?postId=" + post.getPostId();
     } else {
         CafeCommentDTO comment = new CafeCommentDAO().selectCommentById(targetId);
         CafePostDTO post = comment == null ? null : new CafePostDAO().selectPostById(comment.getPostId());
@@ -54,7 +54,7 @@
             return;
         }
         targetTitle = comment.getContent();
-        backUrl = request.getContextPath() + "/community/postDetail.jsp?postId=" + comment.getPostId();
+        backUrl = request.getContextPath() + "/community/post/postDetail.jsp?postId=" + comment.getPostId();
     }
 %>
 <!DOCTYPE html>
@@ -66,7 +66,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=community-report-1">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell">
     <section class="detail-panel">
         <div class="detail-header">
@@ -80,7 +80,7 @@
         <% if ("reportFail".equals(request.getParameter("error"))) { %>
             <p class="field-message is-error">신고 접수에 실패했습니다.</p>
         <% } %>
-        <form class="form-grid" action="<%= contextPath %>/community/communityReportProcess.jsp" method="post">
+        <form class="form-grid" action="<%= contextPath %>/community/report/communityReportProcess.jsp" method="post">
             <input type="hidden" name="targetType" value="<%= escapeHtml(targetType) %>">
             <input type="hidden" name="targetId" value="<%= targetId %>">
             <div class="field">
@@ -103,6 +103,6 @@
         </form>
     </section>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

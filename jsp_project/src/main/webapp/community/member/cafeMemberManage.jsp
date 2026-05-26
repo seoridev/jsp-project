@@ -4,7 +4,7 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafeMemberDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%!
     private int parseIntParam(String value) {
         try {
@@ -48,7 +48,7 @@
     int cafeId = parseIntParam(request.getParameter("cafeId"));
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     if (cafe == null) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeList.jsp?error=noCafe");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
         return;
     }
 
@@ -57,7 +57,7 @@
     CafeMemberDTO currentMember = memberDao.selectCafeMember(cafeId, currentLoginId);
     if (currentMember == null || !"ACTIVE".equals(currentMember.getStatus())
             || (!"OWNER".equals(currentMember.getRole()) && !"MANAGER".equals(currentMember.getRole()))) {
-        response.sendRedirect(request.getContextPath() + "/community/cafeDetail.jsp?cafeId=" + cafeId + "&error=manageDenied");
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&error=manageDenied");
         return;
     }
 
@@ -78,14 +78,14 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="page-shell manage-shell">
     <section class="manage-header">
         <div>
-            <p class="breadcrumb"><a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
+            <p class="breadcrumb"><a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>"><%= escapeHtml(cafe.getCafeName()) %></a></p>
             <h1>회원 관리</h1>
         </div>
-        <a class="button btn-sub" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
+        <a class="button btn-sub" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
     </section>
 
     <% if ("success".equals(request.getParameter("approve"))) { %>
@@ -118,9 +118,9 @@
         <aside class="manage-sidebar">
             <div class="manage-sidebar-title">카페 관리</div>
             <nav class="manage-menu" aria-label="카페 관리 메뉴">
-                <a href="<%= contextPath %>/community/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
-                <a class="active" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
-                <a href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
+                <a href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
+                <a class="active" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
+                <a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>
             </nav>
         </aside>
 
@@ -175,12 +175,12 @@
                                     <td><span class="status-badge is-pending">승인 필요</span></td>
                                     <td>
                                         <div class="manage-actions">
-                                            <form action="<%= contextPath %>/community/memberApproveProcess.jsp" method="post">
+                                            <form action="<%= contextPath %>/community/member/memberApproveProcess.jsp" method="post">
                                                 <input type="hidden" name="cafeId" value="<%= cafeId %>">
                                                 <input type="hidden" name="memberId" value="<%= escapeHtml(member.getMemberId()) %>">
                                                 <button class="btn-main btn-small" type="submit">승인</button>
                                             </form>
-                                            <form action="<%= contextPath %>/community/memberRejectProcess.jsp" method="post">
+                                            <form action="<%= contextPath %>/community/member/memberRejectProcess.jsp" method="post">
                                                 <input type="hidden" name="cafeId" value="<%= cafeId %>">
                                                 <input type="hidden" name="memberId" value="<%= escapeHtml(member.getMemberId()) %>">
                                                 <button class="btn-danger btn-small" type="submit">거절</button>
@@ -202,7 +202,7 @@
                     </div>
                     <span class="status-badge">검색 결과 <%= cafeMembers.size() %>명</span>
                 </div>
-                <form class="member-filter-form" action="<%= contextPath %>/community/cafeMemberManage.jsp" method="get">
+                <form class="member-filter-form" action="<%= contextPath %>/community/member/cafeMemberManage.jsp" method="get">
                     <input type="hidden" name="cafeId" value="<%= cafeId %>">
                     <label>
                         <span>검색</span>
@@ -229,7 +229,7 @@
                         </select>
                     </label>
                     <button class="btn-main btn-small" type="submit">검색</button>
-                    <a class="button btn-sub btn-small" href="<%= contextPath %>/community/cafeMemberManage.jsp?cafeId=<%= cafeId %>">초기화</a>
+                    <a class="button btn-sub btn-small" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">초기화</a>
                 </form>
                 <div class="manage-table-wrap">
                     <table class="manage-table member-manage-table member-directory-table">
@@ -270,7 +270,7 @@
                                     <td><%= escapeHtml(formatDateTime(member.getJoinedAt())) %></td>
                                     <td>
                                         <% if (canChangeRole) { %>
-                                            <form class="member-inline-form" action="<%= contextPath %>/community/memberRoleProcess.jsp" method="post">
+                                            <form class="member-inline-form" action="<%= contextPath %>/community/member/memberRoleProcess.jsp" method="post">
                                                 <input type="hidden" name="cafeId" value="<%= cafeId %>">
                                                 <input type="hidden" name="memberId" value="<%= escapeHtml(member.getMemberId()) %>">
                                                 <select name="role" aria-label="회원 등급">
@@ -298,7 +298,7 @@
         <button type="button" data-member-action="unban" data-menu-type="restore-kick">강퇴 해제</button>
         <button type="button" data-member-action="unban" data-menu-type="restore-ban">차단 해제</button>
     </div>
-    <form id="memberContextForm" action="<%= contextPath %>/community/memberStatusProcess.jsp" method="post" hidden>
+    <form id="memberContextForm" action="<%= contextPath %>/community/member/memberStatusProcess.jsp" method="post" hidden>
         <input type="hidden" name="cafeId" value="<%= cafeId %>">
         <input type="hidden" name="memberId" value="">
         <input type="hidden" name="action" value="">
@@ -385,6 +385,6 @@
     window.addEventListener('resize', hideMenu);
 }());
 </script>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

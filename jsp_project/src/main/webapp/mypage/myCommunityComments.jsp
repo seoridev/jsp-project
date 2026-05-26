@@ -2,7 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.CafeCommentDAO" %>
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
-<%@ include file="../common/sessionCheck.jsp" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
 <%
     String currentLoginId = (String) session.getAttribute("loginId");
     List<CafeCommentDTO> comments = new CafeCommentDAO().selectCommentsByWriter(currentLoginId);
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=mypage-community-1">
 </head>
 <body>
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %>
 <main class="admin-shell">
     <div class="admin-heading">
         <div>
@@ -47,8 +47,8 @@
                 <% for (CafeCommentDTO comment : comments) { %>
                     <tr>
                         <td><%= escapeHtml(comment.getContent()) %></td>
-                        <td><a class="table-link" href="<%= contextPath %>/community/postDetail.jsp?postId=<%= comment.getPostId() %>"><%= escapeHtml(comment.getPostTitle()) %></a></td>
-                        <td><a class="table-link" href="<%= contextPath %>/community/cafeDetail.jsp?cafeId=<%= comment.getCafeId() %>"><%= escapeHtml(comment.getCafeName()) %></a></td>
+                        <td><a class="table-link" href="<%= contextPath %>/community/post/postDetail.jsp?postId=<%= comment.getPostId() %>"><%= escapeHtml(comment.getPostTitle()) %></a></td>
+                        <td><a class="table-link" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= comment.getCafeId() %>"><%= escapeHtml(comment.getCafeName()) %></a></td>
                         <td><%= escapeHtml(comment.getBoardName()) %></td>
                         <td><%= comment.getCreatedAt() == null ? "-" : comment.getCreatedAt() %></td>
                     </tr>
@@ -57,6 +57,6 @@
         </table>
     </div>
 </main>
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../../common/footer.jsp" %>
 </body>
 </html>
