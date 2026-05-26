@@ -2,18 +2,11 @@
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
+    // 즐겨찾기 요청 후 원래 커뮤니티 경로로 복귀
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
     String redirect = request.getParameter("redirect");
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);

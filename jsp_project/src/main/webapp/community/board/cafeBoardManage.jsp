@@ -5,18 +5,11 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
+    // 관리 대상 카페와 선택 게시판 정보 조회
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     if (cafe == null) {
         response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
@@ -31,7 +24,7 @@
 
     CafeBoardDAO boardDao = new CafeBoardDAO();
     List<CafeBoardDTO> boards = boardDao.selectBoardsByCafeId(cafeId);
-    int selectedBoardId = parseIntParam(request.getParameter("boardId"));
+    int selectedBoardId = ParamParser.parseInt(request.getParameter("boardId"));
     CafeBoardDTO selectedBoard = null;
     int selectedIndex = -1;
 

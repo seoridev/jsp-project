@@ -5,23 +5,18 @@
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
+    // 신고 대상 유형 허용 여부 확인
     private boolean isValidTargetType(String targetType) {
         return "CAFE".equals(targetType) || "CAFE_POST".equals(targetType) || "CAFE_COMMENT".equals(targetType);
     }
 %>
 <%
+    // 신고 대상 제목과 돌아갈 경로 조회
     String targetType = request.getParameter("targetType");
-    int targetId = parseIntParam(request.getParameter("targetId"));
+    int targetId = ParamParser.parseInt(request.getParameter("targetId"));
     String targetTitle = "";
     String backUrl = request.getContextPath() + "/community/communityHome.jsp";
 

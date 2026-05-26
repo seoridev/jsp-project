@@ -3,18 +3,11 @@
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dao.CafePostLikeDAO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int postId = parseIntParam(request.getParameter("postId"));
+    // 활성 카페 회원만 게시글 좋아요 토글
+    int postId = ParamParser.parseInt(request.getParameter("postId"));
     String currentLoginId = (String) session.getAttribute("loginId");
     CafePostDTO post = new CafePostDAO().selectPostById(postId);
 

@@ -135,6 +135,52 @@ public class CafePostDAO extends BaseDAO {
         return list;
     }
 
+    public List<CafePostDTO> selectPopularPosts(int limit) {
+        List<CafePostDTO> list = new ArrayList<>();
+        String sql = baseSelect()
+                + " WHERE cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND cp.is_notice = 'N' "
+                + "AND c.status = 'ACTIVE' "
+                + "ORDER BY (cp.like_count * 3 + cp.comment_count * 2 + cp.view_count) DESC, "
+                + "cp.created_at DESC FETCH FIRST " + Math.max(1, limit) + " ROWS ONLY";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapPost(rs));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<CafePostDTO> selectSearchPosts(String keyword, int limit) {
+        List<CafePostDTO> list = new ArrayList<>();
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return list;
+        }
+
+        String sql = baseSelect()
+                + " WHERE cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' "
+                + "AND (LOWER(cp.title) LIKE ? OR LOWER(DBMS_LOB.SUBSTR(cp.content, 4000, 1)) LIKE ?) "
+                + "ORDER BY cp.created_at DESC FETCH FIRST " + Math.max(1, limit) + " ROWS ONLY";
+        String value = "%" + keyword.trim().toLowerCase() + "%";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, value);
+            pstmt.setString(2, value);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapPost(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public List<CafePostDTO> selectRecentPostsByCafeId(int cafeId, int limit) {
         List<CafePostDTO> list = new ArrayList<>();
         String sql = baseSelect()

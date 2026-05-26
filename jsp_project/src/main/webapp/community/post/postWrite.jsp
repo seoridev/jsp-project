@@ -5,19 +5,12 @@
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
-    int boardId = parseIntParam(request.getParameter("boardId"));
+    // 글쓰기 가능한 게시판인지 확인
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
+    int boardId = ParamParser.parseInt(request.getParameter("boardId"));
     CafeBoardDAO boardDao = new CafeBoardDAO();
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     CafeBoardDTO board = boardDao.selectBoardById(boardId);

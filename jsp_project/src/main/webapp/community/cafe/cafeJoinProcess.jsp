@@ -1,17 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
+    // 카페 가입 요청 처리
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
     if (cafeId <= 0) {
         response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
         return;

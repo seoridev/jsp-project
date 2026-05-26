@@ -2,18 +2,11 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int postId = parseIntParam(request.getParameter("postId"));
+    // 작성자 또는 관리자만 게시글 삭제 처리
+    int postId = ParamParser.parseInt(request.getParameter("postId"));
     CafePostDAO postDao = new CafePostDAO();
     CafePostDTO post = postDao.selectPostForDelete(postId);
     if (post == null) {

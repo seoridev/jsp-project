@@ -10,18 +10,11 @@
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
+<%@ page import="com.carrot.util.ParamParser" %>
+<%@ page import="java.util.Collections" %>
 <%
-    int postId = parseIntParam(request.getParameter("postId"));
-    String postDetailRedirect = java.net.URLEncoder.encode("/community/post/postDetail.jsp?postId=" + postId, "UTF-8");
+    // 게시글 조회 권한, 좋아요, 댓글 데이터 조회
+    int postId = ParamParser.parseInt(request.getParameter("postId"));
     CafePostDAO postDao = new CafePostDAO();
     CafePostDTO post = postDao.selectPostById(postId);
     int cafeId = post == null ? 0 : post.getCafeId();
@@ -34,13 +27,13 @@
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeMemberDAO memberDao = new CafeMemberDAO();
     CafeDTO cafe = null;
-    List<CafeBoardDTO> boards = java.util.Collections.emptyList();
+    List<CafeBoardDTO> boards = Collections.emptyList();
     boolean activeMember = false;
     boolean manager = false;
     boolean isWriter = false;
     boolean likedPost = false;
     int likeCount = 0;
-    List<CafeCommentDTO> comments = java.util.Collections.emptyList();
+    List<CafeCommentDTO> comments = Collections.emptyList();
     if (post != null) {
         cafe = new CafeDAO().selectCafeById(post.getCafeId());
         boards = new CafeBoardDAO().selectBoardsByCafeId(post.getCafeId());

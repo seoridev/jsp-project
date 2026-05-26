@@ -12,6 +12,7 @@
 <%@ include file="../../common/header.jsp" %>
 <main class="cafe-write-wrap">
     <section class="cafe-write-panel">
+        <%-- 카페 생성 입력 화면 --%>
         <div class="cafe-write-head">
             <p class="breadcrumb">
                 <a href="<%= contextPath %>/community/communityHome.jsp">커뮤니티</a>

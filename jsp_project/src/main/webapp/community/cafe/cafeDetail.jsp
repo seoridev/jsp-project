@@ -12,15 +12,9 @@
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafeMemberDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
+<%@ page import="java.util.Collections" %>
 <%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
     private String formatCafeDate(java.time.LocalDateTime value) {
         return value == null ? "" : value.format(DateTimeFormatter.ofPattern("yyyy.MM.dd."));
     }
@@ -43,8 +37,8 @@
     }
 %>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
-    String cafeDetailRedirect = java.net.URLEncoder.encode("/community/cafe/cafeDetail.jsp?cafeId=" + cafeId, "UTF-8");
+    // 카페 상세 진입 권한과 사이드 영역 데이터를 조회
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
     CafeDAO cafeDao = new CafeDAO();
     CafeDTO cafe = cafeDao.selectCafeById(cafeId);
     if (cafe == null) {
@@ -74,7 +68,7 @@
 
     CafePostDAO postDao = new CafePostDAO();
     List<CafeBoardDTO> boards = new CafeBoardDAO().selectBoardsByCafeId(cafeId);
-    List<CafePostDTO> posts = canRead ? postDao.selectRecentPostsByCafeId(cafeId, 10) : java.util.Collections.emptyList();
+    List<CafePostDTO> posts = canRead ? postDao.selectRecentPostsByCafeId(cafeId, 10) : Collections.emptyList();
     int myCafePostCount = currentLoginId != null ? postDao.countPostsByWriterInCafe(cafeId, currentLoginId) : 0;
     int myCafeCommentCount = currentLoginId != null ? new CafeCommentDAO().countCommentsByWriterInCafe(cafeId, currentLoginId) : 0;
     int myCafeLikeCount = currentLoginId != null ? new CafePostLikeDAO().countLikesByMemberInCafe(cafeId, currentLoginId) : 0;

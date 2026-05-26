@@ -2,21 +2,14 @@
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
+    // 관리자 권한 확인 후 게시판 노출 순서 변경
     request.setCharacterEncoding("UTF-8");
 
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
-    int boardId = parseIntParam(request.getParameter("boardId"));
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
+    int boardId = ParamParser.parseInt(request.getParameter("boardId"));
     String direction = request.getParameter("direction");
     String currentLoginId = (String) session.getAttribute("loginId");
 

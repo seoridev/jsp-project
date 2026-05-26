@@ -1,6 +1,10 @@
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="com.carrot.util.RegionFormatter" %>
+<%@ page import="com.carrot.util.HtmlEscaper" %>
 <%
+    // 공통 카페 상단 영역에 필요한 즐겨찾기 상태 계산
     CafeDTO cafeHeroCafe = (CafeDTO) request.getAttribute("cafeIncludeCafe");
     Object cafeHeroCafeIdValue = request.getAttribute("cafeIncludeCafeId");
     int cafeHeroCafeId = cafeHeroCafeIdValue instanceof Integer ? ((Integer) cafeHeroCafeIdValue).intValue() : 0;
@@ -11,22 +15,22 @@
     String cafeHeroUri = request.getRequestURI().substring(request.getContextPath().length());
     String cafeHeroQuery = request.getQueryString();
     String cafeHeroReturn = cafeHeroUri + (cafeHeroQuery == null ? "" : "?" + cafeHeroQuery);
-    String cafeHeroRedirect = java.net.URLEncoder.encode(cafeHeroReturn, "UTF-8");
+    String cafeHeroRedirect = URLEncoder.encode(cafeHeroReturn, "UTF-8");
 %>
 <% if (cafeHeroCafe != null) { %>
 <section class="cafe-gate">
     <div class="cafe-cover-band">
-        <span class="cafe-cover-label"><%= com.carrot.util.HtmlEscaper.escape(cafeHeroCafe.getCategory()) %></span>
+        <span class="cafe-cover-label"><%= HtmlEscaper.escape(cafeHeroCafe.getCategory()) %></span>
     </div>
     <div class="cafe-gate-content">
         <div class="cafe-gate-copy">
             <div class="cafe-title-row">
-                <h1><%= com.carrot.util.HtmlEscaper.escape(cafeHeroCafe.getCafeName()) %></h1>
-                <span class="cafe-badge"><%= com.carrot.util.HtmlEscaper.escape(cafeHeroCafe.getVisibility()) %></span>
+                <h1><%= HtmlEscaper.escape(cafeHeroCafe.getCafeName()) %></h1>
+                <span class="cafe-badge"><%= HtmlEscaper.escape(cafeHeroCafe.getVisibility()) %></span>
                 <% if (cafeHeroLoginId != null) { %>
                     <form class="cafe-title-favorite-form" action="<%= request.getContextPath() %>/community/cafe/cafeFavoriteProcess.jsp" method="post">
                         <input type="hidden" name="cafeId" value="<%= cafeHeroCafeId %>">
-                        <input type="hidden" name="redirect" value="<%= com.carrot.util.HtmlEscaper.escape(cafeHeroReturn) %>">
+                        <input type="hidden" name="redirect" value="<%= HtmlEscaper.escape(cafeHeroReturn) %>">
                         <button class="cafe-favorite-toggle <%= cafeHeroFavorite ? "is-active" : "" %>" type="submit" aria-label="<%= cafeHeroFavorite ? "즐겨찾기 해제" : "즐겨찾기" %>">
                             <%= cafeHeroFavorite ? "★" : "☆" %>
                         </button>
@@ -35,10 +39,10 @@
                     <a class="cafe-favorite-toggle" href="<%= request.getContextPath() %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeHeroRedirect %>" aria-label="로그인 후 즐겨찾기">☆</a>
                 <% } %>
             </div>
-            <p><%= com.carrot.util.HtmlEscaper.escape(cafeHeroCafe.getDescription()) %></p>
+            <p><%= HtmlEscaper.escape(cafeHeroCafe.getDescription()) %></p>
             <div class="cafe-meta-line">
-                <span><%= com.carrot.util.HtmlEscaper.escape(cafeHeroCafe.getCategory()) %></span>
-                <span><%= com.carrot.util.HtmlEscaper.escape(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafeHeroCafe.getRegion())) %></span>
+                <span><%= HtmlEscaper.escape(cafeHeroCafe.getCategory()) %></span>
+                <span><%= HtmlEscaper.escape(RegionFormatter.formatKoreanSigungu(cafeHeroCafe.getRegion())) %></span>
             </div>
         </div>
     </div>

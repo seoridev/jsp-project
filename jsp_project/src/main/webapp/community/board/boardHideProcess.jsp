@@ -2,19 +2,12 @@
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
-    int boardId = parseIntParam(request.getParameter("boardId"));
+    // 게시글이 없는 게시판만 숨김 처리
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
+    int boardId = ParamParser.parseInt(request.getParameter("boardId"));
     String currentLoginId = (String) session.getAttribute("loginId");
 
     CafeBoardDAO boardDao = new CafeBoardDAO();

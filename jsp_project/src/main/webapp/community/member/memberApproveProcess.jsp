@@ -1,17 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
+    // 관리자 권한 확인 후 가입 대기 회원 승인
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
     String memberId = request.getParameter("memberId");
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeMemberDAO memberDao = new CafeMemberDAO();

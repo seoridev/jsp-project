@@ -7,7 +7,13 @@
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafeMemberDTO" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="com.carrot.util.RegionFormatter" %>
+<%@ page import="com.carrot.util.HtmlEscaper" %>
 <%
+    // 공통 사이드 프로필에 표시할 회원 상태와 활동 통계 조회
     CafeDTO cafeSideCafe = (CafeDTO) request.getAttribute("cafeIncludeCafe");
     Object cafeSideCafeIdValue = request.getAttribute("cafeIncludeCafeId");
     int cafeSideCafeId = cafeSideCafeIdValue instanceof Integer ? ((Integer) cafeSideCafeIdValue).intValue() : 0;
@@ -17,14 +23,14 @@
     String cafeSideLoginNickname = (String) session.getAttribute("loginNickname");
     String cafeSideRedirectPath = request.getRequestURI().substring(request.getContextPath().length());
     String cafeSideQuery = request.getQueryString();
-    String cafeSideRedirect = java.net.URLEncoder.encode(cafeSideRedirectPath + (cafeSideQuery == null ? "" : "?" + cafeSideQuery), "UTF-8");
+    String cafeSideRedirect = URLEncoder.encode(cafeSideRedirectPath + (cafeSideQuery == null ? "" : "?" + cafeSideQuery), "UTF-8");
 
     CafeMemberDTO cafeSideMember = null;
     boolean cafeSideLoggedIn = cafeSideLoginId != null;
     boolean cafeSideActive = false;
     boolean cafeSidePending = false;
     boolean cafeSideManager = false;
-    List<CafeBoardDTO> cafeSideBoards = java.util.Collections.emptyList();
+    List<CafeBoardDTO> cafeSideBoards = Collections.emptyList();
     int cafeSideWriteBoardId = 0;
     int cafeSidePostCount = 0;
     int cafeSideCommentCount = 0;
@@ -74,8 +80,8 @@
     String cafeSideImageUrl = cafeSideHasImage
             ? request.getContextPath() + (cafeSideImagePath.startsWith("/") ? cafeSideImagePath : "/" + cafeSideImagePath)
             : "";
-    String cafeSideCreatedDate = cafeSideCafe == null || cafeSideCafe.getCreatedAt() == null ? "" : cafeSideCafe.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd."));
-    String cafeSideJoinedDate = cafeSideMember == null || cafeSideMember.getJoinedAt() == null ? "" : cafeSideMember.getJoinedAt().format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd."));
+    String cafeSideCreatedDate = cafeSideCafe == null || cafeSideCafe.getCreatedAt() == null ? "" : cafeSideCafe.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy.MM.dd."));
+    String cafeSideJoinedDate = cafeSideMember == null || cafeSideMember.getJoinedAt() == null ? "" : cafeSideMember.getJoinedAt().format(DateTimeFormatter.ofPattern("yyyy.MM.dd."));
     String cafeSideRoleText = "방문자";
     if (cafeSideActive) {
         if ("OWNER".equals(cafeSideMember.getRole())) {
@@ -99,13 +105,13 @@
     <div class="cafe-side-panel is-active" data-cafe-panel="info" role="tabpanel">
         <div class="cafe-side-head">
             <% if (cafeSideHasImage) { %>
-                <img class="cafe-side-image" src="<%= com.carrot.util.HtmlEscaper.escape(cafeSideImageUrl) %>" alt="">
+                <img class="cafe-side-image" src="<%= HtmlEscaper.escape(cafeSideImageUrl) %>" alt="">
             <% } else { %>
-                <div class="cafe-side-image is-initial"><%= com.carrot.util.HtmlEscaper.escape(cafeSideCafe.getCafeName()).isEmpty() ? "C" : com.carrot.util.HtmlEscaper.escape(cafeSideCafe.getCafeName()).substring(0, 1) %></div>
+                <div class="cafe-side-image is-initial"><%= HtmlEscaper.escape(cafeSideCafe.getCafeName()).isEmpty() ? "C" : HtmlEscaper.escape(cafeSideCafe.getCafeName()).substring(0, 1) %></div>
             <% } %>
             <div class="cafe-side-copy">
                 <div class="cafe-side-name-row">
-                    <strong><%= com.carrot.util.HtmlEscaper.escape(cafeSideOwnerName) %></strong>
+                    <strong><%= HtmlEscaper.escape(cafeSideOwnerName) %></strong>
                     <span>스탭</span>
                 </div>
                 <% if (!cafeSideCreatedDate.isEmpty()) { %>
@@ -114,9 +120,9 @@
             </div>
         </div>
         <div class="cafe-side-meta">
-            <div><span>지역</span><strong><%= com.carrot.util.HtmlEscaper.escape(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafeSideCafe.getRegion())) %></strong></div>
+            <div><span>지역</span><strong><%= HtmlEscaper.escape(RegionFormatter.formatKoreanSigungu(cafeSideCafe.getRegion())) %></strong></div>
             <div><span>회원</span><strong><%= cafeSideCafe.getMemberCount() %>명</strong></div>
-            <div><span>공개</span><strong><%= com.carrot.util.HtmlEscaper.escape(cafeSideCafe.getVisibility()) %></strong></div>
+            <div><span>공개</span><strong><%= HtmlEscaper.escape(cafeSideCafe.getVisibility()) %></strong></div>
         </div>
     </div>
     <div class="cafe-side-panel" data-cafe-panel="activity" role="tabpanel" hidden>
@@ -124,9 +130,9 @@
             <div class="cafe-side-empty">로그인 후 나의활동을 볼 수 있습니다.</div>
         <% } else { %>
             <div class="cafe-side-head">
-                <div class="cafe-side-image is-user"><%= com.carrot.util.HtmlEscaper.escape(cafeSideUserName == null || cafeSideUserName.isEmpty() ? cafeSideLoginId.substring(0, 1) : cafeSideUserName.substring(0, 1)) %></div>
+                <div class="cafe-side-image is-user"><%= HtmlEscaper.escape(cafeSideUserName == null || cafeSideUserName.isEmpty() ? cafeSideLoginId.substring(0, 1) : cafeSideUserName.substring(0, 1)) %></div>
                 <div class="cafe-side-copy">
-                    <strong><%= com.carrot.util.HtmlEscaper.escape(cafeSideUserName) %></strong>
+                    <strong><%= HtmlEscaper.escape(cafeSideUserName) %></strong>
                     <% if (!cafeSideJoinedDate.isEmpty()) { %>
                         <p><%= cafeSideJoinedDate %> 가입</p>
                     <% } else { %>

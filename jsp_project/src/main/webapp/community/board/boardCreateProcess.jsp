@@ -1,16 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.CafeBoardDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%!
-    private int parseIntParam(String value, int defaultValue) {
-        try {
-            return value == null ? defaultValue : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
-    }
-
+    // 게시판 설정값 허용 범위 확인
     private boolean isReadPermission(String value) {
         return "ALL".equals(value) || "MEMBER".equals(value);
     }
@@ -24,9 +18,10 @@
     }
 %>
 <%
+    // 게시판 생성 권한과 입력값 검증
     request.setCharacterEncoding("UTF-8");
 
-    int cafeId = parseIntParam(request.getParameter("cafeId"), 0);
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"), 0);
     String boardName = request.getParameter("boardName") == null ? "" : request.getParameter("boardName").trim();
     String description = request.getParameter("description") == null ? "" : request.getParameter("description").trim();
     String readPermission = request.getParameter("readPermission");

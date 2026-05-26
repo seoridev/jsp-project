@@ -2,18 +2,11 @@
 <%@ page import="com.carrot.dao.CafeCommentDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int commentId = parseIntParam(request.getParameter("commentId"));
+    // 작성자 또는 관리자만 댓글 삭제 처리
+    int commentId = ParamParser.parseInt(request.getParameter("commentId"));
     CafeCommentDAO commentDao = new CafeCommentDAO();
     CafeCommentDTO comment = commentDao.selectCommentById(commentId);
     if (comment == null) {

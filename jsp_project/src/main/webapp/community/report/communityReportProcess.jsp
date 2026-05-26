@@ -7,16 +7,10 @@
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
 <%@ page import="com.carrot.dto.ReportDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
+    // 신고 처리 공통 검증과 리다이렉트 보조 함수
     private boolean isValidTargetType(String targetType) {
         return "CAFE".equals(targetType) || "CAFE_POST".equals(targetType) || "CAFE_COMMENT".equals(targetType);
     }
@@ -26,10 +20,11 @@
     }
 %>
 <%
+    // 신고 대상 검증 후 중복 신고를 막고 저장
     request.setCharacterEncoding("UTF-8");
     String currentLoginId = (String) session.getAttribute("loginId");
     String targetType = request.getParameter("targetType");
-    int targetId = parseIntParam(request.getParameter("targetId"));
+    int targetId = ParamParser.parseInt(request.getParameter("targetId"));
     String reason = request.getParameter("reason");
     String detail = request.getParameter("detail");
     String redirectUrl = request.getContextPath() + "/community/communityHome.jsp";

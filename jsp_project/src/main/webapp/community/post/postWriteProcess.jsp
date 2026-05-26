@@ -4,21 +4,14 @@
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
+    // 글쓰기 요청값과 게시판 권한 검증
     request.setCharacterEncoding("UTF-8");
 
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
-    int boardId = parseIntParam(request.getParameter("boardId"));
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
+    int boardId = ParamParser.parseInt(request.getParameter("boardId"));
     String title = request.getParameter("title") == null ? "" : request.getParameter("title").trim();
     String content = request.getParameter("content") == null ? "" : request.getParameter("content").trim();
     String currentLoginId = (String) session.getAttribute("loginId");

@@ -3,6 +3,7 @@
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%
+    // 카페 생성 요청값 검증 및 기본 게시판 생성
     request.setCharacterEncoding("UTF-8");
 
     String currentLoginId = (String) session.getAttribute("loginId");

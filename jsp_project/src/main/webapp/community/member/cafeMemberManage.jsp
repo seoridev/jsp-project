@@ -4,16 +4,11 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafeMemberDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
+<%@ page import="com.carrot.util.RegionFormatter" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
+    // 회원 관리 화면 표시용 상태/등급 문구 변환
     private String statusText(String status) {
         if ("ACTIVE".equals(status)) return "활동";
         if ("PENDING".equals(status)) return "승인 대기";
@@ -45,7 +40,8 @@
     }
 %>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
+    // 카페 관리자 권한 확인 후 회원 목록 조회
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     if (cafe == null) {
         response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
@@ -170,7 +166,7 @@
                                 <tr>
                                     <td><strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong></td>
                                     <td><%= escapeHtml(member.getMemberId()) %></td>
-                                    <td><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(member.getRegion())) %></td>
+                                    <td><%= escapeHtml(RegionFormatter.formatKoreanSigungu(member.getRegion())) %></td>
                                     <td><%= escapeHtml(formatDateTime(member.getJoinedAt())) %></td>
                                     <td><span class="status-badge is-pending">승인 필요</span></td>
                                     <td>
@@ -266,7 +262,7 @@
                                     data-can-restore-ban="<%= cafeOwner && canManageStatus && "BANNED".equals(member.getStatus()) %>">
                                     <td><strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong></td>
                                     <td><%= escapeHtml(member.getMemberId()) %></td>
-                                    <td><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(member.getRegion())) %></td>
+                                    <td><%= escapeHtml(RegionFormatter.formatKoreanSigungu(member.getRegion())) %></td>
                                     <td><%= escapeHtml(formatDateTime(member.getJoinedAt())) %></td>
                                     <td>
                                         <% if (canChangeRole) { %>

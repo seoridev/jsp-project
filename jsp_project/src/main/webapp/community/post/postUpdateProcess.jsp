@@ -2,20 +2,13 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
+    // 게시글 수정 요청값과 작성자/관리자 권한 확인
     request.setCharacterEncoding("UTF-8");
 
-    int postId = parseIntParam(request.getParameter("postId"));
+    int postId = ParamParser.parseInt(request.getParameter("postId"));
     String title = request.getParameter("title") == null ? "" : request.getParameter("title").trim();
     String content = request.getParameter("content") == null ? "" : request.getParameter("content").trim();
     if (postId <= 0 || title.isEmpty() || title.length() > 200 || content.isEmpty()) {

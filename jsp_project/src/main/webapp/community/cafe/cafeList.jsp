@@ -1,13 +1,32 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.HashSet" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Set" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
+<%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="com.carrot.util.RegionFormatter" %>
 <%
+    // 검색 조건과 즐겨찾기 여부를 함께 조회
     String keyword = request.getParameter("keyword");
     String region = request.getParameter("region");
     String category = request.getParameter("category");
     String sort = request.getParameter("sort") == null ? "recent" : request.getParameter("sort");
+    String currentLoginId = (String) session.getAttribute("loginId");
     List<CafeDTO> cafes = new CafeDAO().selectCafeList(keyword, region, category, sort, 100);
+    Set<Integer> favoriteCafeIds = new HashSet<>();
+    if (currentLoginId != null) {
+        for (CafeDTO favoriteCafe : new CafeFavoriteDAO().selectFavoriteCafes(currentLoginId)) {
+            favoriteCafeIds.add(favoriteCafe.getCafeId());
+        }
+    }
+    String cafeListReturn = request.getRequestURI().substring(request.getContextPath().length());
+    String cafeListQuery = request.getQueryString();
+    if (cafeListQuery != null) {
+        cafeListReturn += "?" + cafeListQuery;
+    }
+    String cafeListRedirect = URLEncoder.encode(cafeListReturn, "UTF-8");
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -54,20 +73,32 @@
                 <p class="empty-cell">검색 결과가 없습니다.</p>
             <% } %>
             <% for (CafeDTO cafe : cafes) { %>
-                <a class="cafe-directory-item" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
-                    <span class="cafe-initial"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></span>
-                    <span class="cafe-list-copy">
-                        <strong><%= escapeHtml(cafe.getCafeName()) %></strong>
-                        <p><%= escapeHtml(cafe.getDescription()) %></p>
-                        <span class="cafe-meta-line">
-                            <span><%= escapeHtml(com.carrot.util.RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %></span>
-                            <span><%= escapeHtml(cafe.getCategory()) %></span>
-                            <span>회원 <%= cafe.getMemberCount() %></span>
-                            <span>글 <%= cafe.getPostCount() %></span>
+                <div class="cafe-directory-item">
+                    <a class="cafe-list-main" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafe.getCafeId() %>">
+                        <span class="cafe-initial"><%= escapeHtml(cafe.getCafeName()).isEmpty() ? "C" : escapeHtml(cafe.getCafeName()).substring(0, 1) %></span>
+                        <span class="cafe-list-copy">
+                            <strong><%= escapeHtml(cafe.getCafeName()) %></strong>
+                            <p><%= escapeHtml(cafe.getDescription()) %></p>
+                            <span class="cafe-meta-line">
+                                <span><%= escapeHtml(RegionFormatter.formatKoreanSigungu(cafe.getRegion())) %></span>
+                                <span><%= escapeHtml(cafe.getCategory()) %></span>
+                                <span>회원 <%= cafe.getMemberCount() %></span>
+                                <span>글 <%= cafe.getPostCount() %></span>
+                            </span>
                         </span>
-                    </span>
-                    <span class="btn-sub btn-small">방문</span>
-                </a>
+                        <span class="btn-sub btn-small">방문</span>
+                    </a>
+                    <% if (currentLoginId != null) { %>
+                        <form class="cafe-list-favorite-form" action="<%= contextPath %>/community/cafe/cafeFavoriteProcess.jsp" method="post">
+                            <input type="hidden" name="cafeId" value="<%= cafe.getCafeId() %>">
+                            <input type="hidden" name="redirect" value="<%= escapeHtml(cafeListReturn) %>">
+                            <% boolean favoriteCafe = favoriteCafeIds.contains(cafe.getCafeId()); %>
+                            <button class="cafe-favorite-toggle <%= favoriteCafe ? "is-active" : "" %>" type="submit" aria-label="<%= favoriteCafe ? "remove favorite" : "add favorite" %>"><%= favoriteCafe ? "&#9733;" : "&#9734;" %></button>
+                        </form>
+                    <% } else { %>
+                        <a class="cafe-favorite-toggle" href="<%= contextPath %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeListRedirect %>" aria-label="login to add favorite">&#9734;</a>
+                    <% } %>
+                </div>
             <% } %>
         </div>
     </section>

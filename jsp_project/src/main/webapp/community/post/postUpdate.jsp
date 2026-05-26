@@ -7,18 +7,11 @@
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
-    int postId = parseIntParam(request.getParameter("postId"));
+    // 게시글 수정 화면 접근 권한 확인
+    int postId = ParamParser.parseInt(request.getParameter("postId"));
     CafePostDTO post = new CafePostDAO().selectPostById(postId);
     if (post == null) {
         response.sendRedirect(request.getContextPath() + "/community/communityHome.jsp?error=noPost");

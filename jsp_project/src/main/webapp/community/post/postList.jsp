@@ -7,25 +7,20 @@
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
+<%@ page import="com.carrot.util.ParamParser" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.Collections" %>
 <%
-    int cafeId = parseIntParam(request.getParameter("cafeId"));
-    int boardId = parseIntParam(request.getParameter("boardId"));
-    int pageNo = parseIntParam(request.getParameter("page"));
+    // 게시판 선택, 읽기 권한, 페이지 정보를 함께 계산
+    int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
+    int boardId = ParamParser.parseInt(request.getParameter("boardId"));
+    int pageNo = ParamParser.parseInt(request.getParameter("page"));
     if (pageNo <= 0) {
         pageNo = 1;
     }
     int pageSize = 10;
     String keyword = request.getParameter("keyword");
-    String keywordParam = keyword == null ? "" : java.net.URLEncoder.encode(keyword, "UTF-8");
+    String keywordParam = keyword == null ? "" : URLEncoder.encode(keyword, "UTF-8");
 
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
     if (cafe == null) {
@@ -66,12 +61,7 @@
     if (pageNo > totalPages) {
         pageNo = totalPages;
     }
-    List<CafePostDTO> posts = canRead ? postDao.selectPosts(cafeId, boardId, keyword, pageNo, pageSize) : java.util.Collections.emptyList();
-    String postListRedirect = "/community/post/postList.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&page=" + pageNo;
-    if (keyword != null && !keyword.trim().isEmpty()) {
-        postListRedirect += "&keyword=" + keywordParam;
-    }
-    String encodedPostListRedirect = java.net.URLEncoder.encode(postListRedirect, "UTF-8");
+    List<CafePostDTO> posts = canRead ? postDao.selectPosts(cafeId, boardId, keyword, pageNo, pageSize) : Collections.emptyList();
     int pageBlockSize = 10;
     int pageBlockStart = ((pageNo - 1) / pageBlockSize) * pageBlockSize + 1;
     int pageBlockEnd = Math.min(pageBlockStart + pageBlockSize - 1, totalPages);
