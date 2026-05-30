@@ -3357,6 +3357,18 @@ button.btn-danger {
     margin: 0;
 }
 
+.cafe-left-leave-form {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid #eee7dc;
+}
+
+.cafe-left-leave-form .cafe-side-secondary {
+    border-color: #ead8ca;
+    background: #fffaf6;
+    color: #8a4b2a;
+}
+
 .cafe-side-actions .status-badge {
     justify-content: center;
     min-height: 38px;
@@ -4125,7 +4137,8 @@ button.btn-danger {
 
 .board-setting-row input[type="text"],
 .board-setting-row input:not([type]),
-.board-setting-row select {
+.board-setting-row select,
+.board-setting-row textarea {
     min-height: 32px;
     border: 1px solid #c8c8c8;
     border-radius: 0;
@@ -4138,6 +4151,13 @@ button.btn-danger {
 .board-setting-row input[type="text"],
 .board-setting-row input:not([type]) {
     width: min(100%, 520px);
+}
+
+.board-setting-row textarea {
+    width: min(100%, 620px);
+    min-height: 110px;
+    padding-top: 8px;
+    resize: vertical;
 }
 
 .board-setting-stack {
@@ -4170,6 +4190,17 @@ button.btn-danger {
     justify-content: flex-end;
     gap: 8px;
     padding-top: 18px;
+}
+
+.cafe-setting-form {
+    padding: 0 18px 18px;
+}
+
+.cafe-setting-help {
+    margin: 0;
+    color: #756b61;
+    font-size: 12px;
+    line-height: 1.45;
 }
 
 .board-create-form {

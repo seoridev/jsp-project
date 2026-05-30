@@ -18,6 +18,7 @@
     Object cafeSideCafeIdValue = request.getAttribute("cafeIncludeCafeId");
     int cafeSideCafeId = cafeSideCafeIdValue instanceof Integer ? ((Integer) cafeSideCafeIdValue).intValue() : 0;
     Object cafeSideCurrentBoardIdValue = request.getAttribute("cafeIncludeCurrentBoardId");
+    boolean cafeSideHasCurrentBoardContext = cafeSideCurrentBoardIdValue instanceof Integer;
     int cafeSideCurrentBoardId = cafeSideCurrentBoardIdValue instanceof Integer ? ((Integer) cafeSideCurrentBoardIdValue).intValue() : 0;
     String cafeSideLoginId = (String) session.getAttribute("loginId");
     String cafeSideLoginNickname = (String) session.getAttribute("loginNickname");
@@ -32,6 +33,7 @@
     boolean cafeSideManager = false;
     List<CafeBoardDTO> cafeSideBoards = Collections.emptyList();
     int cafeSideWriteBoardId = 0;
+    int cafeSideWriteTargetBoardId = 0;
     int cafeSidePostCount = 0;
     int cafeSideCommentCount = 0;
     int cafeSideLikeCount = 0;
@@ -65,6 +67,7 @@
                 }
             }
         }
+        cafeSideWriteTargetBoardId = cafeSideHasCurrentBoardContext && cafeSideCurrentBoardId <= 0 ? 0 : cafeSideWriteBoardId;
         CafePostDAO cafeSidePostDao = new CafePostDAO();
         cafeSidePostCount = cafeSideLoginId != null ? cafeSidePostDao.countPostsByWriterInCafe(cafeSideCafeId, cafeSideLoginId) : 0;
         cafeSideCommentCount = cafeSideLoginId != null ? new CafeCommentDAO().countCommentsByWriterInCafe(cafeSideCafeId, cafeSideLoginId) : 0;
@@ -156,15 +159,9 @@
         <% } else if (!cafeSideActive) { %>
             <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/cafe/cafeJoinProcess.jsp?cafeId=<%= cafeSideCafeId %>">카페 가입</a>
         <% } else if (cafeSideWriteBoardId > 0) { %>
-            <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/post/postWrite.jsp?cafeId=<%= cafeSideCafeId %>&boardId=<%= cafeSideWriteBoardId %>">카페 글쓰기</a>
+            <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/post/postWrite.jsp?cafeId=<%= cafeSideCafeId %>&boardId=<%= cafeSideWriteTargetBoardId %>">카페 글쓰기</a>
         <% } else { %>
             <span class="status-badge is-stopped">글쓰기 권한 없음</span>
-        <% } %>
-        <% if (cafeSideActive && !"OWNER".equals(cafeSideMember.getRole())) { %>
-            <form action="<%= request.getContextPath() %>/community/cafe/cafeLeaveProcess.jsp" method="post" onsubmit="return confirm('카페에서 탈퇴하시겠습니까?');">
-                <input type="hidden" name="cafeId" value="<%= cafeSideCafeId %>">
-                <button class="button cafe-side-secondary" type="submit">카페 탈퇴</button>
-            </form>
         <% } %>
     </div>
 </div>

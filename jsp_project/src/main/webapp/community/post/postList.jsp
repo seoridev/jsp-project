@@ -119,11 +119,13 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeManage.jsp?cafeId=<%= cafeId %>">카페 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
+            <%@ include file="../includes/cafeLeaveAction.jsp" %>
         </aside>
 
         <section class="cafe-main">
@@ -131,7 +133,7 @@
                 <div class="cafe-section-title">
                     <span><%= allBoards ? "전체글 보기" : escapeHtml(selectedBoard.getBoardName()) %></span>
                     <% if (canWrite) { %>
-                        <a class="button btn-main btn-small" href="<%= contextPath %>/community/post/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= allBoards ? writeBoardId : boardId %>">글쓰기</a>
+                        <a class="button btn-main btn-small" href="<%= contextPath %>/community/post/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= allBoards ? 0 : boardId %>">글쓰기</a>
                     <% } %>
                 </div>
                 <div class="cafe-box-body">

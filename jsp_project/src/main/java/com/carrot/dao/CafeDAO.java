@@ -240,6 +240,24 @@ public class CafeDAO extends BaseDAO {
         return false;
     }
 
+    public boolean updateCafeSettings(CafeDTO cafe) {
+        String sql = "UPDATE cafe SET description = ?, region = ?, category = ?, visibility = ?, join_type = ?, "
+                + "updated_at = SYSTIMESTAMP WHERE cafe_id = ? AND status = 'ACTIVE'";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, cafe.getDescription());
+            pstmt.setString(2, cafe.getRegion());
+            pstmt.setString(3, cafe.getCategory());
+            pstmt.setString(4, cafe.getVisibility());
+            pstmt.setString(5, cafe.getJoinType());
+            pstmt.setInt(6, cafe.getCafeId());
+            return pstmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public void increaseViewCount(int cafeId) {
         String sql = "UPDATE cafe SET view_count = view_count + 1 WHERE cafe_id = ?";
 

@@ -8,25 +8,34 @@
 <%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%
-    // 글쓰기 가능한 게시판인지 확인
+    // 전체글 보기에서 진입하면 게시판을 직접 선택하도록 boardId=0을 허용
     int cafeId = ParamParser.parseInt(request.getParameter("cafeId"));
     int boardId = ParamParser.parseInt(request.getParameter("boardId"));
     CafeBoardDAO boardDao = new CafeBoardDAO();
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
-    CafeBoardDTO board = boardDao.selectBoardById(boardId);
+    boolean allBoards = boardId <= 0;
+    CafeBoardDTO board = allBoards ? null : boardDao.selectBoardById(boardId);
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeMemberDAO memberDao = new CafeMemberDAO();
     boolean activeMember = memberDao.isActiveMember(cafeId, currentLoginId);
     boolean manager = memberDao.isCafeManagerOrOwner(cafeId, currentLoginId);
-    boolean canWrite = cafe != null && board != null && board.getCafeId() == cafeId
-            && activeMember
-            && ("MEMBER".equals(board.getWritePermission()) || manager);
+    List<CafeBoardDTO> boards = cafe == null ? java.util.Collections.emptyList() : boardDao.selectBoardsByCafeId(cafeId);
+    boolean hasWritableBoard = false;
+    for (CafeBoardDTO cafeBoard : boards) {
+        if (manager || "MEMBER".equals(cafeBoard.getWritePermission())) {
+            hasWritableBoard = true;
+            break;
+        }
+    }
+    boolean canWrite = cafe != null && activeMember
+            && (allBoards
+                ? hasWritableBoard
+                : board != null && board.getCafeId() == cafeId
+                    && ("MEMBER".equals(board.getWritePermission()) || manager));
     if (!canWrite) {
         response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&error=noPermission");
         return;
     }
-
-    List<CafeBoardDTO> boards = boardDao.selectBoardsByCafeId(cafeId);
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -55,7 +64,7 @@
                 <nav class="cafe-menu-list" aria-label="카페 메뉴">
                     <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페 홈</a>
                     <% if (!boards.isEmpty()) { %>
-                        <a class="cafe-menu-item" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
+                        <a class="cafe-menu-item <%= allBoards ? "active" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=0">전체글 보기</a>
                     <% } %>
                     <% for (CafeBoardDTO cafeBoard : boards) { %>
                         <a class="cafe-menu-item <%= cafeBoard.getBoardId() == boardId ? "active" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= cafeBoard.getBoardId() %>">
@@ -81,11 +90,13 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeManage.jsp?cafeId=<%= cafeId %>">카페 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
+            <%@ include file="../includes/cafeLeaveAction.jsp" %>
         </aside>
 
         <section class="cafe-main">
@@ -93,11 +104,17 @@
                 <div class="cafe-write-head">
                     <h1>글쓰기</h1>
                 </div>
+                <% if ("invalid".equals(request.getParameter("error"))) { %>
+                    <p class="field-message is-error">게시판, 제목, 내용을 확인해 주세요.</p>
+                <% } else if ("fail".equals(request.getParameter("error"))) { %>
+                    <p class="field-message is-error">게시글 등록에 실패했습니다.</p>
+                <% } %>
                 <form class="cafe-write-form" action="<%= contextPath %>/community/post/postWriteProcess.jsp" method="post">
                     <input type="hidden" name="cafeId" value="<%= cafeId %>">
                     <div class="write-board-row">
                         <label class="visually-hidden" for="boardSelect">게시판 선택</label>
                         <select id="boardSelect" class="write-board-select" name="boardId" required>
+                            <option value="" <%= allBoards ? "selected" : "" %>>-게시판 선택-</option>
                             <% for (CafeBoardDTO cafeBoard : boards) {
                                 boolean canSelectBoard = manager || "MEMBER".equals(cafeBoard.getWritePermission());
                                 if (canSelectBoard) {

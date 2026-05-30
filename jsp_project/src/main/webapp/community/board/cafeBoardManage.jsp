@@ -77,8 +77,9 @@
 
     <section class="manage-layout">
         <aside class="manage-sidebar">
-            <div class="manage-sidebar-title">카페 관리</div>
+            <div class="manage-sidebar-title">관리 메뉴</div>
             <nav class="manage-menu" aria-label="카페 관리 메뉴">
+                <a href="<%= contextPath %>/community/cafe/cafeManage.jsp?cafeId=<%= cafeId %>">카페 관리</a>
                 <a class="active" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
                 <a href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
                 <a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= cafeId %>">카페로 돌아가기</a>

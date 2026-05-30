@@ -145,11 +145,13 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeManage.jsp?cafeId=<%= cafeId %>">카페 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= cafeId %>">게시판 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= cafeId %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
+            <%@ include file="../includes/cafeLeaveAction.jsp" %>
         </aside>
 
         <section class="cafe-main cafe-box">

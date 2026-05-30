@@ -11,12 +11,14 @@
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
 <%@ page import="com.carrot.util.ParamParser" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.Collections" %>
 <%
     // 게시글 조회 권한, 좋아요, 댓글 데이터 조회
     int postId = ParamParser.parseInt(request.getParameter("postId"));
     CafePostDAO postDao = new CafePostDAO();
     CafePostDTO post = postDao.selectPostById(postId);
+    DateTimeFormatter commentDateFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
     int cafeId = post == null ? 0 : post.getCafeId();
     boolean deletedPostFail = post == null && "deleteFail".equals(request.getParameter("error"));
     if (post == null && !deletedPostFail) {
@@ -112,11 +114,13 @@
                 <div class="cafe-box">
                     <div class="cafe-section-title">관리 메뉴</div>
                     <nav class="cafe-menu-list">
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeManage.jsp?cafeId=<%= post.getCafeId() %>">카페 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= post.getCafeId() %>">게시판 관리</a>
                         <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= post.getCafeId() %>">회원 관리</a>
                     </nav>
                 </div>
             <% } %>
+            <%@ include file="../includes/cafeLeaveAction.jsp" %>
         </aside>
 
         <article class="cafe-main">
@@ -178,7 +182,7 @@
                                 <div class="comment-body">
                                     <div class="comment-meta">
                                         <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
-                                        <span><%= comment.getCreatedAt() %></span>
+                                        <span><%= comment.getCreatedAt() == null ? "" : comment.getCreatedAt().format(commentDateFormat) %></span>
                                     </div>
                                     <p><%= escapeHtml(comment.getContent()) %></p>
                                     <div class="comment-actions">
