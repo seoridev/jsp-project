@@ -21,6 +21,12 @@
     CafePostDTO post = postDao.selectPostById(postId);
     DateTimeFormatter commentDateFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
     int cafeId = post == null ? 0 : post.getCafeId();
+    Object skipViewPostId = session.getAttribute("skipPostViewIncrementPostId");
+    boolean skipViewIncrease = skipViewPostId instanceof Integer && ((Integer) skipViewPostId).intValue() == postId;
+    if (skipViewIncrease) {
+        session.removeAttribute("skipPostViewIncrementPostId");
+    }
+    int displayViewCount = 0;
     boolean deletedPostFail = post == null && "deleteFail".equals(request.getParameter("error"));
     if (post == null && !deletedPostFail) {
         response.sendRedirect(request.getContextPath() + "/community/communityHome.jsp?error=noPost");
@@ -49,7 +55,10 @@
             return;
         }
 
-        postDao.increaseViewCount(postId);
+        if (!skipViewIncrease) {
+            postDao.increaseViewCount(postId);
+        }
+        displayViewCount = post.getViewCount() + (skipViewIncrease ? 0 : 1);
         CafePostLikeDAO likeDao = new CafePostLikeDAO();
         likedPost = currentLoginId != null && likeDao.existsLike(postId, currentLoginId);
         likeCount = likeDao.countLike(postId);
@@ -153,7 +162,7 @@
                             <% } %>
                             <span><%= escapeHtml(post.getWriterNickname()) %></span>
                         </span>
-                        <span>조회 <%= post.getViewCount() + 1 %></span>
+                        <span>조회 <%= displayViewCount %></span>
                         <span>댓글 <%= comments.size() %></span>
                         <span>좋아요 <%= likeCount %></span>
                     </div>

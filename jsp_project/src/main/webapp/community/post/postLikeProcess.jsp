@@ -17,11 +17,13 @@
     }
 
     if (!new CafeMemberDAO().isActiveMember(post.getCafeId(), currentLoginId)) {
+        session.setAttribute("skipPostViewIncrementPostId", Integer.valueOf(postId));
         response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId=" + postId + "&error=likeDenied");
         return;
     }
 
     boolean toggled = new CafePostLikeDAO().toggleLike(postId, currentLoginId);
+    session.setAttribute("skipPostViewIncrementPostId", Integer.valueOf(postId));
     response.sendRedirect(request.getContextPath() + "/community/post/postDetail.jsp?postId="
             + postId + (toggled ? "&like=success" : "&error=likeFail"));
 %>
