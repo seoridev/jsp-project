@@ -3437,6 +3437,25 @@ button.btn-danger {
     min-height: 38px;
 }
 
+.cafe-side-restricted {
+    width: 100%;
+    min-height: 38px;
+    padding: 10px 12px;
+    border: 1px solid #ead8ca;
+    border-radius: 4px;
+    background: #fffaf6;
+    color: #8a4b2a;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+}
+
+.cafe-side-restricted:hover {
+    border-color: #e6c4ad;
+    background: #fff5ec;
+}
+
 .cafe-side-primary,
 .button.cafe-side-primary {
     width: 100%;

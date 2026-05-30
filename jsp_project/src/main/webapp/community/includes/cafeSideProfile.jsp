@@ -161,7 +161,7 @@
         <% } else if (cafeSidePending) { %>
             <span class="status-badge is-stopped">승인 대기</span>
         <% } else if (cafeSideBanned) { %>
-            <span class="status-badge is-stopped">가입 제한</span>
+            <button class="cafe-side-restricted" type="button" onclick="alert('이 카페에서는 가입이 제한된 상태입니다.');">가입 제한</button>
         <% } else if (!cafeSideActive) { %>
             <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/cafe/cafeJoinProcess.jsp?cafeId=<%= cafeSideCafeId %>">카페 가입</a>
         <% } else if (cafeSideWriteBoardId > 0) { %>
