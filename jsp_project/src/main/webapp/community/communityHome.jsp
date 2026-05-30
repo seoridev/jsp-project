@@ -365,7 +365,6 @@
                     <span class="community-profile-avatar"></span>
                     <div>
                         <strong><%= escapeHtml(displayNickname) %>님</strong>
-                        <p>보관함 · 쪽지 0</p>
                     </div>
                     <a class="community-logout" href="<%= contextPath %>/member/logout.jsp">로그아웃</a>
                 </div>
