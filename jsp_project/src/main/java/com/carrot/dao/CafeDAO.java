@@ -86,7 +86,7 @@ public class CafeDAO extends BaseDAO {
     }
 
     public boolean isDuplicateCafeName(String cafeName) {
-        String sql = "SELECT COUNT(*) FROM cafe WHERE cafe_name = ? AND status <> 'DELETED'";
+        String sql = "SELECT COUNT(*) FROM cafe WHERE cafe_name = ?";
         boolean duplicate = false;
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
