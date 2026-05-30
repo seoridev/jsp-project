@@ -387,11 +387,13 @@ public class CafePostDAO extends BaseDAO {
     }
 
     private String baseSelect() {
-        return "SELECT cp.*, cb.board_name, c.cafe_name, m.nickname AS writer_nickname "
+        return "SELECT cp.*, cb.board_name, c.cafe_name, m.nickname AS writer_nickname, cm.role AS writer_role "
                 + "FROM cafe_post cp "
                 + "JOIN cafe_board cb ON cp.board_id = cb.board_id "
                 + "JOIN cafe c ON cp.cafe_id = c.cafe_id "
-                + "LEFT JOIN member m ON cp.writer_id = m.login_id";
+                + "LEFT JOIN member m ON cp.writer_id = m.login_id "
+                + "LEFT JOIN cafe_member cm ON cm.cafe_id = cp.cafe_id AND cm.member_id = cp.writer_id "
+                + "AND cm.status = 'ACTIVE'";
     }
 
     private int selectLastPostId(Connection conn) throws Exception {
@@ -459,6 +461,7 @@ public class CafePostDAO extends BaseDAO {
                 .createdAt(createdAt == null ? null : createdAt.toLocalDateTime())
                 .updatedAt(updatedAt == null ? null : updatedAt.toLocalDateTime())
                 .writerNickname(rs.getString("writer_nickname"))
+                .writerRole(rs.getString("writer_role"))
                 .boardName(rs.getString("board_name"))
                 .cafeName(rs.getString("cafe_name"))
                 .build();

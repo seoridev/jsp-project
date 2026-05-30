@@ -43,10 +43,12 @@ public class CafeCommentDAO extends BaseDAO {
 
     public List<CafeCommentDTO> selectCommentsByPostId(int postId) {
         List<CafeCommentDTO> list = new ArrayList<>();
-        String sql = "SELECT cc.*, cp.cafe_id, m.nickname AS writer_nickname "
+        String sql = "SELECT cc.*, cp.cafe_id, m.nickname AS writer_nickname, cm.role AS writer_role "
                 + "FROM cafe_comment cc "
                 + "JOIN cafe_post cp ON cc.post_id = cp.post_id "
                 + "LEFT JOIN member m ON cc.writer_id = m.login_id "
+                + "LEFT JOIN cafe_member cm ON cm.cafe_id = cp.cafe_id AND cm.member_id = cc.writer_id "
+                + "AND cm.status = 'ACTIVE' "
                 + "WHERE cc.post_id = ? AND cc.is_deleted = 'N' "
                 + "ORDER BY cc.created_at ASC, cc.comment_id ASC";
 
@@ -64,10 +66,12 @@ public class CafeCommentDAO extends BaseDAO {
     }
 
     public CafeCommentDTO selectCommentById(int commentId) {
-        String sql = "SELECT cc.*, cp.cafe_id, m.nickname AS writer_nickname "
+        String sql = "SELECT cc.*, cp.cafe_id, m.nickname AS writer_nickname, cm.role AS writer_role "
                 + "FROM cafe_comment cc "
                 + "JOIN cafe_post cp ON cc.post_id = cp.post_id "
                 + "LEFT JOIN member m ON cc.writer_id = m.login_id "
+                + "LEFT JOIN cafe_member cm ON cm.cafe_id = cp.cafe_id AND cm.member_id = cc.writer_id "
+                + "AND cm.status = 'ACTIVE' "
                 + "WHERE cc.comment_id = ?";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -86,12 +90,14 @@ public class CafeCommentDAO extends BaseDAO {
     public List<CafeCommentDTO> selectCommentsByWriter(String writerId) {
         List<CafeCommentDTO> list = new ArrayList<>();
         String sql = "SELECT cc.*, cp.cafe_id, cp.title AS post_title, cb.board_name, c.cafe_name, "
-                + "m.nickname AS writer_nickname "
+                + "m.nickname AS writer_nickname, cm.role AS writer_role "
                 + "FROM cafe_comment cc "
                 + "JOIN cafe_post cp ON cc.post_id = cp.post_id "
                 + "JOIN cafe_board cb ON cp.board_id = cb.board_id "
                 + "JOIN cafe c ON cp.cafe_id = c.cafe_id "
                 + "LEFT JOIN member m ON cc.writer_id = m.login_id "
+                + "LEFT JOIN cafe_member cm ON cm.cafe_id = cp.cafe_id AND cm.member_id = cc.writer_id "
+                + "AND cm.status = 'ACTIVE' "
                 + "WHERE cc.writer_id = ? AND cc.is_deleted = 'N' "
                 + "AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' "
                 + "ORDER BY cc.created_at DESC";
@@ -201,6 +207,7 @@ public class CafeCommentDAO extends BaseDAO {
                 .createdAt(createdAt == null ? null : createdAt.toLocalDateTime())
                 .updatedAt(updatedAt == null ? null : updatedAt.toLocalDateTime())
                 .writerNickname(rs.getString("writer_nickname"))
+                .writerRole(rs.getString("writer_role"))
                 .build();
     }
 
@@ -217,6 +224,7 @@ public class CafeCommentDAO extends BaseDAO {
                 .createdAt(createdAt == null ? null : createdAt.toLocalDateTime())
                 .updatedAt(updatedAt == null ? null : updatedAt.toLocalDateTime())
                 .writerNickname(rs.getString("writer_nickname"))
+                .writerRole(rs.getString("writer_role"))
                 .postTitle(rs.getString("post_title"))
                 .cafeName(rs.getString("cafe_name"))
                 .boardName(rs.getString("board_name"))

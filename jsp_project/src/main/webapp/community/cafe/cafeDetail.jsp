@@ -12,6 +12,7 @@
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafeMemberDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%@ page import="com.carrot.util.ParamParser" %>
 <%@ page import="java.util.Collections" %>
 <%!
@@ -21,13 +22,13 @@
 
     private String formatCafeRole(String role) {
         if ("OWNER".equals(role)) {
-            return "스탭";
+            return "운영자";
         }
         if ("MANAGER".equals(role)) {
             return "스탭";
         }
         if ("MEMBER".equals(role)) {
-            return "멤버";
+            return "회원";
         }
         return role == null ? "방문자" : role;
     }
@@ -63,7 +64,7 @@
     String joinedDate = myMember == null ? "" : formatCafeDate(myMember.getJoinedAt());
     String ownerDisplayName = cafe.getOwnerNickname();
     if (ownerDisplayName == null || ownerDisplayName.trim().isEmpty()) {
-        ownerDisplayName = cafe.getOwnerId() == null ? "스탭" : cafe.getOwnerId();
+        ownerDisplayName = cafe.getOwnerId() == null ? "운영자" : cafe.getOwnerId();
     }
 
     CafePostDAO postDao = new CafePostDAO();
@@ -100,6 +101,8 @@
         <p class="notice-toast">카페에 가입되었습니다.</p>
     <% } else if ("pending".equals(request.getParameter("join"))) { %>
         <p class="field-message">가입 요청이 접수되었습니다.</p>
+    <% } else if ("banned".equals(request.getParameter("join"))) { %>
+        <p class="field-message is-error">차단된 회원은 이 카페에 가입할 수 없습니다.</p>
     <% } else if ("success".equals(request.getParameter("leave"))) { %>
         <p class="notice-toast">카페에서 탈퇴했습니다.</p>
     <% } else if (request.getParameter("error") != null) { %>
@@ -168,11 +171,21 @@
             <% } else { %>
                 <div class="cafe-post-list">
                     <% for (CafePostDTO post : posts) { %>
+                        <%
+                            String writerRoleLabel = CafeRoleUtil.badgeText(post.getWriterRole());
+                        %>
                         <a class="cafe-post-item <%= "Y".equals(post.getIsNotice()) ? "is-notice" : "" %>" href="<%= contextPath %>/community/post/postDetail.jsp?postId=<%= post.getPostId() %>">
                             <span class="<%= "Y".equals(post.getIsNotice()) ? "notice-badge" : "board-badge is-normal" %>"><%= "Y".equals(post.getIsNotice()) ? "공지" : "일반" %></span>
                             <span class="cafe-post-board"><%= escapeHtml(post.getBoardName()) %></span>
                             <span class="cafe-post-title"><%= escapeHtml(post.getTitle()) %></span>
-                            <span class="cafe-post-author"><%= escapeHtml(post.getWriterNickname()) %></span>
+                            <span class="cafe-post-author">
+                                <span class="post-author-line">
+                                    <% if (!writerRoleLabel.isEmpty()) { %>
+                                        <span class="writer-role-badge <%= CafeRoleUtil.badgeClass(post.getWriterRole()) %>"><%= writerRoleLabel %></span>
+                                    <% } %>
+                                    <span><%= escapeHtml(post.getWriterNickname()) %></span>
+                                </span>
+                            </span>
                             <span class="cafe-post-comments">댓글 <%= post.getCommentCount() %></span>
                         </a>
                     <% } %>

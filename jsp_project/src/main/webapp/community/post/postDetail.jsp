@@ -10,6 +10,7 @@
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%@ page import="com.carrot.util.ParamParser" %>
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="java.util.Collections" %>
@@ -143,7 +144,15 @@
                     <% if ("Y".equals(post.getIsNotice())) { %><span class="notice-badge">공지</span><% } %>
                     <h1><%= escapeHtml(post.getTitle()) %></h1>
                     <div class="post-meta-line">
-                        <span><%= escapeHtml(post.getWriterNickname()) %></span>
+                        <%
+                            String postWriterRoleText = CafeRoleUtil.badgeText(post.getWriterRole());
+                        %>
+                        <span class="post-author-line">
+                            <% if (!postWriterRoleText.isEmpty()) { %>
+                                <span class="writer-role-badge <%= CafeRoleUtil.badgeClass(post.getWriterRole()) %>"><%= postWriterRoleText %></span>
+                            <% } %>
+                            <span><%= escapeHtml(post.getWriterNickname()) %></span>
+                        </span>
                         <span>조회 <%= post.getViewCount() + 1 %></span>
                         <span>댓글 <%= comments.size() %></span>
                         <span>좋아요 <%= likeCount %></span>
@@ -177,11 +186,19 @@
                             <p class="empty-cell">아직 댓글이 없습니다.</p>
                         <% } %>
                         <% for (CafeCommentDTO comment : comments) { %>
+                            <%
+                                String commentWriterRoleText = CafeRoleUtil.badgeText(comment.getWriterRole());
+                            %>
                             <div class="comment-item">
                                 <div class="comment-avatar"><%= escapeHtml(comment.getWriterNickname()).isEmpty() ? "U" : escapeHtml(comment.getWriterNickname()).substring(0, 1) %></div>
                                 <div class="comment-body">
                                     <div class="comment-meta">
-                                        <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
+                                        <div class="comment-author-line">
+                                            <% if (!commentWriterRoleText.isEmpty()) { %>
+                                                <span class="writer-role-badge <%= CafeRoleUtil.badgeClass(comment.getWriterRole()) %>"><%= commentWriterRoleText %></span>
+                                            <% } %>
+                                            <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
+                                        </div>
                                         <span><%= comment.getCreatedAt() == null ? "" : comment.getCreatedAt().format(commentDateFormat) %></span>
                                     </div>
                                     <p><%= escapeHtml(comment.getContent()) %></p>

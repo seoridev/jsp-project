@@ -1960,6 +1960,63 @@ button.btn-danger,
     font-weight: 900;
 }
 
+.writer-role-badge {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 6px;
+    border: 1px solid #d9d1c8;
+    border-radius: 4px;
+    background: #fffdf9;
+    color: #5f574f;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.writer-role-badge.is-owner {
+    border-color: #ff8a22;
+    background: #fff7ed;
+    color: #c45100;
+}
+
+.writer-role-badge.is-manager {
+    border-color: #8fb999;
+    background: #f4fbf5;
+    color: #316d3d;
+}
+
+.writer-role-badge.is-member {
+    border-color: #d7d3cd;
+    background: #faf8f5;
+    color: #6f665d;
+}
+
+.post-author-line,
+.comment-author-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.post-author-line {
+    justify-content: center;
+}
+
+.post-author-line > span:last-child,
+.comment-author-line > strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .board-badge.is-normal {
     border-color: #ded6ca;
     background: #f7f4ee;
@@ -2059,7 +2116,7 @@ button.btn-danger {
 }
 
 .post-board-table .col-author {
-    width: 110px;
+    width: 160px;
 }
 
 .post-board-table .col-count {
@@ -2069,6 +2126,12 @@ button.btn-danger {
 .post-board-table .post-title-cell {
     overflow: hidden;
     text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post-board-table td:nth-child(3) {
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -3402,7 +3465,7 @@ button.btn-danger {
 
 .cafe-post-item {
     display: grid;
-    grid-template-columns: 56px 96px minmax(0, 1fr) 110px 76px;
+    grid-template-columns: 56px 96px minmax(0, 1fr) 160px 76px;
     gap: 10px;
     align-items: center;
     min-height: 50px;

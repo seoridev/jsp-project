@@ -20,7 +20,7 @@
     } else if ("ban".equals(action)) {
         nextStatus = "BANNED";
     } else if ("unban".equals(action)) {
-        nextStatus = "ACTIVE";
+        nextStatus = "LEFT";
     }
 
     boolean owner = currentMember != null && "OWNER".equals(currentMember.getRole());
@@ -36,9 +36,11 @@
 
     if ("kick".equals(action)) {
         canManage = canManage && "ACTIVE".equals(targetMember.getStatus());
+    } else if ("ban".equals(action)) {
+        canManage = canManage && !"BANNED".equals(targetMember.getStatus());
     } else if ("unban".equals(action)) {
         canManage = canManage && owner
-                && ("BANNED".equals(targetMember.getStatus()) || "LEFT".equals(targetMember.getStatus()));
+                && "BANNED".equals(targetMember.getStatus());
     }
 
     if (!canManage) {

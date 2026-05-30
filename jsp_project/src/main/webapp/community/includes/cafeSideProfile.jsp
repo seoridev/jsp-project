@@ -30,6 +30,7 @@
     boolean cafeSideLoggedIn = cafeSideLoginId != null;
     boolean cafeSideActive = false;
     boolean cafeSidePending = false;
+    boolean cafeSideBanned = false;
     boolean cafeSideManager = false;
     List<CafeBoardDTO> cafeSideBoards = Collections.emptyList();
     int cafeSideWriteBoardId = 0;
@@ -43,6 +44,7 @@
         cafeSideMember = cafeSideLoginId == null ? null : cafeSideMemberDao.selectCafeMember(cafeSideCafeId, cafeSideLoginId);
         cafeSideActive = cafeSideMember != null && "ACTIVE".equals(cafeSideMember.getStatus());
         cafeSidePending = cafeSideMember != null && "PENDING".equals(cafeSideMember.getStatus());
+        cafeSideBanned = cafeSideMember != null && "BANNED".equals(cafeSideMember.getStatus());
         cafeSideManager = cafeSideActive && ("OWNER".equals(cafeSideMember.getRole()) || "MANAGER".equals(cafeSideMember.getRole()));
         cafeSideBoards = new CafeBoardDAO().selectBoardsByCafeId(cafeSideCafeId);
         if (cafeSideActive) {
@@ -76,7 +78,7 @@
 
     String cafeSideOwnerName = cafeSideCafe == null ? "" : cafeSideCafe.getOwnerNickname();
     if (cafeSideOwnerName == null || cafeSideOwnerName.trim().isEmpty()) {
-        cafeSideOwnerName = cafeSideCafe == null || cafeSideCafe.getOwnerId() == null ? "스탭" : cafeSideCafe.getOwnerId();
+        cafeSideOwnerName = cafeSideCafe == null || cafeSideCafe.getOwnerId() == null ? "운영자" : cafeSideCafe.getOwnerId();
     }
     String cafeSideImagePath = cafeSideCafe == null ? null : cafeSideCafe.getImagePath();
     boolean cafeSideHasImage = cafeSideImagePath != null && !cafeSideImagePath.trim().isEmpty();
@@ -88,14 +90,16 @@
     String cafeSideRoleText = "방문자";
     if (cafeSideActive) {
         if ("OWNER".equals(cafeSideMember.getRole())) {
-            cafeSideRoleText = "스탭";
+            cafeSideRoleText = "운영자";
         } else if ("MANAGER".equals(cafeSideMember.getRole())) {
             cafeSideRoleText = "스탭";
         } else {
-            cafeSideRoleText = "멤버";
+            cafeSideRoleText = "회원";
         }
     } else if (cafeSidePending) {
         cafeSideRoleText = "승인 대기";
+    } else if (cafeSideBanned) {
+        cafeSideRoleText = "가입 제한";
     }
     String cafeSideUserName = cafeSideLoginNickname == null || cafeSideLoginNickname.isEmpty() ? cafeSideLoginId : cafeSideLoginNickname;
 %>
@@ -115,7 +119,7 @@
             <div class="cafe-side-copy">
                 <div class="cafe-side-name-row">
                     <strong><%= HtmlEscaper.escape(cafeSideOwnerName) %></strong>
-                    <span>스탭</span>
+                    <span>운영자</span>
                 </div>
                 <% if (!cafeSideCreatedDate.isEmpty()) { %>
                     <p><%= cafeSideCreatedDate %> 개설</p>
@@ -156,6 +160,8 @@
             <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/member/login.jsp?error=loginRequired&amp;redirect=<%= cafeSideRedirect %>">로그인 후 가입</a>
         <% } else if (cafeSidePending) { %>
             <span class="status-badge is-stopped">승인 대기</span>
+        <% } else if (cafeSideBanned) { %>
+            <span class="status-badge is-stopped">가입 제한</span>
         <% } else if (!cafeSideActive) { %>
             <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/cafe/cafeJoinProcess.jsp?cafeId=<%= cafeSideCafeId %>">카페 가입</a>
         <% } else if (cafeSideWriteBoardId > 0) { %>

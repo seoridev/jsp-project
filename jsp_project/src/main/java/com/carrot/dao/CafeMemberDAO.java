@@ -216,12 +216,15 @@ public class CafeMemberDAO extends BaseDAO {
                 return false;
             }
 
-            String sql = "UPDATE cafe_member SET status = ?, updated_at = SYSTIMESTAMP "
+            String sql = "UPDATE cafe_member SET status = ?, "
+                    + "role = CASE WHEN ? = 'ACTIVE' THEN role ELSE 'MEMBER' END, "
+                    + "updated_at = SYSTIMESTAMP "
                     + "WHERE cafe_id = ? AND member_id = ? AND role <> 'OWNER'";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, status);
-                pstmt.setInt(2, cafeId);
-                pstmt.setString(3, memberId);
+                pstmt.setString(2, status);
+                pstmt.setInt(3, cafeId);
+                pstmt.setString(4, memberId);
                 boolean updated = pstmt.executeUpdate() > 0;
                 if (!updated) {
                     conn.rollback();
@@ -280,7 +283,7 @@ public class CafeMemberDAO extends BaseDAO {
     }
 
     private boolean updateMemberStatus(int cafeId, String memberId, String oldStatus, String status) {
-        String sql = "UPDATE cafe_member SET status = ?, updated_at = SYSTIMESTAMP "
+        String sql = "UPDATE cafe_member SET status = ?, role = 'MEMBER', updated_at = SYSTIMESTAMP "
                 + "WHERE cafe_id = ? AND member_id = ? AND status = ?";
 
         Connection conn = null;

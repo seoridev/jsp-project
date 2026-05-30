@@ -24,6 +24,7 @@ public class CafeCommentDTO {
     private LocalDateTime updatedAt;
 
     private String writerNickname;
+    private String writerRole;
     private String postTitle;
     private String cafeName;
     private String boardName;

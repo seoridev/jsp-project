@@ -170,7 +170,7 @@
                                             글쓰기
                                             <select id="writePermission<%= selectedBoard.getBoardId() %>" name="writePermission">
                                                 <option value="MEMBER" <%= "MEMBER".equals(selectedBoard.getWritePermission()) ? "selected" : "" %>>회원</option>
-                                                <option value="MANAGER" <%= "MANAGER".equals(selectedBoard.getWritePermission()) ? "selected" : "" %>>매니저</option>
+                                                <option value="MANAGER" <%= "MANAGER".equals(selectedBoard.getWritePermission()) ? "selected" : "" %>>스탭</option>
                                                 <option value="OWNER" <%= "OWNER".equals(selectedBoard.getWritePermission()) ? "selected" : "" %>>운영자</option>
                                             </select>
                                             이상

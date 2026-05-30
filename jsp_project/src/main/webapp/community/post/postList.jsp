@@ -7,6 +7,7 @@
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%@ page import="com.carrot.util.ParamParser" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collections" %>
@@ -166,10 +167,20 @@
                         </thead>
                         <tbody>
                             <% for (CafePostDTO post : posts) { %>
+                                <%
+                                    String writerRoleLabel = CafeRoleUtil.badgeText(post.getWriterRole());
+                                %>
                                 <tr>
                                     <td><span class="<%= "Y".equals(post.getIsNotice()) ? "notice-badge" : "board-badge is-normal" %>"><%= "Y".equals(post.getIsNotice()) ? "공지" : "일반" %></span></td>
                                     <td class="post-title-cell"><a href="<%= contextPath %>/community/post/postDetail.jsp?postId=<%= post.getPostId() %>"><%= escapeHtml(post.getTitle()) %></a></td>
-                                    <td><%= escapeHtml(post.getWriterNickname()) %></td>
+                                    <td>
+                                        <span class="post-author-line">
+                                            <% if (!writerRoleLabel.isEmpty()) { %>
+                                                <span class="writer-role-badge <%= CafeRoleUtil.badgeClass(post.getWriterRole()) %>"><%= writerRoleLabel %></span>
+                                            <% } %>
+                                            <span><%= escapeHtml(post.getWriterNickname()) %></span>
+                                        </span>
+                                    </td>
                                     <td><%= post.getViewCount() %></td>
                                     <td><%= post.getCommentCount() %></td>
                                 </tr>

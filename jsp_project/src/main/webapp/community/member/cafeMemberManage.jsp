@@ -95,7 +95,7 @@
     <% } else if ("ban".equals(request.getParameter("memberAction"))) { %>
         <p class="notice-toast">회원을 차단했습니다.</p>
     <% } else if ("unban".equals(request.getParameter("memberAction"))) { %>
-        <p class="notice-toast">차단을 해제했습니다.</p>
+        <p class="notice-toast">차단을 해제했습니다. 다시 가입할 수 있습니다.</p>
     <% } else if ("approveFail".equals(request.getParameter("error"))) { %>
         <p class="field-message is-error">승인할 수 없는 신청입니다.</p>
     <% } else if ("rejectFail".equals(request.getParameter("error"))) { %>
@@ -258,8 +258,7 @@
                                 <tr class="member-manage-row"
                                     data-member-id="<%= escapeHtml(member.getMemberId()) %>"
                                     data-can-kick="<%= canManageStatus && targetActive %>"
-                                    data-can-ban="<%= canManageStatus && targetActive %>"
-                                    data-can-restore-kick="<%= cafeOwner && canManageStatus && "LEFT".equals(member.getStatus()) %>"
+                                    data-can-ban="<%= canManageStatus && !"BANNED".equals(member.getStatus()) %>"
                                     data-can-restore-ban="<%= cafeOwner && canManageStatus && "BANNED".equals(member.getStatus()) %>">
                                     <td><strong><%= escapeHtml(member.getNickname() == null ? member.getMemberId() : member.getNickname()) %></strong></td>
                                     <td><%= escapeHtml(member.getMemberId()) %></td>
@@ -290,9 +289,8 @@
         </section>
     </section>
     <div class="member-context-menu" id="memberContextMenu" hidden>
-        <button type="button" data-member-action="kick">강퇴</button>
+        <button type="button" data-member-action="kick">강제 퇴장</button>
         <button type="button" data-member-action="ban" class="is-danger">차단</button>
-        <button type="button" data-member-action="unban" data-menu-type="restore-kick">강퇴 해제</button>
         <button type="button" data-member-action="unban" data-menu-type="restore-ban">차단 해제</button>
     </div>
     <form id="memberContextForm" action="<%= contextPath %>/community/member/memberStatusProcess.jsp" method="post" hidden>
@@ -328,9 +326,8 @@
         row.addEventListener('contextmenu', function (event) {
             var canKick = row.dataset.canKick === 'true';
             var canBan = row.dataset.canBan === 'true';
-            var canRestoreKick = row.dataset.canRestoreKick === 'true';
             var canRestoreBan = row.dataset.canRestoreBan === 'true';
-            if (!canKick && !canBan && !canRestoreKick && !canRestoreBan) {
+            if (!canKick && !canBan && !canRestoreBan) {
                 return;
             }
 
@@ -339,11 +336,7 @@
             setButton('kick', canKick);
             setButton('ban', canBan);
             setButton('unban', false);
-            var restoreKickButton = menu.querySelector('[data-menu-type="restore-kick"]');
             var restoreBanButton = menu.querySelector('[data-menu-type="restore-ban"]');
-            if (restoreKickButton) {
-                restoreKickButton.hidden = !canRestoreKick;
-            }
             if (restoreBanButton) {
                 restoreBanButton.hidden = !canRestoreBan;
             }

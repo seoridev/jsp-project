@@ -30,6 +30,7 @@ public class CafePostDTO {
     private LocalDateTime updatedAt;
 
     private String writerNickname;
+    private String writerRole;
     private String boardName;
     private String cafeName;
 }
