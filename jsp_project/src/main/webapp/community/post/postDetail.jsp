@@ -9,6 +9,7 @@
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeCommentDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.dto.CafeMemberDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
 <%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%@ page import="com.carrot.util.ParamParser" %>
@@ -36,33 +37,52 @@
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeMemberDAO memberDao = new CafeMemberDAO();
     CafeDTO cafe = null;
+    CafeBoardDTO currentBoard = null;
     List<CafeBoardDTO> boards = Collections.emptyList();
     boolean activeMember = false;
     boolean manager = false;
     boolean isWriter = false;
     boolean likedPost = false;
+    boolean canReadPost = false;
+    String readBlockedTitle = "게시글을 볼 수 없습니다.";
+    String readBlockedMessage = "이 게시글을 볼 수 있는 권한이 없습니다.";
     int likeCount = 0;
     List<CafeCommentDTO> comments = Collections.emptyList();
     if (post != null) {
         cafe = new CafeDAO().selectCafeById(post.getCafeId());
-        boards = new CafeBoardDAO().selectBoardsByCafeId(post.getCafeId());
-        activeMember = currentLoginId != null && memberDao.isActiveMember(post.getCafeId(), currentLoginId);
-        manager = currentLoginId != null && memberDao.isCafeManagerOrOwner(post.getCafeId(), currentLoginId);
+        CafeBoardDAO boardDao = new CafeBoardDAO();
+        boards = boardDao.selectBoardsByCafeId(post.getCafeId());
+        currentBoard = boardDao.selectBoardById(post.getBoardId());
+        CafeMemberDTO currentMember = currentLoginId == null ? null : memberDao.selectCafeMember(post.getCafeId(), currentLoginId);
+        activeMember = currentMember != null && "ACTIVE".equals(currentMember.getStatus());
+        String currentRole = activeMember ? currentMember.getRole() : null;
+        manager = CafeRoleUtil.canManageCafe(currentRole);
         isWriter = currentLoginId != null && currentLoginId.equals(post.getWriterId());
-        boolean canRead = cafe != null && ("PUBLIC".equals(cafe.getVisibility()) || activeMember);
-        if (!canRead) {
-            response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + post.getCafeId() + "&error=private");
-            return;
+        boolean canEnterCafe = cafe != null && ("PUBLIC".equals(cafe.getVisibility()) || activeMember);
+        canReadPost = canEnterCafe
+                && currentBoard != null
+                && currentBoard.getCafeId() == post.getCafeId()
+                && CafeRoleUtil.canReadBoard(currentBoard.getReadPermission(), activeMember);
+        if (!canEnterCafe) {
+            readBlockedTitle = "비공개 카페입니다.";
+            readBlockedMessage = "카페에 가입해야 글을 볼 수 있습니다.";
+        } else if (!canReadPost) {
+            readBlockedTitle = "게시판 읽기 권한이 없습니다.";
+            readBlockedMessage = "이 게시판은 카페 회원만 볼 수 있습니다. 카페에 가입하면 게시글을 확인할 수 있습니다.";
         }
 
-        if (!skipViewIncrease) {
-            postDao.increaseViewCount(postId);
+        if (canReadPost) {
+            if (!skipViewIncrease) {
+                postDao.increaseViewCount(postId);
+            }
+            displayViewCount = post.getViewCount() + (skipViewIncrease ? 0 : 1);
+            CafePostLikeDAO likeDao = new CafePostLikeDAO();
+            likedPost = currentLoginId != null && likeDao.existsLike(postId, currentLoginId);
+            likeCount = likeDao.countLike(postId);
+            comments = new CafeCommentDAO().selectCommentsByPostId(postId);
+        } else {
+            displayViewCount = post.getViewCount();
         }
-        displayViewCount = post.getViewCount() + (skipViewIncrease ? 0 : 1);
-        CafePostLikeDAO likeDao = new CafePostLikeDAO();
-        likedPost = currentLoginId != null && likeDao.existsLike(postId, currentLoginId);
-        likeCount = likeDao.countLike(postId);
-        comments = new CafeCommentDAO().selectCommentsByPostId(postId);
     }
 %>
 <!DOCTYPE html>
@@ -70,7 +90,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= deletedPostFail ? "게시글 삭제 실패" : escapeHtml(post.getTitle()) %> | 커뮤니티</title>
+    <title><%= deletedPostFail ? "게시글 삭제 실패" : (canReadPost ? escapeHtml(post.getTitle()) : "권한 안내") %> | 커뮤니티</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
 </head>
 <body>
@@ -144,6 +164,12 @@
                 <% } else if ("success".equals(request.getParameter("report"))) { %>
                     <p class="notice-toast">신고가 접수되었습니다.</p>
                 <% } %>
+                <% if (!canReadPost) { %>
+                    <div class="cafe-private-guide">
+                        <strong><%= readBlockedTitle %></strong>
+                        <p><%= readBlockedMessage %></p>
+                    </div>
+                <% } else { %>
                 <div class="post-read-header">
                     <p class="breadcrumb">
                         <a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>"><%= escapeHtml(post.getCafeName()) %></a>
@@ -185,8 +211,10 @@
                         <a class="button btn-text" href="<%= contextPath %>/community/report/communityReport.jsp?targetType=CAFE_POST&targetId=<%= postId %>">신고</a>
                     <% } %>
                 </div>
+                <% } %>
             </section>
 
+            <% if (canReadPost) { %>
             <section class="cafe-box">
                 <div class="cafe-section-title">댓글 <%= comments.size() %>개</div>
                 <div class="cafe-box-body">
@@ -237,6 +265,7 @@
                     <% } %>
                 </div>
             </section>
+            <% } %>
         </article>
     </section>
     <% } %>

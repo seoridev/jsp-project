@@ -5,6 +5,8 @@
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.dto.CafeMemberDTO" %>
+<%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%
@@ -13,28 +15,51 @@
     int boardId = ParamParser.parseInt(request.getParameter("boardId"));
     CafeBoardDAO boardDao = new CafeBoardDAO();
     CafeDTO cafe = new CafeDAO().selectCafeById(cafeId);
+    if (cafe == null) {
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeList.jsp?error=noCafe");
+        return;
+    }
     boolean allBoards = boardId <= 0;
     CafeBoardDTO board = allBoards ? null : boardDao.selectBoardById(boardId);
+    if (!allBoards && (board == null || board.getCafeId() != cafeId)) {
+        allBoards = true;
+        boardId = 0;
+        board = null;
+    }
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeMemberDAO memberDao = new CafeMemberDAO();
-    boolean activeMember = memberDao.isActiveMember(cafeId, currentLoginId);
-    boolean manager = memberDao.isCafeManagerOrOwner(cafeId, currentLoginId);
-    List<CafeBoardDTO> boards = cafe == null ? java.util.Collections.emptyList() : boardDao.selectBoardsByCafeId(cafeId);
+    CafeMemberDTO currentMember = currentLoginId == null ? null : memberDao.selectCafeMember(cafeId, currentLoginId);
+    boolean activeMember = currentMember != null && "ACTIVE".equals(currentMember.getStatus());
+    String currentRole = activeMember ? currentMember.getRole() : null;
+    boolean manager = CafeRoleUtil.canManageCafe(currentRole);
+    List<CafeBoardDTO> boards = boardDao.selectBoardsByCafeId(cafeId);
     boolean hasWritableBoard = false;
     for (CafeBoardDTO cafeBoard : boards) {
-        if (manager || "MEMBER".equals(cafeBoard.getWritePermission())) {
+        if (CafeRoleUtil.canWriteBoard(cafeBoard.getWritePermission(), currentRole)) {
             hasWritableBoard = true;
             break;
         }
     }
-    boolean canWrite = cafe != null && activeMember
-            && (allBoards
-                ? hasWritableBoard
-                : board != null && board.getCafeId() == cafeId
-                    && ("MEMBER".equals(board.getWritePermission()) || manager));
-    if (!canWrite) {
-        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&error=noPermission");
-        return;
+    boolean selectedBoardWritable = !allBoards && board != null
+            && CafeRoleUtil.canWriteBoard(board.getWritePermission(), currentRole);
+    boolean canShowWriteFields = activeMember && (allBoards ? hasWritableBoard : selectedBoardWritable);
+    String writeBlockedTitle = "";
+    String writeBlockedMessage = "";
+    if (!activeMember) {
+        writeBlockedTitle = "글쓰기 권한이 없습니다.";
+        writeBlockedMessage = "카페 회원만 글을 작성할 수 있습니다.";
+    } else if (!allBoards && !selectedBoardWritable) {
+        String requiredRoleText = "회원";
+        if (board != null && "MANAGER".equals(board.getWritePermission())) {
+            requiredRoleText = "스탭";
+        } else if (board != null && "OWNER".equals(board.getWritePermission())) {
+            requiredRoleText = "운영자";
+        }
+        writeBlockedTitle = "게시판 글쓰기 권한이 없습니다.";
+        writeBlockedMessage = "이 게시판은 " + requiredRoleText + " 이상 글을 작성할 수 있습니다.";
+    } else if (!hasWritableBoard) {
+        writeBlockedTitle = "글쓰기 권한이 없습니다.";
+        writeBlockedMessage = "현재 글을 작성할 수 있는 게시판이 없습니다.";
     }
 %>
 <!DOCTYPE html>
@@ -106,6 +131,8 @@
                 </div>
                 <% if ("invalid".equals(request.getParameter("error"))) { %>
                     <p class="field-message is-error">게시판, 제목, 내용을 확인해 주세요.</p>
+                <% } else if ("noPermission".equals(request.getParameter("error"))) { %>
+                    <p class="field-message is-error">글쓰기 권한이 없습니다.</p>
                 <% } else if ("fail".equals(request.getParameter("error"))) { %>
                     <p class="field-message is-error">게시글 등록에 실패했습니다.</p>
                 <% } %>
@@ -115,15 +142,18 @@
                         <label class="visually-hidden" for="boardSelect">게시판 선택</label>
                         <select id="boardSelect" class="write-board-select" name="boardId" required>
                             <option value="" <%= allBoards ? "selected" : "" %>>-게시판 선택-</option>
-                            <% for (CafeBoardDTO cafeBoard : boards) {
-                                boolean canSelectBoard = manager || "MEMBER".equals(cafeBoard.getWritePermission());
-                                if (canSelectBoard) {
-                            %>
+                            <% for (CafeBoardDTO cafeBoard : boards) { %>
                                 <option value="<%= cafeBoard.getBoardId() %>" <%= cafeBoard.getBoardId() == boardId ? "selected" : "" %>><%= escapeHtml(cafeBoard.getBoardName()) %></option>
-                            <%  }
-                            } %>
+                            <% } %>
                         </select>
                     </div>
+                    <% if (!writeBlockedMessage.isEmpty()) { %>
+                        <div class="cafe-private-guide">
+                            <strong><%= writeBlockedTitle %></strong>
+                            <p><%= writeBlockedMessage %></p>
+                        </div>
+                    <% } %>
+                    <% if (canShowWriteFields) { %>
                     <label class="visually-hidden" for="title">제목</label>
                     <input id="title" class="write-title-input" name="title" maxlength="200" placeholder="제목을 입력하세요." required>
                     <label class="visually-hidden" for="content">내용</label>
@@ -131,15 +161,27 @@
                     <% if (manager) { %>
                         <label class="check-row"><input type="checkbox" name="isNotice" value="Y"> 공지글</label>
                     <% } %>
+                    <% } %>
                     <div class="write-actions">
                         <a class="button btn-sub" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= cafeId %>&boardId=<%= boardId %>">취소</a>
-                        <button class="btn-main" type="submit">등록</button>
+                        <% if (canShowWriteFields) { %>
+                            <button class="btn-main" type="submit">등록</button>
+                        <% } %>
                     </div>
                 </form>
             </section>
         </section>
     </section>
 </main>
+<script>
+    var boardSelect = document.getElementById("boardSelect");
+    if (boardSelect) {
+        boardSelect.addEventListener("change", function () {
+            var selectedBoardId = boardSelect.value || "0";
+            location.href = "<%= contextPath %>/community/post/postWrite.jsp?cafeId=<%= cafeId %>&boardId=" + selectedBoardId;
+        });
+    }
+</script>
 <%@ include file="../../common/footer.jsp" %>
 </body>
 </html>

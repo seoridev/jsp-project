@@ -3,7 +3,9 @@
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
+<%@ page import="com.carrot.dto.CafeMemberDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%
@@ -17,12 +19,20 @@
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeBoardDTO board = new CafeBoardDAO().selectBoardById(boardId);
     CafeMemberDAO memberDao = new CafeMemberDAO();
-    boolean manager = memberDao.isCafeManagerOrOwner(cafeId, currentLoginId);
+    CafeMemberDTO currentMember = currentLoginId == null ? null : memberDao.selectCafeMember(cafeId, currentLoginId);
+    boolean activeMember = currentMember != null && "ACTIVE".equals(currentMember.getStatus());
+    String currentRole = activeMember ? currentMember.getRole() : null;
+    boolean manager = CafeRoleUtil.canManageCafe(currentRole);
     boolean canWrite = board != null && board.getCafeId() == cafeId
-            && memberDao.isActiveMember(cafeId, currentLoginId)
-            && ("MEMBER".equals(board.getWritePermission()) || manager);
+            && activeMember
+            && CafeRoleUtil.canWriteBoard(board.getWritePermission(), currentRole);
 
-    if (!canWrite || title.isEmpty() || content.isEmpty()) {
+    if (!canWrite) {
+        response.sendRedirect(request.getContextPath() + "/community/post/postWrite.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&error=noPermission");
+        return;
+    }
+
+    if (title.isEmpty() || content.isEmpty()) {
         response.sendRedirect(request.getContextPath() + "/community/post/postWrite.jsp?cafeId=" + cafeId + "&boardId=" + boardId + "&error=invalid");
         return;
     }

@@ -7,6 +7,7 @@
 <%@ page import="com.carrot.dao.CafeCategoryDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
+<%@ page import="com.carrot.dao.CafeMemberDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafeCategoryDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
@@ -42,6 +43,7 @@
     CafeDAO cafeDao = new CafeDAO();
     CafePostDAO postDao = new CafePostDAO();
     CafeFavoriteDAO favoriteDao = new CafeFavoriteDAO();
+    CafeMemberDAO memberDao = new CafeMemberDAO();
 
     List<CafeDTO> recentCafes = Collections.emptyList();
     List<CafeDTO> allCafes = Collections.emptyList();
@@ -274,7 +276,11 @@
                                 </span>
                             </a>
                             <div class="community-my-cafe-posts">
-                                <% List<CafePostDTO> cafePosts = postDao.selectRecentPostsByCafeId(cafe.getCafeId(), 3); %>
+                                <%
+                                    boolean activeCafeMember = currentLoginId != null
+                                            && memberDao.isActiveMember(cafe.getCafeId(), currentLoginId);
+                                    List<CafePostDTO> cafePosts = postDao.selectReadableRecentPostsByCafeId(cafe.getCafeId(), 3, activeCafeMember);
+                                %>
                                 <% if (cafePosts.isEmpty()) { %>
                                     <p>아직 새 글이 없습니다.</p>
                                 <% } %>

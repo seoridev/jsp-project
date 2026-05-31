@@ -6,6 +6,7 @@
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafeBoardDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.dto.CafeMemberDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
 <%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%@ page import="com.carrot.util.ParamParser" %>
@@ -40,29 +41,23 @@
 
     String currentLoginId = (String) session.getAttribute("loginId");
     CafeMemberDAO memberDao = new CafeMemberDAO();
-    boolean activeMember = currentLoginId != null && memberDao.isActiveMember(cafeId, currentLoginId);
-    boolean manager = currentLoginId != null && memberDao.isCafeManagerOrOwner(cafeId, currentLoginId);
-    boolean canRead = "PUBLIC".equals(cafe.getVisibility()) || activeMember;
-    int writeBoardId = 0;
-    if (activeMember) {
-        for (CafeBoardDTO board : boards) {
-            if (manager || "MEMBER".equals(board.getWritePermission())) {
-                writeBoardId = board.getBoardId();
-                break;
-            }
-        }
-    }
-    boolean canWrite = allBoards
-            ? writeBoardId > 0
-            : activeMember && ("MEMBER".equals(selectedBoard.getWritePermission()) || manager);
-
+    CafeMemberDTO currentMember = currentLoginId == null ? null : memberDao.selectCafeMember(cafeId, currentLoginId);
+    boolean activeMember = currentMember != null && "ACTIVE".equals(currentMember.getStatus());
+    String currentRole = activeMember ? currentMember.getRole() : null;
+    boolean manager = CafeRoleUtil.canManageCafe(currentRole);
+    boolean canEnterCafe = "PUBLIC".equals(cafe.getVisibility()) || activeMember;
+    boolean canRead = canEnterCafe && (allBoards || CafeRoleUtil.canReadBoard(selectedBoard.getReadPermission(), activeMember));
+    String readBlockedTitle = canEnterCafe ? "게시판 읽기 권한이 없습니다." : "비공개 카페입니다.";
+    String readBlockedMessage = canEnterCafe
+            ? "이 게시판은 카페 회원만 볼 수 있습니다. 카페에 가입하면 게시글을 확인할 수 있습니다."
+            : "카페에 가입해야 글을 볼 수 있습니다.";
     CafePostDAO postDao = new CafePostDAO();
-    int totalCount = canRead ? postDao.countPosts(cafeId, boardId, keyword) : 0;
+    int totalCount = canRead ? postDao.countReadablePosts(cafeId, boardId, keyword, activeMember) : 0;
     int totalPages = Math.max(1, (int) Math.ceil(totalCount / (double) pageSize));
     if (pageNo > totalPages) {
         pageNo = totalPages;
     }
-    List<CafePostDTO> posts = canRead ? postDao.selectPosts(cafeId, boardId, keyword, pageNo, pageSize) : Collections.emptyList();
+    List<CafePostDTO> posts = canRead ? postDao.selectReadablePosts(cafeId, boardId, keyword, pageNo, pageSize, activeMember) : Collections.emptyList();
     int pageBlockSize = 10;
     int pageBlockStart = ((pageNo - 1) / pageBlockSize) * pageBlockSize + 1;
     int pageBlockEnd = Math.min(pageBlockStart + pageBlockSize - 1, totalPages);
@@ -133,9 +128,7 @@
             <div class="cafe-box">
                 <div class="cafe-section-title">
                     <span><%= allBoards ? "전체글 보기" : escapeHtml(selectedBoard.getBoardName()) %></span>
-                    <% if (canWrite) { %>
-                        <a class="button btn-main btn-small" href="<%= contextPath %>/community/post/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= allBoards ? 0 : boardId %>">글쓰기</a>
-                    <% } %>
+                    <a class="button btn-main btn-small" href="<%= contextPath %>/community/post/postWrite.jsp?cafeId=<%= cafeId %>&boardId=<%= allBoards ? 0 : boardId %>">글쓰기</a>
                 </div>
                 <div class="cafe-box-body">
                     <p class="community-meta"><%= allBoards ? "카페에 올라온 모든 게시글입니다." : escapeHtml(selectedBoard.getDescription()) %></p>
@@ -144,7 +137,10 @@
                     <p class="notice-toast">게시글이 삭제되었습니다.</p>
                 <% } %>
                 <% if (!canRead) { %>
-                    <p class="empty-cell">비공개 카페입니다. 가입 후 글을 볼 수 있습니다.</p>
+                    <div class="cafe-private-guide">
+                        <strong><%= readBlockedTitle %></strong>
+                        <p><%= readBlockedMessage %></p>
+                    </div>
                 <% } else if (posts.isEmpty()) { %>
                     <p class="empty-cell">게시글이 없습니다.</p>
                 <% } else { %>

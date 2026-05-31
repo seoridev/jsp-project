@@ -50,6 +50,16 @@ public class CafePostDAO extends BaseDAO {
     }
 
     public List<CafePostDTO> selectPosts(int cafeId, int boardId, String keyword, int page, int pageSize) {
+        return selectPostsByReadPermission(cafeId, boardId, keyword, page, pageSize, true);
+    }
+
+    public List<CafePostDTO> selectReadablePosts(int cafeId, int boardId, String keyword, int page, int pageSize,
+            boolean activeMember) {
+        return selectPostsByReadPermission(cafeId, boardId, keyword, page, pageSize, activeMember);
+    }
+
+    private List<CafePostDTO> selectPostsByReadPermission(int cafeId, int boardId, String keyword, int page,
+            int pageSize, boolean activeMember) {
         List<CafePostDTO> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder(baseSelect()
@@ -59,6 +69,9 @@ public class CafePostDAO extends BaseDAO {
         if (boardId > 0) {
             sql.append(" AND cp.board_id = ?");
             params.add(boardId);
+        }
+        if (!activeMember) {
+            sql.append(" AND cb.read_permission = 'ALL'");
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -88,15 +101,27 @@ public class CafePostDAO extends BaseDAO {
     }
 
     public int countPosts(int cafeId, int boardId, String keyword) {
+        return countPostsByReadPermission(cafeId, boardId, keyword, true);
+    }
+
+    public int countReadablePosts(int cafeId, int boardId, String keyword, boolean activeMember) {
+        return countPostsByReadPermission(cafeId, boardId, keyword, activeMember);
+    }
+
+    private int countPostsByReadPermission(int cafeId, int boardId, String keyword, boolean activeMember) {
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM cafe_post cp "
                 + "JOIN cafe c ON cp.cafe_id = c.cafe_id "
+                + "JOIN cafe_board cb ON cp.board_id = cb.board_id "
                 + "WHERE cp.cafe_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' "
                 + "AND c.status = 'ACTIVE'");
         params.add(cafeId);
         if (boardId > 0) {
             sql.append(" AND cp.board_id = ?");
             params.add(boardId);
+        }
+        if (!activeMember) {
+            sql.append(" AND cb.read_permission = 'ALL'");
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -182,12 +207,19 @@ public class CafePostDAO extends BaseDAO {
     }
 
     public List<CafePostDTO> selectRecentPostsByCafeId(int cafeId, int limit) {
-        List<CafePostDTO> list = new ArrayList<>();
-        String sql = baseSelect()
-                + " WHERE cp.cafe_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' "
-                + "ORDER BY cp.created_at DESC FETCH FIRST " + Math.max(1, limit) + " ROWS ONLY";
+        return selectReadableRecentPostsByCafeId(cafeId, limit, true);
+    }
 
-        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    public List<CafePostDTO> selectReadableRecentPostsByCafeId(int cafeId, int limit, boolean activeMember) {
+        List<CafePostDTO> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(baseSelect()
+                + " WHERE cp.cafe_id = ? AND cp.is_deleted = 'N' AND cp.is_hidden = 'N' AND c.status = 'ACTIVE' ");
+        if (!activeMember) {
+            sql.append("AND cb.read_permission = 'ALL' ");
+        }
+        sql.append("ORDER BY cp.created_at DESC FETCH FIRST ").append(Math.max(1, limit)).append(" ROWS ONLY");
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             pstmt.setInt(1, cafeId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {

@@ -52,7 +52,8 @@
     CafeMemberDTO myMember = currentLoginId == null ? null : memberDao.selectCafeMember(cafeId, currentLoginId);
     boolean activeMember = myMember != null && "ACTIVE".equals(myMember.getStatus());
     boolean pendingMember = myMember != null && "PENDING".equals(myMember.getStatus());
-    boolean ownerOrManager = activeMember && ("OWNER".equals(myMember.getRole()) || "MANAGER".equals(myMember.getRole()));
+    String currentRole = activeMember ? myMember.getRole() : null;
+    boolean ownerOrManager = CafeRoleUtil.canManageCafe(currentRole);
     boolean favoriteCafe = currentLoginId != null && new CafeFavoriteDAO().existsFavorite(cafeId, currentLoginId);
     boolean canRead = "PUBLIC".equals(cafe.getVisibility()) || activeMember;
     String cafeImagePath = cafe.getImagePath();
@@ -69,19 +70,10 @@
 
     CafePostDAO postDao = new CafePostDAO();
     List<CafeBoardDTO> boards = new CafeBoardDAO().selectBoardsByCafeId(cafeId);
-    List<CafePostDTO> posts = canRead ? postDao.selectRecentPostsByCafeId(cafeId, 10) : Collections.emptyList();
+    List<CafePostDTO> posts = canRead ? postDao.selectReadableRecentPostsByCafeId(cafeId, 10, activeMember) : Collections.emptyList();
     int myCafePostCount = currentLoginId != null ? postDao.countPostsByWriterInCafe(cafeId, currentLoginId) : 0;
     int myCafeCommentCount = currentLoginId != null ? new CafeCommentDAO().countCommentsByWriterInCafe(cafeId, currentLoginId) : 0;
     int myCafeLikeCount = currentLoginId != null ? new CafePostLikeDAO().countLikesByMemberInCafe(cafeId, currentLoginId) : 0;
-    int writeBoardId = 0;
-    if (activeMember) {
-        for (CafeBoardDTO board : boards) {
-            if (ownerOrManager || "MEMBER".equals(board.getWritePermission())) {
-                writeBoardId = board.getBoardId();
-                break;
-            }
-        }
-    }
     cafeDao.increaseViewCount(cafeId);
 %>
 <!DOCTYPE html>

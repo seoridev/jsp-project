@@ -12,6 +12,7 @@
 <%@ page import="java.time.format.DateTimeFormatter" %>
 <%@ page import="com.carrot.util.RegionFormatter" %>
 <%@ page import="com.carrot.util.HtmlEscaper" %>
+<%@ page import="com.carrot.util.CafeRoleUtil" %>
 <%
     // 공통 사이드 프로필에 표시할 회원 상태와 활동 통계 조회
     CafeDTO cafeSideCafe = (CafeDTO) request.getAttribute("cafeIncludeCafe");
@@ -45,7 +46,7 @@
         cafeSideActive = cafeSideMember != null && "ACTIVE".equals(cafeSideMember.getStatus());
         cafeSidePending = cafeSideMember != null && "PENDING".equals(cafeSideMember.getStatus());
         cafeSideBanned = cafeSideMember != null && "BANNED".equals(cafeSideMember.getStatus());
-        cafeSideManager = cafeSideActive && ("OWNER".equals(cafeSideMember.getRole()) || "MANAGER".equals(cafeSideMember.getRole()));
+        cafeSideManager = cafeSideActive && CafeRoleUtil.canManageCafe(cafeSideMember.getRole());
         cafeSideBoards = new CafeBoardDAO().selectBoardsByCafeId(cafeSideCafeId);
         if (cafeSideActive) {
             boolean cafeSideFoundCurrentBoard = false;
@@ -53,7 +54,7 @@
                 for (CafeBoardDTO cafeSideBoard : cafeSideBoards) {
                     if (cafeSideBoard.getBoardId() == cafeSideCurrentBoardId) {
                         cafeSideFoundCurrentBoard = true;
-                        if (cafeSideManager || "MEMBER".equals(cafeSideBoard.getWritePermission())) {
+                        if (CafeRoleUtil.canWriteBoard(cafeSideBoard.getWritePermission(), cafeSideMember.getRole())) {
                             cafeSideWriteBoardId = cafeSideBoard.getBoardId();
                         }
                         break;
@@ -62,14 +63,17 @@
             }
             if (cafeSideWriteBoardId <= 0 && !cafeSideFoundCurrentBoard) {
                 for (CafeBoardDTO cafeSideBoard : cafeSideBoards) {
-                    if (cafeSideManager || "MEMBER".equals(cafeSideBoard.getWritePermission())) {
+                    if (CafeRoleUtil.canWriteBoard(cafeSideBoard.getWritePermission(), cafeSideMember.getRole())) {
                         cafeSideWriteBoardId = cafeSideBoard.getBoardId();
                         break;
                     }
                 }
             }
         }
-        cafeSideWriteTargetBoardId = cafeSideHasCurrentBoardContext && cafeSideCurrentBoardId <= 0 ? 0 : cafeSideWriteBoardId;
+        cafeSideWriteTargetBoardId = cafeSideHasCurrentBoardContext ? cafeSideCurrentBoardId : cafeSideWriteBoardId;
+        if (cafeSideWriteTargetBoardId < 0) {
+            cafeSideWriteTargetBoardId = 0;
+        }
         CafePostDAO cafeSidePostDao = new CafePostDAO();
         cafeSidePostCount = cafeSideLoginId != null ? cafeSidePostDao.countPostsByWriterInCafe(cafeSideCafeId, cafeSideLoginId) : 0;
         cafeSideCommentCount = cafeSideLoginId != null ? new CafeCommentDAO().countCommentsByWriterInCafe(cafeSideCafeId, cafeSideLoginId) : 0;
@@ -164,10 +168,8 @@
             <button class="cafe-side-restricted" type="button" onclick="alert('이 카페에서는 가입이 제한된 상태입니다.');">가입 제한</button>
         <% } else if (!cafeSideActive) { %>
             <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/cafe/cafeJoinProcess.jsp?cafeId=<%= cafeSideCafeId %>">카페 가입</a>
-        <% } else if (cafeSideWriteBoardId > 0) { %>
+        <% } else if (cafeSideActive) { %>
             <a class="button cafe-side-primary" href="<%= request.getContextPath() %>/community/post/postWrite.jsp?cafeId=<%= cafeSideCafeId %>&boardId=<%= cafeSideWriteTargetBoardId %>">카페 글쓰기</a>
-        <% } else { %>
-            <span class="status-badge is-stopped">글쓰기 권한 없음</span>
         <% } %>
     </div>
 </div>
