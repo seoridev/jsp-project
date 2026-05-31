@@ -3,6 +3,7 @@ package com.carrot.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,9 +54,10 @@ public class CafeFavoriteDAO extends BaseDAO {
 
     public List<CafeDTO> selectFavoriteCafes(String memberId) {
         List<CafeDTO> cafes = new ArrayList<>();
-        String sql = "SELECT c.*, m.nickname AS owner_nickname "
+        String sql = "SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
                 + "FROM cafe_favorite cf "
                 + "JOIN cafe c ON cf.cafe_id = c.cafe_id "
+                + "LEFT JOIN cafe_category cc ON c.cafe_category_id = cc.cafe_category_id "
                 + "LEFT JOIN member m ON c.owner_id = m.login_id "
                 + "WHERE cf.member_id = ? AND c.status = 'ACTIVE' "
                 + "ORDER BY cf.created_at DESC";
@@ -126,6 +128,10 @@ public class CafeFavoriteDAO extends BaseDAO {
         Timestamp lastActiveAt = rs.getTimestamp("last_active_at");
         Timestamp createdAt = rs.getTimestamp("created_at");
         Timestamp updatedAt = rs.getTimestamp("updated_at");
+        String categoryName = getOptionalString(rs, "cafe_category_name");
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            categoryName = rs.getString("category");
+        }
 
         return CafeDTO.builder()
                 .cafeId(rs.getInt("cafe_id"))
@@ -133,7 +139,9 @@ public class CafeFavoriteDAO extends BaseDAO {
                 .description(rs.getString("description"))
                 .imagePath(rs.getString("image_path"))
                 .region(rs.getString("region"))
-                .category(rs.getString("category"))
+                .cafeCategoryId(rs.getInt("cafe_category_id"))
+                .category(categoryName)
+                .categoryName(categoryName)
                 .visibility(rs.getString("visibility"))
                 .joinType(rs.getString("join_type"))
                 .ownerId(rs.getString("owner_id"))
@@ -146,5 +154,13 @@ public class CafeFavoriteDAO extends BaseDAO {
                 .updatedAt(updatedAt == null ? null : updatedAt.toLocalDateTime())
                 .ownerNickname(rs.getString("owner_nickname"))
                 .build();
+    }
+
+    private String getOptionalString(ResultSet rs, String columnName) throws SQLException {
+        try {
+            return rs.getString(columnName);
+        } catch (SQLException e) {
+            return null;
+        }
     }
 }

@@ -19,7 +19,9 @@ public class CafeDTO {
     private String description;
     private String imagePath;
     private String region;
+    private int cafeCategoryId;
     private String category;
+    private String categoryName;
     private String visibility;
     private String joinType;
     private String ownerId;

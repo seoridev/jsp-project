@@ -1,5 +1,11 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.List" %>
+<%@ page import="com.carrot.dao.CafeCategoryDAO" %>
+<%@ page import="com.carrot.dto.CafeCategoryDTO" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
+<%
+    List<CafeCategoryDTO> cafeCategories = new CafeCategoryDAO().selectActiveCategories();
+%>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -45,8 +51,13 @@
                 <input id="region" name="region" maxlength="100" value="<%= escapeHtml(loginRegion) %>" required>
             </div>
             <div class="field">
-                <label for="category">주제</label>
-                <input id="category" name="category" maxlength="50" placeholder="독서, 반려동물, 동네 소식" required>
+                <label for="cafeCategoryId">주제</label>
+                <select id="cafeCategoryId" name="cafeCategoryId" required>
+                    <option value="">주제를 선택하세요</option>
+                    <% for (CafeCategoryDTO category : cafeCategories) { %>
+                        <option value="<%= category.getCafeCategoryId() %>"><%= escapeHtml(category.getCategoryName()) %></option>
+                    <% } %>
+                </select>
             </div>
             <div class="field">
                 <label for="visibility">공개 범위</label>

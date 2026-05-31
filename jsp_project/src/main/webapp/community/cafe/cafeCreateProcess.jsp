@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.carrot.dao.CafeCategoryDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
 <%
     // 카페 생성 요청값 검증 및 기본 게시판 생성
@@ -10,12 +12,17 @@
     String cafeName = request.getParameter("cafeName") == null ? "" : request.getParameter("cafeName").trim();
     String description = request.getParameter("description") == null ? "" : request.getParameter("description").trim();
     String region = request.getParameter("region") == null ? "" : request.getParameter("region").trim();
-    String category = request.getParameter("category") == null ? "" : request.getParameter("category").trim();
+    int cafeCategoryId = ParamParser.parseInt(request.getParameter("cafeCategoryId"));
     String visibility = "PRIVATE".equals(request.getParameter("visibility")) ? "PRIVATE" : "PUBLIC";
     String joinType = "APPROVAL".equals(request.getParameter("joinType")) ? "APPROVAL" : "DIRECT";
 
-    if (cafeName.isEmpty() || region.isEmpty() || category.isEmpty()) {
+    if (cafeName.isEmpty() || region.isEmpty() || cafeCategoryId <= 0) {
         response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=empty");
+        return;
+    }
+
+    if (!new CafeCategoryDAO().existsActiveCategory(cafeCategoryId)) {
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=invalid");
         return;
     }
 
@@ -29,7 +36,7 @@
             .cafeName(cafeName)
             .description(description)
             .region(region)
-            .category(category)
+            .cafeCategoryId(cafeCategoryId)
             .visibility(visibility)
             .joinType(joinType)
             .ownerId(currentLoginId)

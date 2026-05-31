@@ -3,6 +3,7 @@ package com.carrot.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +14,8 @@ public class CafeDAO extends BaseDAO {
 
     public int insertCafe(CafeDTO cafe) {
         String sql = "INSERT INTO cafe "
-                + "(cafe_id, cafe_name, description, image_path, region, category, visibility, join_type, owner_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(cafe_id, cafe_name, description, image_path, region, category, cafe_category_id, visibility, join_type, owner_id) "
+                + "VALUES (?, ?, ?, ?, ?, (SELECT category_name FROM cafe_category WHERE cafe_category_id = ?), ?, ?, ?, ?)";
 
         try (Connection conn = getConnection()) {
             int cafeId = nextVal(conn, "seq_cafe");
@@ -24,10 +25,11 @@ public class CafeDAO extends BaseDAO {
                 pstmt.setString(3, cafe.getDescription());
                 pstmt.setString(4, cafe.getImagePath());
                 pstmt.setString(5, cafe.getRegion());
-                pstmt.setString(6, cafe.getCategory());
-                pstmt.setString(7, cafe.getVisibility());
-                pstmt.setString(8, cafe.getJoinType());
-                pstmt.setString(9, cafe.getOwnerId());
+                pstmt.setInt(6, cafe.getCafeCategoryId());
+                pstmt.setInt(7, cafe.getCafeCategoryId());
+                pstmt.setString(8, cafe.getVisibility());
+                pstmt.setString(9, cafe.getJoinType());
+                pstmt.setString(10, cafe.getOwnerId());
                 return pstmt.executeUpdate() > 0 ? cafeId : 0;
             }
         } catch (Exception e) {
@@ -102,8 +104,10 @@ public class CafeDAO extends BaseDAO {
     }
 
     public CafeDTO selectCafeById(int cafeId) {
-        String sql = "SELECT c.*, m.nickname AS owner_nickname "
-                + "FROM cafe c LEFT JOIN member m ON c.owner_id = m.login_id "
+        String sql = "SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
+                + "FROM cafe c "
+                + "LEFT JOIN cafe_category cc ON c.cafe_category_id = cc.cafe_category_id "
+                + "LEFT JOIN member m ON c.owner_id = m.login_id "
                 + "WHERE c.cafe_id = ? AND c.status = 'ACTIVE'";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -119,11 +123,13 @@ public class CafeDAO extends BaseDAO {
         return null;
     }
 
-    public List<CafeDTO> selectCafeList(String keyword, String region, String category, String sort, int limit) {
+    public List<CafeDTO> selectCafeList(String keyword, String region, Integer cafeCategoryId, String sort, int limit) {
         List<CafeDTO> list = new ArrayList<>();
-        List<String> params = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT c.*, m.nickname AS owner_nickname "
-                + "FROM cafe c LEFT JOIN member m ON c.owner_id = m.login_id "
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
+                + "FROM cafe c "
+                + "LEFT JOIN cafe_category cc ON c.cafe_category_id = cc.cafe_category_id "
+                + "LEFT JOIN member m ON c.owner_id = m.login_id "
                 + "WHERE c.status = 'ACTIVE'");
 
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -136,9 +142,9 @@ public class CafeDAO extends BaseDAO {
             sql.append(" AND c.region LIKE ?");
             params.add("%" + region.trim() + "%");
         }
-        if (category != null && !category.trim().isEmpty()) {
-            sql.append(" AND c.category = ?");
-            params.add(category.trim());
+        if (cafeCategoryId != null && cafeCategoryId > 0) {
+            sql.append(" AND c.cafe_category_id = ?");
+            params.add(cafeCategoryId);
         }
 
         if ("popular".equals(sort)) {
@@ -150,7 +156,12 @@ public class CafeDAO extends BaseDAO {
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
-                pstmt.setString(i + 1, params.get(i));
+                Object param = params.get(i);
+                if (param instanceof Integer) {
+                    pstmt.setInt(i + 1, (Integer) param);
+                } else {
+                    pstmt.setString(i + 1, (String) param);
+                }
             }
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -165,9 +176,10 @@ public class CafeDAO extends BaseDAO {
 
     public List<CafeDTO> selectJoinedCafes(String memberId) {
         List<CafeDTO> list = new ArrayList<>();
-        String sql = "SELECT c.*, m.nickname AS owner_nickname "
+        String sql = "SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
                 + "FROM cafe_member cm "
                 + "JOIN cafe c ON cm.cafe_id = c.cafe_id "
+                + "LEFT JOIN cafe_category cc ON c.cafe_category_id = cc.cafe_category_id "
                 + "LEFT JOIN member m ON c.owner_id = m.login_id "
                 + "WHERE cm.member_id = ? AND cm.status = 'ACTIVE' AND cm.role <> 'OWNER' AND c.status = 'ACTIVE' "
                 + "ORDER BY cm.joined_at DESC";
@@ -187,8 +199,10 @@ public class CafeDAO extends BaseDAO {
 
     public List<CafeDTO> selectOwnedCafes(String ownerId) {
         List<CafeDTO> list = new ArrayList<>();
-        String sql = "SELECT c.*, m.nickname AS owner_nickname "
-                + "FROM cafe c LEFT JOIN member m ON c.owner_id = m.login_id "
+        String sql = "SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
+                + "FROM cafe c "
+                + "LEFT JOIN cafe_category cc ON c.cafe_category_id = cc.cafe_category_id "
+                + "LEFT JOIN member m ON c.owner_id = m.login_id "
                 + "WHERE c.owner_id = ? AND c.status = 'ACTIVE' "
                 + "ORDER BY c.created_at DESC";
 
@@ -207,8 +221,10 @@ public class CafeDAO extends BaseDAO {
 
     public List<CafeDTO> selectAllCafesForAdmin() {
         List<CafeDTO> list = new ArrayList<>();
-        String sql = "SELECT c.*, m.nickname AS owner_nickname "
-                + "FROM cafe c LEFT JOIN member m ON c.owner_id = m.login_id "
+        String sql = "SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
+                + "FROM cafe c "
+                + "LEFT JOIN cafe_category cc ON c.cafe_category_id = cc.cafe_category_id "
+                + "LEFT JOIN member m ON c.owner_id = m.login_id "
                 + "WHERE c.status <> 'DELETED' "
                 + "ORDER BY c.created_at DESC";
 
@@ -241,16 +257,19 @@ public class CafeDAO extends BaseDAO {
     }
 
     public boolean updateCafeSettings(CafeDTO cafe) {
-        String sql = "UPDATE cafe SET description = ?, region = ?, category = ?, visibility = ?, join_type = ?, "
+        String sql = "UPDATE cafe SET description = ?, region = ?, "
+                + "category = (SELECT category_name FROM cafe_category WHERE cafe_category_id = ?), "
+                + "cafe_category_id = ?, visibility = ?, join_type = ?, "
                 + "updated_at = SYSTIMESTAMP WHERE cafe_id = ? AND status = 'ACTIVE'";
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, cafe.getDescription());
             pstmt.setString(2, cafe.getRegion());
-            pstmt.setString(3, cafe.getCategory());
-            pstmt.setString(4, cafe.getVisibility());
-            pstmt.setString(5, cafe.getJoinType());
-            pstmt.setInt(6, cafe.getCafeId());
+            pstmt.setInt(3, cafe.getCafeCategoryId());
+            pstmt.setInt(4, cafe.getCafeCategoryId());
+            pstmt.setString(5, cafe.getVisibility());
+            pstmt.setString(6, cafe.getJoinType());
+            pstmt.setInt(7, cafe.getCafeId());
             return pstmt.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -271,8 +290,8 @@ public class CafeDAO extends BaseDAO {
 
     private boolean insertCafe(Connection conn, int cafeId, CafeDTO cafe) throws Exception {
         String sql = "INSERT INTO cafe "
-                + "(cafe_id, cafe_name, description, image_path, region, category, visibility, join_type, owner_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(cafe_id, cafe_name, description, image_path, region, category, cafe_category_id, visibility, join_type, owner_id) "
+                + "VALUES (?, ?, ?, ?, ?, (SELECT category_name FROM cafe_category WHERE cafe_category_id = ?), ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, cafeId);
@@ -280,10 +299,11 @@ public class CafeDAO extends BaseDAO {
             pstmt.setString(3, cafe.getDescription());
             pstmt.setString(4, cafe.getImagePath());
             pstmt.setString(5, cafe.getRegion());
-            pstmt.setString(6, cafe.getCategory());
-            pstmt.setString(7, cafe.getVisibility());
-            pstmt.setString(8, cafe.getJoinType());
-            pstmt.setString(9, cafe.getOwnerId());
+            pstmt.setInt(6, cafe.getCafeCategoryId());
+            pstmt.setInt(7, cafe.getCafeCategoryId());
+            pstmt.setString(8, cafe.getVisibility());
+            pstmt.setString(9, cafe.getJoinType());
+            pstmt.setString(10, cafe.getOwnerId());
             return pstmt.executeUpdate() > 0;
         }
     }
@@ -341,6 +361,10 @@ public class CafeDAO extends BaseDAO {
         Timestamp lastActiveAt = rs.getTimestamp("last_active_at");
         Timestamp createdAt = rs.getTimestamp("created_at");
         Timestamp updatedAt = rs.getTimestamp("updated_at");
+        String categoryName = getOptionalString(rs, "cafe_category_name");
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            categoryName = rs.getString("category");
+        }
 
         return CafeDTO.builder()
                 .cafeId(rs.getInt("cafe_id"))
@@ -348,7 +372,9 @@ public class CafeDAO extends BaseDAO {
                 .description(rs.getString("description"))
                 .imagePath(rs.getString("image_path"))
                 .region(rs.getString("region"))
-                .category(rs.getString("category"))
+                .cafeCategoryId(rs.getInt("cafe_category_id"))
+                .category(categoryName)
+                .categoryName(categoryName)
                 .visibility(rs.getString("visibility"))
                 .joinType(rs.getString("join_type"))
                 .ownerId(rs.getString("owner_id"))
@@ -361,5 +387,13 @@ public class CafeDAO extends BaseDAO {
                 .updatedAt(updatedAt == null ? null : updatedAt.toLocalDateTime())
                 .ownerNickname(rs.getString("owner_nickname"))
                 .build();
+    }
+
+    private String getOptionalString(ResultSet rs, String columnName) throws SQLException {
+        try {
+            return rs.getString(columnName);
+        } catch (SQLException e) {
+            return null;
+        }
     }
 }

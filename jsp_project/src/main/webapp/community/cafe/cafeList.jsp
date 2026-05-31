@@ -2,19 +2,23 @@
 <%@ page import="java.util.HashSet" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Set" %>
+<%@ page import="com.carrot.dao.CafeCategoryDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
+<%@ page import="com.carrot.dto.CafeCategoryDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="com.carrot.util.RegionFormatter" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%
     // 검색 조건과 즐겨찾기 여부를 함께 조회
     String keyword = request.getParameter("keyword");
     String region = request.getParameter("region");
-    String category = request.getParameter("category");
+    int cafeCategoryId = ParamParser.parseInt(request.getParameter("cafeCategoryId"));
     String sort = request.getParameter("sort") == null ? "recent" : request.getParameter("sort");
     String currentLoginId = (String) session.getAttribute("loginId");
-    List<CafeDTO> cafes = new CafeDAO().selectCafeList(keyword, region, category, sort, 100);
+    List<CafeCategoryDTO> cafeCategories = new CafeCategoryDAO().selectActiveCategories();
+    List<CafeDTO> cafes = new CafeDAO().selectCafeList(keyword, region, cafeCategoryId > 0 ? cafeCategoryId : null, sort, 100);
     Set<Integer> favoriteCafeIds = new HashSet<>();
     if (currentLoginId != null) {
         for (CafeDTO favoriteCafe : new CafeFavoriteDAO().selectFavoriteCafes(currentLoginId)) {
@@ -57,7 +61,12 @@
         <form class="cafe-filter-bar" action="<%= contextPath %>/community/cafe/cafeList.jsp" method="get">
             <input name="keyword" placeholder="카페명 또는 소개글" value="<%= escapeHtml(keyword) %>">
             <input name="region" placeholder="지역" value="<%= escapeHtml(region) %>">
-            <input name="category" placeholder="주제" value="<%= escapeHtml(category) %>">
+            <select name="cafeCategoryId">
+                <option value="">전체 주제</option>
+                <% for (CafeCategoryDTO category : cafeCategories) { %>
+                    <option value="<%= category.getCafeCategoryId() %>" <%= category.getCafeCategoryId() == cafeCategoryId ? "selected" : "" %>><%= escapeHtml(category.getCategoryName()) %></option>
+                <% } %>
+            </select>
             <select name="sort">
                 <option value="recent" <%= "recent".equals(sort) ? "selected" : "" %>>최신순</option>
                 <option value="popular" <%= "popular".equals(sort) ? "selected" : "" %>>인기순</option>

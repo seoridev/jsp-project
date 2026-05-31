@@ -1,6 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.List" %>
+<%@ page import="com.carrot.dao.CafeCategoryDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeMemberDAO" %>
+<%@ page import="com.carrot.dto.CafeCategoryDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../../common/sessionCheck.jsp" %>
@@ -27,6 +30,7 @@
         response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&error=manageDenied");
         return;
     }
+    List<CafeCategoryDTO> cafeCategories = new CafeCategoryDAO().selectActiveCategories();
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -106,9 +110,13 @@
                     </div>
 
                     <div class="board-setting-row">
-                        <label for="category">주제</label>
+                        <label for="cafeCategoryId">주제</label>
                         <div class="board-setting-stack">
-                            <input id="category" name="category" maxlength="50" value="<%= escapeHtml(cafe.getCategory()) %>" required>
+                            <select id="cafeCategoryId" name="cafeCategoryId" required>
+                                <% for (CafeCategoryDTO category : cafeCategories) { %>
+                                    <option value="<%= category.getCafeCategoryId() %>" <%= category.getCafeCategoryId() == cafe.getCafeCategoryId() ? "selected" : "" %>><%= escapeHtml(category.getCategoryName()) %></option>
+                                <% } %>
+                            </select>
                             <p class="cafe-setting-help">독서, 반려동물, 동네 소식처럼 카페의 주제를 적어 주세요.</p>
                         </div>
                     </div>
