@@ -7,11 +7,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.carrot.dto.ChatRoomDTO;
+import com.carrot.dto.ProductDTO;
 
 public class ChatRoomDAO extends BaseDAO {
 
+	public ChatRoomDTO selectChatRoomByRoomId(int roomId) {
+		String sql = "SELECT ROOM_ID, BUYER_ID, PRODUCT_ID, STATUS, CREATED_AT FROM CHAT_ROOM WHERE STATUS = 'OPEN' AND ROOM_ID = ? ";
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setInt(1, roomId);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
+					return ChatRoomDTO.builder()
+			                          .roomId(rs.getInt("ROOM_ID"))
+			                          .buyerId(rs.getString("BUYER_ID"))
+			                          .productId(rs.getInt("PRODUCT_ID"))
+			                          .status(rs.getString("STATUS"))
+			                          .createdAt(rs.getTimestamp("CREATED_AT"))
+			                          .build();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	// 기존 채팅방이 있는지 확인하고, 없으면 생성 후 방 번호 반환
-    public int getOrCreateRoom(String buyerId, int productId) {
+    public int selectOrCreateRoom(String buyerId, int productId) {
         String selectSql = "SELECT ROOM_ID FROM CHAT_ROOM WHERE BUYER_ID = ? AND PRODUCT_ID = ? AND STATUS = 'OPEN'";
         String insertSql = "INSERT INTO CHAT_ROOM (ROOM_ID, BUYER_ID, PRODUCT_ID, STATUS, CREATED_AT) "
                          + "VALUES (?, ?, ?, 'OPEN', SYSTIMESTAMP)";
@@ -65,29 +87,6 @@ public class ChatRoomDAO extends BaseDAO {
 
         return 0; 
     }
-
-
-    // 웹소켓 검증용 방 체크
-    public boolean checkChatRoomExist(int roomId) {
-        String sql = "SELECT 1 FROM CHAT_ROOM WHERE ROOM_ID = ? AND STATUS = 'OPEN'";
-
-        try (Connection conn = getConnection(); 
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, roomId);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        return false;
-    }
-
     
     // 구매자와 판매자 모두를 고려한 채팅방 리스트 가져오기
     public List<ChatRoomDTO> getRoomListByUserId(String userId) {

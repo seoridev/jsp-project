@@ -2,8 +2,7 @@
 <%@ page import="com.carrot.dao.ChatRoomDAO" %>
 <%@ include file="../common/sessionCheck.jsp" %>
 <%
-
-    String buyerId = (String) session.getAttribute("loginId"); 
+String buyerId = (String) session.getAttribute("loginId"); 
 
     // 파라미터 유효성 검증
     String productParam = request.getParameter("productId");
@@ -28,7 +27,7 @@
 
     // 채팅방 가져오기 또는 생성하기
     ChatRoomDAO dao = new ChatRoomDAO();
-    int roomId = dao.getOrCreateRoom(buyerId, productId);
+    int roomId = dao.selectOrCreateRoom(buyerId, productId);
 
     //  결과에 따른 페이지 이동
     if (roomId > 0) {

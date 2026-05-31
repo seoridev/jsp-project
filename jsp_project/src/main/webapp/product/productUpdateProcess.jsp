@@ -12,7 +12,7 @@
 
 <%
     //파일 저장 경로 설정
-    String savePath = request.getServletContext().getRealPath("/upload");
+    String savePath = request.getServletContext().getRealPath("/upload/product");
     int maxSize = 1024 * 1024 * 10; //최대 10MB
     String encoding = "UTF-8";
 
@@ -81,7 +81,7 @@
                     
                     productImageDao.insertProductImage(ProductImageDTO.builder()
                         .productId(productId).originName(originName).saveName(saveName)
-                        .imagePath("/upload/").isMain(isMain).build());
+                        .imagePath("/upload/product/").isMain(isMain).build());
                 } 
                 // 기존에 있던 파일을 그대로 유지한 경우
                 else if (multi.getParameter("existing_image_" + i) != null) {
@@ -90,7 +90,7 @@
                     // 기존 파일은 원본 이름을 알기 어려우므로 저장된 이름을 그대로 넣어줌
                     productImageDao.insertProductImage(ProductImageDTO.builder()
                         .productId(productId).originName(saveName).saveName(saveName)
-                        .imagePath("/upload/").isMain(isMain).build());
+                        .imagePath("/upload/product/").isMain(isMain).build());
                 }
             }
             

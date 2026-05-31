@@ -8,8 +8,15 @@ import java.util.Map;
 import java.util.Set;
 
 import com.carrot.dao.ChatMessageDAO;
+import com.carrot.dao.ChatRoomDAO;
+import com.carrot.dao.PayDAO;
+import com.carrot.dao.ProductDAO;
 import com.carrot.dto.ChatMessageDTO;
+import com.carrot.dto.ChatRoomDTO;
+import com.carrot.dto.PayTransactionDTO;
+import com.carrot.dto.ProductDTO;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
@@ -30,7 +37,7 @@ public class ChatServer {
     private static Map<Session, String> sessionUserMap = Collections.synchronizedMap(new HashMap<>());
 
     private Gson gson = new Gson();
-    private ChatMessageDAO chatDAO = new ChatMessageDAO();
+    private ChatMessageDAO chatDao = new ChatMessageDAO();
 
     //클라이언트가 웹소켓에 연결되었을 때 호출
     @OnOpen
@@ -58,21 +65,61 @@ public class ChatServer {
 
         try {
             // 수신한 JSON 문자열을 DTO 객체로 변환
-            ChatMessageDTO messageDto = gson.fromJson(messageJson, ChatMessageDTO.class);
+            ChatMessageDTO message = gson.fromJson(messageJson, ChatMessageDTO.class);
+            
+            PayDAO payDAO = new PayDAO();
+            ChatRoomDAO chatRoomDAO = new ChatRoomDAO();
+            ProductDAO productDAO = new ProductDAO();
+            
+            ProductDTO product = productDAO.selectProductById(chatRoomDAO.selectChatRoomByRoomId(roomId).getProductId());
+
+            
+            // 안전결제 처리
+            switch (message.getMsgType()) {
+			case "PAY_REQUEST": {
+                int amount = Integer.parseInt(message.getMessage());
+                
+                boolean result = payDAO.sendEscrow(product.getProductId(), message.getSenderId(), product.getSellerId(), amount);
+                if (!result) {
+                	sendErrorMessage(session, "잔액이 부족하거나 시스템 오류로 인해 안전결제 요청에 실패했습니다.");
+                	return; 
+                }
+                System.out.println("안전결제 DB 기록 성공: " + amount + "원");
+
+                JsonObject payload = new JsonObject();
+                payload.addProperty("amount", amount);
+                payload.addProperty("txId", payDAO.selectLastTxId());
+
+                message.setMessage(payload.toString());
+                
+				break;
+            }	
+			case "PAY_CONFIRM": {
+                int txId = Integer.parseInt(message.getMessage());
+                
+                boolean result = payDAO.confirmEscrow(txId, product.getSellerId(), payDAO.selectEscrowByTxId(txId).getAmount(), product.getProductId());
+                if (!result) {
+                	sendErrorMessage(session, "시스템 오류로 인해 구매 확정 처리에 실패했습니다.");
+                	return; 
+                }
+                System.out.println("구매확정 DB 업데이트 성공. 거래번호: " + txId);
+				break;
+			}
+			default:
+				break;
+			}
             
             // DB에 대화 내역 저장
-            chatDAO.insertMessage(messageDto);
+            chatDao.insertMessage(message);
             
             // 현재 같은 채팅방(roomId)에 접속해 있는 모든 세션에게 메시지 브로드캐스팅
             Set<Session> roomSessions = roomSessionMap.get(roomId);
             if (roomSessions != null) {
                 // DTO를 다시 JSON 문자열로 변환하여 전송
-                String broadcastMessage = gson.toJson(messageDto);
+                String broadcastMessage = gson.toJson(message);
                 
                 synchronized (roomSessions) {
                     for (Session clientSession : roomSessions) {
-                        // 상대방뿐만 아니라 본인 세션에도 보내서 화면을 갱신하게 하거나, 
-                        // 상대방에게만 보낼지 여부는 프론트엔드 구현에 따라 분기 가능합니다.
                         if (clientSession.isOpen()) {
                             clientSession.getBasicRemote().sendText(broadcastMessage);
                         }
@@ -112,5 +159,16 @@ public class ChatServer {
     public void onError(Session session, Throwable throwable) {
         System.err.println("[웹소켓 에러 발생] 세션ID: " + session.getId());
         throwable.printStackTrace();
+    }
+    
+    private void sendErrorMessage(Session session, String errorMsg) {
+        try {
+            if (session.isOpen()) {
+                String errorPacket = "{\"msgType\":\"ERROR\", \"message\":\"" + errorMsg + "\"}";
+                session.getBasicRemote().sendText(errorPacket);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
