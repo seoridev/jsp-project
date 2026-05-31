@@ -11,10 +11,7 @@ public final class CafeRoleUtil {
         if ("MANAGER".equals(role)) {
             return "스탭";
         }
-        if ("MEMBER".equals(role)) {
-            return "멤버";
-        }
-        return "";
+        return "멤버";
     }
 
     public static String badgeClass(String role) {
@@ -24,9 +21,6 @@ public final class CafeRoleUtil {
         if ("MANAGER".equals(role)) {
             return "is-manager";
         }
-        if ("MEMBER".equals(role)) {
-            return "is-member";
-        }
-        return "";
+        return "is-member";
     }
 }
