@@ -4,13 +4,16 @@
 <%@ page import="java.util.HashSet" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Set" %>
+<%@ page import="com.carrot.dao.CafeCategoryDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dao.CafeFavoriteDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
+<%@ page import="com.carrot.dto.CafeCategoryDTO" %>
 <%@ page import="com.carrot.dto.CafeDTO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collections" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ page import="com.carrot.util.RegionFormatter" %>
 <%
     // 커뮤니티 홈 탭과 검색 조건에 맞는 목록 데이터 조회
@@ -33,6 +36,8 @@
     String homeView = request.getParameter("view");
     boolean favoriteOnly = "favorite".equals(homeView);
     boolean manageOnly = "manage".equals(homeView);
+    int cafeCategoryId = ParamParser.parseInt(request.getParameter("cafeCategoryId"));
+    String cafeSort = "popular".equals(request.getParameter("sort")) ? "popular" : "recent";
 
     CafeDAO cafeDao = new CafeDAO();
     CafePostDAO postDao = new CafePostDAO();
@@ -48,6 +53,7 @@
     List<CafeDTO> ownedCafes = Collections.emptyList();
     List<CafeDTO> joinedCafes = Collections.emptyList();
     List<CafeDTO> favoriteCafes = Collections.emptyList();
+    List<CafeCategoryDTO> cafeCategories = Collections.emptyList();
     List<CafeDTO> myCafes = new ArrayList<>();
     Set<Integer> myCafeIds = new HashSet<>();
 
@@ -60,7 +66,8 @@
     } else if ("popular".equals(tab)) {
         popularPosts = postDao.selectPopularPosts(8);
     } else if ("cafes".equals(tab)) {
-        allCafes = cafeDao.selectCafeList(null, null, null, "recent", 100);
+        cafeCategories = new CafeCategoryDAO().selectActiveCategories();
+        allCafes = cafeDao.selectCafeListByCategoryId(null, null, cafeCategoryId > 0 ? cafeCategoryId : null, cafeSort, 100);
     } else if ("latest".equals(tab)) {
         recentPosts = postDao.selectRecentPosts(12);
     } else if ("myPosts".equals(tab)) {
@@ -204,6 +211,23 @@
             </section>
         <% } else if ("cafes".equals(tab)) { %>
             <section class="community-search-results">
+                <form class="community-cafe-filter" action="<%= contextPath %>/community/communityHome.jsp" method="get">
+                    <input type="hidden" name="tab" value="cafes">
+                    <select name="cafeCategoryId" aria-label="카페 카테고리">
+                        <option value="">전체 카테고리</option>
+                        <% for (CafeCategoryDTO category : cafeCategories) { %>
+                            <option value="<%= category.getCafeCategoryId() %>" <%= category.getCafeCategoryId() == cafeCategoryId ? "selected" : "" %>><%= escapeHtml(category.getCategoryName()) %></option>
+                        <% } %>
+                    </select>
+                    <select name="sort" aria-label="정렬">
+                        <option value="recent" <%= "recent".equals(cafeSort) ? "selected" : "" %>>최신순</option>
+                        <option value="popular" <%= "popular".equals(cafeSort) ? "selected" : "" %>>인기순</option>
+                    </select>
+                    <button type="submit">적용</button>
+                    <% if (cafeCategoryId > 0 || !"recent".equals(cafeSort)) { %>
+                        <a href="<%= contextPath %>/community/communityHome.jsp?tab=cafes">초기화</a>
+                    <% } %>
+                </form>
                 <div class="community-search-list">
                     <% if (allCafes.isEmpty()) { %>
                         <div class="community-empty-cafe">

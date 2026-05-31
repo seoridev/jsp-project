@@ -2380,6 +2380,48 @@ button.btn-danger {
     color: #d95c00;
 }
 
+.community-cafe-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.community-cafe-filter select {
+    min-width: 140px;
+    min-height: 38px;
+    border: 1px solid #e5ded3;
+    border-radius: 8px;
+    background: #fff;
+    padding: 0 12px;
+    color: #202124;
+    font-size: 14px;
+}
+
+.community-cafe-filter button,
+.community-cafe-filter a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid #ff6f0f;
+    border-radius: 8px;
+    background: #ff6f0f;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.community-cafe-filter a {
+    border-color: #e5ded3;
+    background: #fff;
+    color: #d95c00;
+}
+
 .community-cafe-menu,
 .community-cafe-submenu {
     display: grid;
