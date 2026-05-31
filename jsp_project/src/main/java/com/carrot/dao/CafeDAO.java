@@ -123,7 +123,12 @@ public class CafeDAO extends BaseDAO {
         return null;
     }
 
-    public List<CafeDTO> selectCafeList(String keyword, String region, Integer cafeCategoryId, String sort, int limit) {
+    public List<CafeDTO> selectCafeList(String keyword, String region, String category, String sort, int limit) {
+        Integer cafeCategoryId = findCafeCategoryIdByName(category);
+        return selectCafeListByCategoryId(keyword, region, cafeCategoryId, sort, limit);
+    }
+
+    public List<CafeDTO> selectCafeListByCategoryId(String keyword, String region, Integer cafeCategoryId, String sort, int limit) {
         List<CafeDTO> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
@@ -172,6 +177,25 @@ public class CafeDAO extends BaseDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    private Integer findCafeCategoryIdByName(String category) {
+        if (category == null || category.trim().isEmpty()) {
+            return null;
+        }
+
+        String sql = "SELECT cafe_category_id FROM cafe_category WHERE category_name = ? AND is_active = 'Y'";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, category.trim());
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("cafe_category_id");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public List<CafeDTO> selectJoinedCafes(String memberId) {

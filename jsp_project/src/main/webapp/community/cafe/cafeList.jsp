@@ -18,7 +18,7 @@
     String sort = request.getParameter("sort") == null ? "recent" : request.getParameter("sort");
     String currentLoginId = (String) session.getAttribute("loginId");
     List<CafeCategoryDTO> cafeCategories = new CafeCategoryDAO().selectActiveCategories();
-    List<CafeDTO> cafes = new CafeDAO().selectCafeList(keyword, region, cafeCategoryId > 0 ? cafeCategoryId : null, sort, 100);
+    List<CafeDTO> cafes = new CafeDAO().selectCafeListByCategoryId(keyword, region, cafeCategoryId > 0 ? cafeCategoryId : null, sort, 100);
     Set<Integer> favoriteCafeIds = new HashSet<>();
     if (currentLoginId != null) {
         for (CafeDTO favoriteCafe : new CafeFavoriteDAO().selectFavoriteCafes(currentLoginId)) {
