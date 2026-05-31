@@ -84,6 +84,8 @@
                     <option value="SPAM">스팸/홍보</option>
                     <option value="ABUSE">욕설/비방</option>
                     <option value="FRAUD">사기/허위 정보</option>
+                    <option value="SEXUAL">음란/부적절한 내용</option>
+                    <option value="PRIVACY">개인정보 노출</option>
                     <option value="ETC">기타</option>
                 </select>
             </div>

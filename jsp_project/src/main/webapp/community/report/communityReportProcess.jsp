@@ -15,6 +15,11 @@
         return "CAFE".equals(targetType) || "CAFE_POST".equals(targetType) || "CAFE_COMMENT".equals(targetType);
     }
 
+    private boolean isValidReason(String reason) {
+        return "SPAM".equals(reason) || "ABUSE".equals(reason) || "FRAUD".equals(reason)
+                || "SEXUAL".equals(reason) || "PRIVACY".equals(reason) || "ETC".equals(reason);
+    }
+
     private String appendParam(String url, String param) {
         return url + (url.indexOf('?') >= 0 ? "&" : "?") + param;
     }
@@ -50,8 +55,7 @@
     boolean valid = isValidTargetType(targetType)
             && targetId > 0
             && validTarget
-            && reason != null
-            && !reason.trim().isEmpty()
+            && isValidReason(reason)
             && detail != null
             && !detail.trim().isEmpty();
 

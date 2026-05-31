@@ -23,7 +23,19 @@ public class ReportDTO {
     private String status;
     private Timestamp createdAt;
     private Timestamp processedAt;
+    private String processedBy;
+    private String actionType;
+    private String adminMemo;
 
     private String reporterNickname;
     private String productTitle;
+    private String targetTitle;
+    private String targetContent;
+    private String targetWriterId;
+    private int targetPostId;
+    private int targetCafeId;
+    private String targetCafeName;
+    private int targetWaitingReportCount;
+    private int targetTotalReportCount;
+    private String targetRecentReportSummary;
 }
