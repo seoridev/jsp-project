@@ -11,6 +11,53 @@ import java.util.List;
 import com.carrot.dto.CafeDTO;
 
 public class CafeDAO extends BaseDAO {
+    public static class AdminCafeFilter {
+        private String searchType;
+        private String keyword;
+        private String status;
+        private String region;
+        private int cafeCategoryId;
+
+        public String getSearchType() {
+            return searchType;
+        }
+
+        public void setSearchType(String searchType) {
+            this.searchType = searchType;
+        }
+
+        public String getKeyword() {
+            return keyword;
+        }
+
+        public void setKeyword(String keyword) {
+            this.keyword = keyword;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getRegion() {
+            return region;
+        }
+
+        public void setRegion(String region) {
+            this.region = region;
+        }
+
+        public int getCafeCategoryId() {
+            return cafeCategoryId;
+        }
+
+        public void setCafeCategoryId(int cafeCategoryId) {
+            this.cafeCategoryId = cafeCategoryId;
+        }
+    }
 
     public int insertCafe(CafeDTO cafe) {
         String sql = "INSERT INTO cafe "
@@ -244,24 +291,51 @@ public class CafeDAO extends BaseDAO {
     }
 
     public List<CafeDTO> selectAllCafesForAdmin() {
+        return selectCafesForAdmin(new AdminCafeFilter(), 1, 1000);
+    }
+
+    public List<CafeDTO> selectCafesForAdmin(AdminCafeFilter filter, int page, int pageSize) {
         List<CafeDTO> list = new ArrayList<>();
-        String sql = "SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT c.*, cc.category_name AS cafe_category_name, m.nickname AS owner_nickname "
                 + "FROM cafe c "
                 + "LEFT JOIN cafe_category cc ON c.cafe_category_id = cc.cafe_category_id "
                 + "LEFT JOIN member m ON c.owner_id = m.login_id "
-                + "WHERE c.status <> 'DELETED' "
-                + "ORDER BY c.created_at DESC";
+                + "WHERE c.status <> 'DELETED' ");
+        appendAdminCafeWhere(sql, params, filter);
+        int safePage = Math.max(1, page);
+        int safePageSize = Math.max(1, pageSize);
+        sql.append("ORDER BY c.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add((safePage - 1) * safePageSize);
+        params.add(safePageSize);
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
             while (rs.next()) {
                 list.add(mapCafe(rs));
+            }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public int countCafesForAdmin(AdminCafeFilter filter) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM cafe c WHERE c.status <> 'DELETED' ");
+        appendAdminCafeWhere(sql, params, filter);
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     public boolean updateCafeStatus(int cafeId, String status) {
@@ -276,6 +350,66 @@ public class CafeDAO extends BaseDAO {
             return pstmt.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateCafeStatusByAdmin(int cafeId, String status, String adminId, String adminMemo) {
+        if (!"ACTIVE".equals(status) && !"HIDDEN".equals(status)) {
+            return false;
+        }
+        if (adminId == null || adminId.trim().isEmpty() || adminMemo == null || adminMemo.trim().isEmpty()) {
+            return false;
+        }
+
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            AdminCommunityActionLogDAO logDao = new AdminCommunityActionLogDAO();
+            if (!logDao.hasLogTable(conn)) {
+                conn.rollback();
+                return false;
+            }
+
+            String currentStatus = null;
+            String selectSql = "SELECT status FROM cafe WHERE cafe_id = ? AND status <> 'DELETED'";
+            try (PreparedStatement pstmt = conn.prepareStatement(selectSql)) {
+                pstmt.setInt(1, cafeId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        currentStatus = rs.getString("status");
+                    }
+                }
+            }
+            if (currentStatus == null || status.equals(currentStatus)) {
+                conn.rollback();
+                return false;
+            }
+
+            String updateSql = "UPDATE cafe SET status = ?, updated_at = SYSTIMESTAMP "
+                    + "WHERE cafe_id = ? AND status <> 'DELETED'";
+            try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
+                pstmt.setString(1, status);
+                pstmt.setInt(2, cafeId);
+                if (pstmt.executeUpdate() <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            String actionType = "HIDDEN".equals(status) ? "HIDE_CAFE" : "RESTORE_CAFE";
+            if (!logDao.insertLog(conn, adminId, "CAFE", cafeId, actionType, adminMemo)) {
+                conn.rollback();
+                return false;
+            }
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            rollbackQuietly(conn);
+            e.printStackTrace();
+        } finally {
+            closeQuietly(conn);
         }
         return false;
     }
@@ -378,6 +512,82 @@ public class CafeDAO extends BaseDAO {
         try (PreparedStatement pstmt = conn.prepareStatement("SELECT " + sequenceName + ".NEXTVAL FROM dual");
              ResultSet rs = pstmt.executeQuery()) {
             return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
+    private void appendAdminCafeWhere(StringBuilder sql, List<Object> params, AdminCafeFilter filter) {
+        String keyword = cleanText(filter == null ? null : filter.getKeyword());
+        if (keyword != null) {
+            String searchType = cleanOption(filter == null ? null : filter.getSearchType());
+            String value = "%" + keyword.toLowerCase() + "%";
+            if ("OWNER".equals(searchType)) {
+                sql.append("AND LOWER(c.owner_id) LIKE ? ");
+                params.add(value);
+            } else {
+                sql.append("AND LOWER(c.cafe_name) LIKE ? ");
+                params.add(value);
+            }
+        }
+
+        String status = cleanOption(filter == null ? null : filter.getStatus());
+        if ("ACTIVE".equals(status) || "HIDDEN".equals(status)) {
+            sql.append("AND c.status = ? ");
+            params.add(status);
+        }
+
+        String region = cleanText(filter == null ? null : filter.getRegion());
+        if (region != null) {
+            sql.append("AND c.region LIKE ? ");
+            params.add("%" + region + "%");
+        }
+
+        int cafeCategoryId = filter == null ? 0 : filter.getCafeCategoryId();
+        if (cafeCategoryId > 0) {
+            sql.append("AND c.cafe_category_id = ? ");
+            params.add(cafeCategoryId);
+        }
+    }
+
+    private void bindParams(PreparedStatement pstmt, List<?> params) throws Exception {
+        for (int i = 0; i < params.size(); i++) {
+            Object param = params.get(i);
+            if (param instanceof Integer) {
+                pstmt.setInt(i + 1, (Integer) param);
+            } else {
+                pstmt.setString(i + 1, String.valueOf(param));
+            }
+        }
+    }
+
+    private String cleanText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String cleanOption(String value) {
+        String trimmed = cleanText(value);
+        return trimmed == null || "ALL".equalsIgnoreCase(trimmed) ? null : trimmed.toUpperCase();
+    }
+
+    private void rollbackQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private void closeQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (Exception ignored) {
+            }
         }
     }
 

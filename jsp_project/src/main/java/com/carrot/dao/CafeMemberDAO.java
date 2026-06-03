@@ -10,7 +10,6 @@ import java.util.List;
 import com.carrot.dto.CafeMemberDTO;
 
 public class CafeMemberDAO extends BaseDAO {
-
     public boolean insertOwner(int cafeId, String ownerId) {
         return insertMember(cafeId, ownerId, "OWNER", "ACTIVE");
     }
@@ -361,14 +360,7 @@ public class CafeMemberDAO extends BaseDAO {
     private List<CafeMemberDTO> selectMembersBySql(String sql, List<Object> params) {
         List<CafeMemberDTO> members = new ArrayList<>();
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            for (int i = 0; i < params.size(); i++) {
-                Object param = params.get(i);
-                if (param instanceof Integer) {
-                    pstmt.setInt(i + 1, (Integer) param);
-                } else {
-                    pstmt.setString(i + 1, String.valueOf(param));
-                }
-            }
+            bindParams(pstmt, params);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     members.add(mapMember(rs));
@@ -378,6 +370,17 @@ public class CafeMemberDAO extends BaseDAO {
             e.printStackTrace();
         }
         return members;
+    }
+
+    private void bindParams(PreparedStatement pstmt, List<?> params) throws Exception {
+        for (int i = 0; i < params.size(); i++) {
+            Object param = params.get(i);
+            if (param instanceof Integer) {
+                pstmt.setInt(i + 1, (Integer) param);
+            } else {
+                pstmt.setString(i + 1, String.valueOf(param));
+            }
+        }
     }
 
     private boolean isValidRole(String role) {

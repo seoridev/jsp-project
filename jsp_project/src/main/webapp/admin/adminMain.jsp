@@ -24,7 +24,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 | 동네마켓</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-5">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-6">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
@@ -64,12 +64,8 @@
             <span>상품 신고 내용을 확인하고 완료, 반려, 상품 숨김 처리를 합니다.</span>
         </a>
         <a href="<%= contextPath %>/admin/communityCafeManage.jsp">
-            <strong>커뮤니티 카페 관리</strong>
-            <span>카페 숨김 처리와 커뮤니티 운영 상태를 확인합니다.</span>
-        </a>
-        <a href="<%= contextPath %>/admin/communityPostManage.jsp">
-            <strong>커뮤니티 게시글 관리</strong>
-            <span>커뮤니티 게시글을 확인하고 숨김 처리합니다.</span>
+            <strong>커뮤니티 관리</strong>
+            <span>카페, 게시글, 댓글을 한 화면의 탭에서 관리합니다.</span>
         </a>
         <a href="<%= contextPath %>/admin/communityReportManage.jsp">
             <strong>커뮤니티 신고 관리</strong>

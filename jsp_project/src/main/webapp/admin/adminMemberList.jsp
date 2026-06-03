@@ -11,7 +11,7 @@
 	        return "이용 제한";
 	    }
 	    if ("WITHDRAWN".equalsIgnoreCase(status)) {
-	        return "탈퇴 처리";
+	        return "탈퇴";
 	    }
 	    return "정상";
 	}
@@ -86,7 +86,7 @@
 
 	String statusFilter = request.getParameter("status") == null ? "ALL" : request.getParameter("status").trim().toUpperCase();
 	if (!"ALL".equals(statusFilter) && !"ACTIVE".equals(statusFilter)
-	        && !"STOPPED".equals(statusFilter) && !"WITHDRAWN".equals(statusFilter)) {
+	        && !"STOPPED".equals(statusFilter)) {
 	    statusFilter = "ALL";
 	}
 
@@ -175,7 +175,6 @@
 	                <option value="ALL" <%= selected(statusFilter, "ALL") %>>전체</option>
 	                <option value="ACTIVE" <%= selected(statusFilter, "ACTIVE") %>>정상</option>
 	                <option value="STOPPED" <%= selected(statusFilter, "STOPPED") %>>이용 제한</option>
-	                <option value="WITHDRAWN" <%= selected(statusFilter, "WITHDRAWN") %>>탈퇴 처리</option>
 	            </select>
 	        </div>
 	        <button class="primary" type="submit">검색</button>
@@ -225,19 +224,22 @@
 	                                <td><span class="status-badge<%= statusClass(member.getStatus()) %>"><%= statusLabel(member.getStatus()) %></span></td>
 	                                <td><%= member.getCreatedAt() == null ? "-" : dateFormat.format(member.getCreatedAt()) %></td>
 	                                <td>
-	                                    <form class="inline-form" action="<%= contextPath %>/admin/adminMemberStatusProcess.jsp" method="post">
-	                                        <input type="hidden" name="loginId" value="<%= escapeHtml(member.getLoginId()) %>">
-	                                        <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
-	                                        <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
-	                                        <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
-	                                        <input type="hidden" name="page" value="<%= pageNumber %>">
-	                                        <select name="status" aria-label="회원 상태">
-	                                            <option value="ACTIVE" <%= "ACTIVE".equalsIgnoreCase(member.getStatus()) || member.getStatus() == null ? "selected" : "" %>>정상</option>
-	                                            <option value="STOPPED" <%= "STOPPED".equalsIgnoreCase(member.getStatus()) ? "selected" : "" %>>이용 제한</option>
-	                                            <option value="WITHDRAWN" <%= "WITHDRAWN".equalsIgnoreCase(member.getStatus()) ? "selected" : "" %>>탈퇴 처리</option>
-	                                        </select>
-	                                        <button type="submit">저장</button>
-	                                    </form>
+	                                    <% if ("WITHDRAWN".equalsIgnoreCase(member.getStatus())) { %>
+	                                        <span class="muted-text">탈퇴 회원</span>
+	                                    <% } else { %>
+	                                        <form class="inline-form" action="<%= contextPath %>/admin/adminMemberStatusProcess.jsp" method="post">
+	                                            <input type="hidden" name="loginId" value="<%= escapeHtml(member.getLoginId()) %>">
+	                                            <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
+	                                            <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
+	                                            <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
+	                                            <input type="hidden" name="page" value="<%= pageNumber %>">
+	                                            <select name="status" aria-label="회원 상태">
+	                                                <option value="ACTIVE" <%= "ACTIVE".equalsIgnoreCase(member.getStatus()) || member.getStatus() == null ? "selected" : "" %>>정상</option>
+	                                                <option value="STOPPED" <%= "STOPPED".equalsIgnoreCase(member.getStatus()) ? "selected" : "" %>>이용 제한</option>
+	                                            </select>
+	                                            <button type="submit">저장</button>
+	                                        </form>
+	                                    <% } %>
 	                                </td>
 	                            </tr>
 	                        <% } %>

@@ -516,6 +516,165 @@ button.primary {
     justify-content: flex-end;
 }
 
+.admin-community-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: -8px 0 20px;
+    border-bottom: 1px solid #e5ded3;
+}
+
+.admin-community-tabs a {
+    min-width: 86px;
+    padding: 11px 16px;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    color: #6f5d4e;
+    font-weight: 800;
+    text-align: center;
+    text-decoration: none;
+}
+
+.admin-community-tabs a:hover {
+    background: #fff7ee;
+    color: #d95c00;
+}
+
+.admin-community-tabs a.is-current {
+    border-color: #e5ded3;
+    background: #fff;
+    color: #1f1b16;
+}
+
+.community-report-shell {
+    width: min(1280px, calc(100% - 32px));
+}
+
+.community-report-filter {
+    grid-template-columns: 116px minmax(440px, 1fr) 96px 112px 140px 132px;
+    align-items: end;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 14px;
+    border: 1px solid #e5ded3;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.community-report-filter .field {
+    grid-column: auto;
+    gap: 6px;
+    min-width: 0;
+}
+
+.community-report-filter .field:nth-of-type(2) {
+    grid-column: auto;
+}
+
+.community-report-filter .field input,
+.community-report-filter .field select {
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 14px;
+}
+
+.community-report-filter .form-actions {
+    display: flex;
+    grid-column: auto;
+    gap: 8px;
+    margin: 0;
+}
+
+.community-report-filter .form-actions .button,
+.community-report-filter .form-actions button {
+    flex: 1 0 0;
+    min-width: 70px;
+    min-height: 40px;
+    white-space: nowrap;
+}
+
+.community-report-shell .admin-table {
+    min-width: 1180px;
+    table-layout: fixed;
+}
+
+.community-report-shell .admin-table th,
+.community-report-shell .admin-table td {
+    word-break: keep-all;
+    overflow-wrap: normal;
+}
+
+.community-report-shell .admin-table th:nth-child(3),
+.community-report-shell .admin-table td:nth-child(3) {
+    width: 360px;
+}
+
+.community-report-shell .admin-table th:nth-child(1),
+.community-report-shell .admin-table td:nth-child(1) {
+    width: 150px;
+}
+
+.community-report-shell .admin-table th:nth-child(2),
+.community-report-shell .admin-table td:nth-child(2) {
+    width: 300px;
+}
+
+.community-report-shell .admin-table th:nth-child(4),
+.community-report-shell .admin-table td:nth-child(4) {
+    width: 150px;
+}
+
+.community-report-shell .admin-table th:nth-child(5),
+.community-report-shell .admin-table td:nth-child(5) {
+    width: 180px;
+}
+
+.community-report-shell .admin-table p {
+    margin: 6px 0 0;
+}
+
+.community-report-shell .admin-table p:first-child {
+    margin-top: 0;
+}
+
+.report-info-cell,
+.report-status-cell {
+    word-break: keep-all;
+}
+
+.report-target-cell,
+.report-summary-cell {
+    line-height: 1.55;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+.community-report-shell .admin-table .inline-form {
+    display: grid;
+    grid-template-columns: 160px;
+    gap: 6px;
+    align-items: center;
+}
+
+.community-report-shell .admin-table .inline-form textarea {
+    width: 160px;
+    min-height: 40px;
+    resize: vertical;
+}
+
+.report-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+}
+
+.report-action-buttons button {
+    min-height: 32px;
+    padding: 0 8px;
+    white-space: nowrap;
+}
+
 .admin-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -594,6 +753,18 @@ button.primary {
     background: #fff;
 }
 
+.admin-filter .form-actions {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+}
+
+.admin-filter .form-actions .button,
+.admin-filter .form-actions button {
+    min-height: 40px;
+    white-space: nowrap;
+}
+
 /* 회원 목록 표는 모바일에서도 깨지지 않게 가로 스크롤을 허용 */
 .admin-list-meta {
     display: flex;
@@ -645,6 +816,8 @@ button.primary {
 .status-badge {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: 42px;
     min-height: 28px;
     padding: 0 10px;
     border-radius: 999px;
@@ -652,6 +825,7 @@ button.primary {
     color: #4d453d;
     font-size: 12px;
     font-weight: 800;
+    white-space: nowrap;
 }
 
 .status-badge.is-active {
@@ -667,6 +841,12 @@ button.primary {
 .status-badge.is-withdrawn {
     background: #f2f0ee;
     color: #6c6259;
+}
+
+.muted-text {
+    color: #756b61;
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .table-link {
@@ -689,16 +869,22 @@ button.primary {
 }
 
 .inline-form select {
+    flex: 0 0 72px;
+    min-width: 72px;
     min-height: 38px;
     border: 1px solid #d7d0c5;
     border-radius: 8px;
     padding: 0 10px;
     background: #fffdf9;
+    white-space: nowrap;
 }
 
 .inline-form button {
+    flex: 0 0 auto;
+    min-width: 48px;
     min-height: 38px;
     padding: 0 12px;
+    white-space: nowrap;
 }
 
 .pagination {
@@ -852,8 +1038,34 @@ button.primary {
     .admin-summary,
     .admin-menu,
     .admin-filter,
+    .community-report-filter,
+    .admin-community-tabs,
     .detail-grid {
         grid-template-columns: 1fr;
+    }
+
+    .admin-community-tabs {
+        display: grid;
+        gap: 0;
+        border: 1px solid #e5ded3;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .admin-community-tabs a {
+        border: 0;
+        border-radius: 0;
+        border-bottom: 1px solid #eee7dd;
+    }
+
+    .admin-community-tabs a:last-child {
+        border-bottom: 0;
+    }
+
+    .community-report-filter .field,
+    .community-report-filter .field:nth-of-type(2),
+    .community-report-filter .form-actions {
+        grid-column: auto;
     }
 
     .admin-list-meta,

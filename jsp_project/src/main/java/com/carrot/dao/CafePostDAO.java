@@ -10,6 +10,80 @@ import java.util.List;
 import com.carrot.dto.CafePostDTO;
 
 public class CafePostDAO extends BaseDAO {
+    public static class AdminPostFilter {
+        private String searchType;
+        private String keyword;
+        private String cafeKeyword;
+        private String boardKeyword;
+        private String writerId;
+        private String status;
+        private String dateFrom;
+        private String dateTo;
+
+        public String getSearchType() {
+            return searchType;
+        }
+
+        public void setSearchType(String searchType) {
+            this.searchType = searchType;
+        }
+
+        public String getKeyword() {
+            return keyword;
+        }
+
+        public void setKeyword(String keyword) {
+            this.keyword = keyword;
+        }
+
+        public String getCafeKeyword() {
+            return cafeKeyword;
+        }
+
+        public void setCafeKeyword(String cafeKeyword) {
+            this.cafeKeyword = cafeKeyword;
+        }
+
+        public String getBoardKeyword() {
+            return boardKeyword;
+        }
+
+        public void setBoardKeyword(String boardKeyword) {
+            this.boardKeyword = boardKeyword;
+        }
+
+        public String getWriterId() {
+            return writerId;
+        }
+
+        public void setWriterId(String writerId) {
+            this.writerId = writerId;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getDateFrom() {
+            return dateFrom;
+        }
+
+        public void setDateFrom(String dateFrom) {
+            this.dateFrom = dateFrom;
+        }
+
+        public String getDateTo() {
+            return dateTo;
+        }
+
+        public void setDateTo(String dateTo) {
+            this.dateTo = dateTo;
+        }
+    }
 
     public int insertPost(CafePostDTO post) {
         String sql = "INSERT INTO cafe_post "
@@ -268,21 +342,50 @@ public class CafePostDAO extends BaseDAO {
     }
 
     public List<CafePostDTO> selectAllPostsForAdmin() {
-        List<CafePostDTO> list = new ArrayList<>();
-        String sql = baseSelect()
-                + " WHERE cp.is_deleted = 'N' "
-                + "ORDER BY cp.created_at DESC";
+        return selectPostsForAdmin(new AdminPostFilter(), 1, 1000);
+    }
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapPost(rs));
+    public List<CafePostDTO> selectPostsForAdmin(AdminPostFilter filter, int page, int pageSize) {
+        List<CafePostDTO> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(baseSelect() + " WHERE cp.is_deleted = 'N' ");
+        appendAdminPostWhere(sql, params, filter);
+        int safePage = Math.max(1, page);
+        int safePageSize = Math.max(1, pageSize);
+        sql.append("ORDER BY cp.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add((safePage - 1) * safePageSize);
+        params.add(safePageSize);
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapPost(rs));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public int countPostsForAdmin(AdminPostFilter filter) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM cafe_post cp "
+                + "JOIN cafe_board cb ON cp.board_id = cb.board_id "
+                + "JOIN cafe c ON cp.cafe_id = c.cafe_id "
+                + "WHERE cp.is_deleted = 'N' ");
+        appendAdminPostWhere(sql, params, filter);
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     public CafePostDTO selectPostById(int postId) {
@@ -389,12 +492,59 @@ public class CafePostDAO extends BaseDAO {
             conn.setAutoCommit(false);
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setInt(1, postId);
-                boolean hidden = pstmt.executeUpdate() > 0;
-                if (!hidden) {
+                boolean updated = pstmt.executeUpdate() > 0;
+                if (!updated) {
                     conn.rollback();
                     return false;
                 }
                 updateCafePostCount(conn, post.getCafeId(), -1);
+                conn.commit();
+                return true;
+            }
+        } catch (Exception e) {
+            rollbackQuietly(conn);
+            e.printStackTrace();
+        } finally {
+            closeQuietly(conn);
+        }
+        return false;
+    }
+
+    public boolean updatePostHiddenByAdmin(int postId, boolean hidden, String adminId, String adminMemo) {
+        if (adminId == null || adminId.trim().isEmpty() || adminMemo == null || adminMemo.trim().isEmpty()) {
+            return false;
+        }
+        CafePostDTO post = selectPostForDelete(postId);
+        String targetHidden = hidden ? "Y" : "N";
+        if (post == null || "Y".equals(post.getIsDeleted()) || targetHidden.equals(post.getIsHidden())) {
+            return false;
+        }
+
+        String sql = "UPDATE cafe_post SET is_hidden = ?, updated_at = SYSTIMESTAMP "
+                + "WHERE post_id = ? AND is_deleted = 'N'";
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+            AdminCommunityActionLogDAO logDao = new AdminCommunityActionLogDAO();
+            if (!logDao.hasLogTable(conn)) {
+                conn.rollback();
+                return false;
+            }
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setString(1, targetHidden);
+                pstmt.setInt(2, postId);
+                boolean updated = pstmt.executeUpdate() > 0;
+                if (!updated) {
+                    conn.rollback();
+                    return false;
+                }
+                updateCafePostCount(conn, post.getCafeId(), hidden ? -1 : 1);
+                String actionType = hidden ? "HIDE_POST" : "RESTORE_POST";
+                if (!logDao.insertLog(conn, adminId, "CAFE_POST", postId, actionType, adminMemo)) {
+                    conn.rollback();
+                    return false;
+                }
                 conn.commit();
                 return true;
             }
@@ -428,6 +578,66 @@ public class CafePostDAO extends BaseDAO {
                 + "AND cm.status = 'ACTIVE'";
     }
 
+    private void appendAdminPostWhere(StringBuilder sql, List<Object> params, AdminPostFilter filter) {
+        String keyword = clean(filter == null ? null : filter.getKeyword());
+        if (keyword != null) {
+            String searchType = cleanUpper(filter == null ? null : filter.getSearchType());
+            String value = "%" + keyword.toLowerCase() + "%";
+            if ("CONTENT".equals(searchType)) {
+                sql.append("AND LOWER(DBMS_LOB.SUBSTR(cp.content, 4000, 1)) LIKE ? ");
+                params.add(value);
+            } else if ("WRITER".equals(searchType)) {
+                sql.append("AND LOWER(cp.writer_id) LIKE ? ");
+                params.add(value);
+            } else if ("CAFE".equals(searchType)) {
+                sql.append("AND LOWER(c.cafe_name) LIKE ? ");
+                params.add(value);
+            } else {
+                sql.append("AND LOWER(cp.title) LIKE ? ");
+                params.add(value);
+            }
+        }
+
+        String cafeKeyword = clean(filter == null ? null : filter.getCafeKeyword());
+        if (cafeKeyword != null) {
+            sql.append("AND (LOWER(c.cafe_name) LIKE ? OR TO_CHAR(c.cafe_id) = ?) ");
+            params.add("%" + cafeKeyword.toLowerCase() + "%");
+            params.add(cafeKeyword);
+        }
+
+        String boardKeyword = clean(filter == null ? null : filter.getBoardKeyword());
+        if (boardKeyword != null) {
+            sql.append("AND (LOWER(cb.board_name) LIKE ? OR TO_CHAR(cb.board_id) = ?) ");
+            params.add("%" + boardKeyword.toLowerCase() + "%");
+            params.add(boardKeyword);
+        }
+
+        String writerId = clean(filter == null ? null : filter.getWriterId());
+        if (writerId != null) {
+            sql.append("AND LOWER(cp.writer_id) LIKE ? ");
+            params.add("%" + writerId.toLowerCase() + "%");
+        }
+
+        String status = cleanUpper(filter == null ? null : filter.getStatus());
+        if ("VISIBLE".equals(status)) {
+            sql.append("AND cp.is_hidden = 'N' ");
+        } else if ("HIDDEN".equals(status)) {
+            sql.append("AND cp.is_hidden = 'Y' ");
+        }
+
+        String dateFrom = clean(filter == null ? null : filter.getDateFrom());
+        if (dateFrom != null) {
+            sql.append("AND cp.created_at >= TO_TIMESTAMP(?, 'YYYY-MM-DD') ");
+            params.add(dateFrom);
+        }
+
+        String dateTo = clean(filter == null ? null : filter.getDateTo());
+        if (dateTo != null) {
+            sql.append("AND cp.created_at < TO_TIMESTAMP(?, 'YYYY-MM-DD') + INTERVAL '1' DAY ");
+            params.add(dateTo);
+        }
+    }
+
     private int selectLastPostId(Connection conn) throws Exception {
         try (PreparedStatement pstmt = conn.prepareStatement("SELECT seq_cafe_post.CURRVAL FROM dual");
              ResultSet rs = pstmt.executeQuery()) {
@@ -453,6 +663,19 @@ public class CafePostDAO extends BaseDAO {
                 pstmt.setString(i + 1, value == null ? null : value.toString());
             }
         }
+    }
+
+    private String clean(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() || "ALL".equalsIgnoreCase(trimmed) ? null : trimmed;
+    }
+
+    private String cleanUpper(String value) {
+        String cleaned = clean(value);
+        return cleaned == null ? null : cleaned.toUpperCase();
     }
 
     private void rollbackQuietly(Connection conn) {

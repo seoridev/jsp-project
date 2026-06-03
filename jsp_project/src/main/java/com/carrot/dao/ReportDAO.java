@@ -11,7 +11,39 @@ import java.util.List;
 import com.carrot.dto.ReportDTO;
 
 public class ReportDAO extends BaseDAO {
+    public static class ProductReportFilter {
+        private String searchType;
+        private String keyword;
+        private String status;
+
+        public String getSearchType() {
+            return searchType;
+        }
+
+        public void setSearchType(String searchType) {
+            this.searchType = searchType;
+        }
+
+        public String getKeyword() {
+            return keyword;
+        }
+
+        public void setKeyword(String keyword) {
+            this.keyword = keyword;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+    }
+
     public static class CommunityReportFilter {
+        private String searchType;
+        private String keyword;
         private String status;
         private String targetType;
         private String reason;
@@ -19,6 +51,22 @@ public class ReportDAO extends BaseDAO {
         private String targetWriterId;
         private String dateFrom;
         private String dateTo;
+
+        public String getSearchType() {
+            return searchType;
+        }
+
+        public void setSearchType(String searchType) {
+            this.searchType = searchType;
+        }
+
+        public String getKeyword() {
+            return keyword;
+        }
+
+        public void setKeyword(String keyword) {
+            this.keyword = keyword;
+        }
 
         public String getStatus() {
             return status;
@@ -133,27 +181,73 @@ public class ReportDAO extends BaseDAO {
     }
 
     public List<ReportDTO> getReportList() {
+        return getReportList(new ProductReportFilter());
+    }
+
+    public List<ReportDTO> getReportList(ProductReportFilter filter) {
         List<ReportDTO> reports = new ArrayList<>();
-        String sql = "SELECT r.report_id, r.reporter_id, r.target_type, r.target_id, "
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT r.report_id, r.reporter_id, r.target_type, r.target_id, "
             + "r.reason, r.detail, r.status, r.created_at, r.processed_at, "
             + "m.nickname AS reporter_nickname, p.title AS product_title "
             + "FROM report r "
             + "LEFT JOIN member m ON r.reporter_id = m.login_id "
             + "LEFT JOIN product p ON r.target_type = 'PRODUCT' AND r.target_id = p.product_id "
-            + "WHERE r.target_type NOT IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') "
-            + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC";
+            + "WHERE r.target_type NOT IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') ");
+        appendProductReportWhere(sql, params, filter);
+        sql.append("ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC");
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                reports.add(mapReport(rs));
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    reports.add(mapReport(rs));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return reports;
+    }
+
+    public int countProductReports(ProductReportFilter filter) {
+        List<Object> params = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM report r "
+            + "LEFT JOIN product p ON r.target_type = 'PRODUCT' AND r.target_id = p.product_id "
+            + "WHERE r.target_type NOT IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') ");
+        appendProductReportWhere(sql, params, filter);
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            bindParams(pstmt, params);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    private void appendProductReportWhere(StringBuilder sql, List<Object> params, ProductReportFilter filter) {
+        String keyword = clean(filter == null ? null : filter.getKeyword());
+        String searchType = clean(filter == null ? null : filter.getSearchType());
+        if (keyword != null) {
+            String value = "%" + keyword.toLowerCase() + "%";
+            if ("REPORTER".equals(searchType)) {
+                sql.append("AND LOWER(r.reporter_id) LIKE ? ");
+                params.add(value);
+            } else {
+                sql.append("AND LOWER(p.title) LIKE ? ");
+                params.add(value);
+            }
+        }
+
+        String status = clean(filter == null ? null : filter.getStatus());
+        if (isReportStatus(status)) {
+            sql.append("AND r.status = ? ");
+            params.add(status);
+        }
     }
 
     public List<ReportDTO> getCommunityReportList() {
@@ -280,6 +374,34 @@ public class ReportDAO extends BaseDAO {
         if (isCommunityTarget(targetType)) {
             sql.append("AND r.target_type = ? ");
             params.add(targetType);
+        }
+
+        String keyword = clean(filter == null ? null : filter.getKeyword());
+        if (keyword != null) {
+            String searchType = clean(filter == null ? null : filter.getSearchType());
+            String like = "%" + keyword.toLowerCase() + "%";
+            if ("TARGET_WRITER".equals(searchType)) {
+                sql.append("AND (")
+                    .append("(r.target_type = 'CAFE' AND LOWER(rc.owner_id) LIKE ?) OR ")
+                    .append("(r.target_type = 'CAFE_POST' AND LOWER(rp.writer_id) LIKE ?) OR ")
+                    .append("(r.target_type = 'CAFE_COMMENT' AND LOWER(rcc.writer_id) LIKE ?)")
+                    .append(") ");
+                params.add(like);
+                params.add(like);
+                params.add(like);
+            } else if ("TARGET_TITLE".equals(searchType)) {
+                sql.append("AND (")
+                    .append("(r.target_type = 'CAFE' AND LOWER(rc.cafe_name) LIKE ?) OR ")
+                    .append("(r.target_type = 'CAFE_POST' AND LOWER(rp.title) LIKE ?) OR ")
+                    .append("(r.target_type = 'CAFE_COMMENT' AND LOWER(rcc.content) LIKE ?)")
+                    .append(") ");
+                params.add(like);
+                params.add(like);
+                params.add(like);
+            } else {
+                sql.append("AND LOWER(r.reporter_id) LIKE ? ");
+                params.add(like);
+            }
         }
 
         String reason = clean(filter == null ? null : filter.getReason());
