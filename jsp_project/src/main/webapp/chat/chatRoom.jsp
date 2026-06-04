@@ -170,7 +170,7 @@
                     	<input type="file" id="imageInput" name="imageFile" accept="image/*" onchange="uploadImageFile()">
                     </form>
                     <% if (userId.equals(buyerId)) { %>
-    					<button type="button" onclick="requestSafetyPay();" style="background: none; border: none; font-size: 20px; cursor: pointer; padding-right: 10px;" title="안전결제 요청">🔒</button>
+    					<button type="button" onclick="requestSafetyPay();" style="background: none; border: none; font-size: 20px; cursor: pointer; padding-right: 10px;" title="안전결제 요청">💵</button>
 					<% } %>
                     <button type="button" onclick="document.getElementById('imageInput').click();" style="background: none; border: none; font-size: 20px; cursor: pointer; padding-right: 10px;" title="이미지 업로드">🖼️</button>
                     
@@ -348,9 +348,17 @@
     }
 
     // 구매 확정 요청
-    function confirmSafetyPay(txId) {
+    function confirmSafetyPay(event, txId) {
+    	const payButton = event.target;
+    	
+    	// 중복실행 방지
+    	if (payButton.disabled) return;
+    	
         if(!confirm("물품을 무사히 수령하셨나요? 판매자에게 대금이 정산되며 취소할 수 없습니다.")) return;
 
+        payButton.disabled = true;
+        payButton.innerText = "구매 확정 처리 중...";
+        
         const packet = {
             roomId: roomId,
             senderId: userId,
@@ -382,7 +390,7 @@
 	             + '    <p style="font-size:12px; margin:0 0 12px; color:#756b61;">안전하게 대금이 중개 보관되었습니다. 물건을 유효하게 수령하신 후 구매 확정을 눌러주세요.</p>';
 	        
 	        if (userId == buyerId) {
-	            html += '    <button class="primary" style="width:100%; min-height:36px; font-size:13px;" onclick="confirmSafetyPay(' + txId + ')">구매 확정하기</button>';
+	            html += '    <button class="primary" style="width:100%; min-height:36px; font-size:13px;" onclick="confirmSafetyPay(event, ' + txId + ')">구매 확정하기</button>';
 	        } else {
 	            html += '    <p style="font-size:12px; color:#ff6f0f; font-weight:700; margin:0;">💡 구매자가 물품 확인 후 구매확정을 누르면 내 지갑으로 정산됩니다.</p>';
 	        }

@@ -157,7 +157,7 @@ public class PayDAO extends BaseDAO {
 
     // 구매 확정
     public boolean confirmEscrow(long txId, String sellerId, int amount, long productId) {
-        String updateTxSql = "UPDATE PAY_TRANSACTION SET STATUS = 'CONFIRMED', UPDATED_AT = CURRENT_TIMESTAMP WHERE TX_ID = ?";
+        String updateTxSql = "UPDATE PAY_TRANSACTION SET STATUS = 'CONFIRMED', UPDATED_AT = CURRENT_TIMESTAMP WHERE TX_ID = ? AND STATUS = 'STAY'";
         String creditSql = "UPDATE USER_ACCOUNT SET BALANCE = BALANCE + ? WHERE USER_ID = ?";
         String productSql = "UPDATE PRODUCT SET STATUS = 'SOLD' WHERE PRODUCT_ID = ?";
 
@@ -165,11 +165,17 @@ public class PayDAO extends BaseDAO {
         try {
             conn = getConnection();
             conn.setAutoCommit(false); // 트랜잭션 시작
-
+            
             // 에스크로 내역 정산 완료로 변경
+            int updatedRows = 0;
             try (PreparedStatement pstmt = conn.prepareStatement(updateTxSql)) {
                 pstmt.setLong(1, txId);
-                pstmt.executeUpdate();
+                updatedRows = pstmt.executeUpdate();
+            }
+            
+            if (updatedRows == 0) {
+                conn.rollback();
+                return false;
             }
 
             // 판매자 계좌로 돈 정산 입금

@@ -88,7 +88,10 @@ public class ChatServer {
 
                 JsonObject payload = new JsonObject();
                 payload.addProperty("amount", amount);
-                payload.addProperty("txId", payDAO.selectLastTxId());
+                
+                int txId = payDAO.selectLastTxId();
+                payload.addProperty("txId", txId);
+
 
                 message.setMessage(payload.toString());
                 
@@ -99,7 +102,7 @@ public class ChatServer {
                 
                 boolean result = payDAO.confirmEscrow(txId, product.getSellerId(), payDAO.selectEscrowByTxId(txId).getAmount(), product.getProductId());
                 if (!result) {
-                	sendErrorMessage(session, "시스템 오류로 인해 구매 확정 처리에 실패했습니다.");
+                	sendErrorMessage(session, "이미 확정된 거래 이거나 시스템 오류로 인해 구매 확정 처리에 실패했습니다.");
                 	return; 
                 }
                 System.out.println("구매확정 DB 업데이트 성공. 거래번호: " + txId);
@@ -164,8 +167,12 @@ public class ChatServer {
     private void sendErrorMessage(Session session, String errorMsg) {
         try {
             if (session.isOpen()) {
-                String errorPacket = "{\"msgType\":\"ERROR\", \"message\":\"" + errorMsg + "\"}";
-                session.getBasicRemote().sendText(errorPacket);
+            	JsonObject json = new JsonObject();
+            	json.addProperty("msgType", "ERROR");
+            	json.addProperty("message", errorMsg);
+
+            	String errorPacket = json.toString();                
+            	session.getBasicRemote().sendText(errorPacket);
             }
         } catch (IOException e) {
             e.printStackTrace();

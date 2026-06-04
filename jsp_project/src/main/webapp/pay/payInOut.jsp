@@ -155,7 +155,7 @@
 				            <td><%= tx.getSellerId().equals(loginId) ? tx.getSellerId() + " (나)" : tx.getSellerId() %></td>
 				            <td style="font-weight: 800; color:#ff5a5f;"><%= df.format(tx.getAmount()) %>원</td>
 				            <td>
-				                <% if ("PAYMENT_COMPLETE".equals(tx.getStatus())) { %>
+				                <% if ("STAY".equals(tx.getStatus())) { %>
 				                    <span class="status-badge is-active">구매 보관중</span>
 				                <% } else if ("CONFIRMED".equals(tx.getStatus())) { %>
 				                    <span class="status-badge is-withdrawn">정산 완료</span>
