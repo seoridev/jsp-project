@@ -510,10 +510,7 @@ public class CafePostDAO extends BaseDAO {
         return false;
     }
 
-    public boolean updatePostHiddenByAdmin(int postId, boolean hidden, String adminId, String adminMemo) {
-        if (adminId == null || adminId.trim().isEmpty() || adminMemo == null || adminMemo.trim().isEmpty()) {
-            return false;
-        }
+    public boolean updatePostHiddenByAdmin(int postId, boolean hidden) {
         CafePostDTO post = selectPostForDelete(postId);
         String targetHidden = hidden ? "Y" : "N";
         if (post == null || "Y".equals(post.getIsDeleted()) || targetHidden.equals(post.getIsHidden())) {
@@ -526,11 +523,6 @@ public class CafePostDAO extends BaseDAO {
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
-            AdminCommunityActionLogDAO logDao = new AdminCommunityActionLogDAO();
-            if (!logDao.hasLogTable(conn)) {
-                conn.rollback();
-                return false;
-            }
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, targetHidden);
                 pstmt.setInt(2, postId);
@@ -540,11 +532,6 @@ public class CafePostDAO extends BaseDAO {
                     return false;
                 }
                 updateCafePostCount(conn, post.getCafeId(), hidden ? -1 : 1);
-                String actionType = hidden ? "HIDE_POST" : "RESTORE_POST";
-                if (!logDao.insertLog(conn, adminId, "CAFE_POST", postId, actionType, adminMemo)) {
-                    conn.rollback();
-                    return false;
-                }
                 conn.commit();
                 return true;
             }

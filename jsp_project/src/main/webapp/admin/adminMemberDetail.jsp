@@ -57,18 +57,18 @@
 	    </div>
 
 	    <% if ("success".equals(result)) { %>
+	        <p class="notice-toast">회원 상태를 변경했습니다.</p>
 	        <script>
 	            (() => {
-	                alert("회원 상태를 변경했습니다.");
 	                const url = new URL(window.location.href);
 	                url.searchParams.delete("result");
 	                window.history.replaceState({}, "", url);
 	            })();
 	        </script>
 	    <% } else if ("fail".equals(result)) { %>
+	        <p class="notice-toast is-error">회원 상태를 변경하지 못했습니다.</p>
 	        <script>
 	            (() => {
-	                alert("회원 상태를 변경하지 못했습니다.");
 	                const url = new URL(window.location.href);
 	                url.searchParams.delete("result");
 	                window.history.replaceState({}, "", url);
@@ -77,9 +77,7 @@
 	    <% } %>
 
 	    <% if (!detailError.isEmpty()) { %>
-	        <script>
-	            alert("<%= escapeScript(detailError) %>");
-	        </script>
+	        <p class="notice-toast is-error"><%= escapeHtml(detailError) %></p>
 	    <% } else { %>
 	        <section class="detail-panel">
 	            <div class="detail-header">

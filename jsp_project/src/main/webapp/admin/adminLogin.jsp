@@ -31,9 +31,9 @@
 
 	        <%-- 에러가 있을 때만 안내 문구 표시 --%>
 	        <% if (!errorMessage.isEmpty()) { %>
+	            <p class="notice-toast is-error"><%= escapeHtml(errorMessage) %></p>
 	            <script>
 	                (() => {
-	                    alert("<%= escapeScript(errorMessage) %>");
 	                    const url = new URL(window.location.href);
 	                    url.searchParams.delete("error");
 	                    window.history.replaceState({}, "", url);

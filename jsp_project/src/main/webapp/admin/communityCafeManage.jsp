@@ -1,7 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.List" %>
-<%@ page import="com.carrot.dao.AdminCommunityActionLogDAO" %>
 <%@ page import="com.carrot.dao.CafeCategoryDAO" %>
 <%@ page import="com.carrot.dao.CafeDAO" %>
 <%@ page import="com.carrot.dto.CafeCategoryDTO" %>
@@ -74,15 +73,11 @@
     String listQuery = buildListQuery(searchType, keyword, statusFilter, categoryIdFilter, pageNumber);
 
     CafeDAO cafeDao = new CafeDAO();
-    boolean logReady = new AdminCommunityActionLogDAO().hasLogTable();
     String action = requestValue(request.getParameter("action"));
     int cafeId = parseIntParam(request.getParameter("cafeId"));
     if (cafeId > 0 && ("hide".equals(action) || "restore".equals(action))) {
-        String adminMemo = request.getParameter("adminMemo");
-        String adminId = (String) session.getAttribute("adminLoginId");
         String nextStatus = "hide".equals(action) ? "HIDDEN" : "ACTIVE";
-        boolean success = logReady && adminMemo != null && !adminMemo.trim().isEmpty()
-                && cafeDao.updateCafeStatusByAdmin(cafeId, nextStatus, adminId, adminMemo);
+        boolean success = cafeDao.updateCafeStatus(cafeId, nextStatus);
         response.sendRedirect(request.getContextPath() + "/admin/communityCafeManage.jsp?"
                 + listQuery + "&result=" + (success ? action : "fail"));
         return;
@@ -131,15 +126,12 @@
     <% request.setAttribute("adminCommunityTab", "cafe"); %>
     <%@ include file="communityManageTabs.jsp" %>
 
-    <% if (!logReady) { %>
-        <p class="field-message is-error">관리 이력 테이블이 없습니다. database/admin_community_action_log_migration.sql을 실행해야 직접 숨김/복구 처리가 가능합니다.</p>
-    <% } %>
     <% if ("hide".equals(result)) { %>
-        <p class="field-message is-success">카페를 숨김 처리했습니다.</p>
+        <p class="notice-toast">카페를 숨김 처리했습니다.</p>
     <% } else if ("restore".equals(result)) { %>
-        <p class="field-message is-success">카페를 복구했습니다.</p>
+        <p class="notice-toast">카페를 복구했습니다.</p>
     <% } else if ("fail".equals(result)) { %>
-        <p class="field-message is-error">카페 처리에 실패했습니다. 처리 사유를 입력했는지 확인하세요.</p>
+        <p class="notice-toast is-error">카페 처리에 실패했습니다.</p>
     <% } %>
 
     <form class="admin-filter" action="<%= contextPath %>/admin/communityCafeManage.jsp" method="get">
@@ -211,9 +203,8 @@
                         <td><%= cafe.getPostCount() %></td>
                         <td><span class="status-badge<%= statusClass(cafe.getStatus()) %>"><%= statusText(cafe.getStatus()) %></span></td>
                         <td>
-                            <form class="inline-form admin-memo-form" action="<%= contextPath %>/admin/communityCafeManage.jsp" method="post" data-current-action="<%= "ACTIVE".equals(cafe.getStatus()) ? "restore" : "hide" %>" data-action-label-prefix="카페" onsubmit="return fillAdminMemo(this);">
+                            <form class="inline-form admin-status-form" action="<%= contextPath %>/admin/communityCafeManage.jsp" method="post">
                                 <input type="hidden" name="cafeId" value="<%= cafe.getCafeId() %>">
-                                <input type="hidden" name="adminMemo" value="">
                                 <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
                                 <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
                                 <input type="hidden" name="status" value="<%= escapeHtml(statusFilter) %>">
@@ -223,7 +214,7 @@
                                     <option value="restore" <%= "ACTIVE".equals(cafe.getStatus()) ? "selected" : "" %>>활성</option>
                                     <option value="hide" <%= "HIDDEN".equals(cafe.getStatus()) ? "selected" : "" %>>숨김</option>
                                 </select>
-                                <button type="submit" <%= logReady ? "" : "disabled" %>>변경</button>
+                                <button type="submit">변경</button>
                             </form>
                         </td>
                     </tr>
@@ -246,24 +237,6 @@
         </nav>
     <% } %>
 </main>
-<script>
-function fillAdminMemo(form) {
-    var select = form.querySelector("select[name='action']");
-    if (select && select.value === form.getAttribute("data-current-action")) {
-        alert("변경할 상태를 선택하세요.");
-        return false;
-    }
-    var prefix = form.getAttribute("data-action-label-prefix") || "";
-    var actionName = (prefix ? prefix + " " : "") + (select ? select.options[select.selectedIndex].text : "상태 변경");
-    var memo = prompt(actionName + " 처리 사유를 입력하세요.");
-    if (!memo || memo.trim().length === 0) {
-        alert("처리 사유가 필요합니다.");
-        return false;
-    }
-    form.querySelector("input[name='adminMemo']").value = memo.trim();
-    return confirm(actionName + " 처리할까요?");
-}
-</script>
 <%@ include file="../common/footer.jsp" %>
 </body>
 </html>

@@ -82,18 +82,18 @@
 	    </div>
 
 	    <% if ("success".equals(result)) { %>
+	        <p class="notice-toast">회원 상태를 변경했습니다.</p>
 	        <script>
 	            (() => {
-	                alert("회원 상태를 변경했습니다.");
 	                const url = new URL(window.location.href);
 	                url.searchParams.delete("result");
 	                window.history.replaceState({}, "", url);
 	            })();
 	        </script>
 	    <% } else if ("fail".equals(result)) { %>
+	        <p class="notice-toast is-error">회원 상태를 변경하지 못했습니다.</p>
 	        <script>
 	            (() => {
-	                alert("회원 상태를 변경하지 못했습니다.");
 	                const url = new URL(window.location.href);
 	                url.searchParams.delete("result");
 	                window.history.replaceState({}, "", url);
@@ -129,9 +129,7 @@
 	    </form>
 
 	    <% if (!listError.isEmpty()) { %>
-	        <script>
-	            alert("<%= escapeScript(listError) %>");
-	        </script>
+	        <p class="notice-toast is-error"><%= escapeHtml(listError) %></p>
 	    <% } else { %>
 	        <div class="admin-list-meta">
 	            <span>총 <strong><%= totalCount %></strong>명</span>

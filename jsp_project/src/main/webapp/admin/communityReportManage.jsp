@@ -165,12 +165,12 @@
         </div>
     </div>
     <% if (!moderationColumnsReady) { %>
-        <p class="field-message is-error">신고 처리 이력 컬럼이 없습니다. 먼저 database/report_moderation_migration.sql을 실행해야 처리 메모와 일괄 처리가 저장됩니다.</p>
+        <p class="notice-toast is-error">신고 처리 이력 컬럼이 없습니다. 먼저 database/report_moderation_migration.sql을 실행해야 처리 메모와 일괄 처리가 저장됩니다.</p>
     <% } %>
     <% if ("success".equals(result)) { %>
-        <p class="field-message is-success">신고를 처리했습니다. 같은 대상의 대기 신고도 함께 처리되었습니다.</p>
+        <p class="notice-toast">신고를 처리했습니다. 같은 대상의 대기 신고도 함께 처리되었습니다.</p>
     <% } else if ("fail".equals(result)) { %>
-        <p class="field-message is-error">신고 처리에 실패했습니다.</p>
+        <p class="notice-toast is-error">신고 처리에 실패했습니다.</p>
     <% } %>
 
     <form class="form-grid community-report-filter" action="<%= contextPath %>/admin/communityReportManage.jsp" method="get">
@@ -331,10 +331,24 @@
     </div>
 </main>
 <script>
+    function showNoticeToast(message, error) {
+        var current = document.querySelector(".notice-toast.is-script-toast");
+        if (current) {
+            current.remove();
+        }
+        var toast = document.createElement("p");
+        toast.className = "notice-toast is-script-toast" + (error ? " is-error" : "");
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        window.setTimeout(function() {
+            toast.remove();
+        }, 4200);
+    }
+
     function submitReportAction(form, action, actionName) {
         var memo = form.querySelector("textarea[name='adminMemo']");
         if (!memo || memo.value.trim().length === 0) {
-            alert("처리 메모를 입력해 주세요.");
+            showNoticeToast("처리 메모를 입력해 주세요.", true);
             if (memo) {
                 memo.focus();
             }
@@ -359,7 +373,7 @@
         }
         var memo = form.querySelector("textarea[name='adminMemo']");
         if (!memo || memo.value.trim().length === 0) {
-            alert("처리 메모를 입력해 주세요.");
+            showNoticeToast("처리 메모를 입력해 주세요.", true);
             if (memo) {
                 memo.focus();
             }

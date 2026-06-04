@@ -51,18 +51,18 @@
         </div>
     </div>
     <% if ("success".equals(result)) { %>
+        <p class="notice-toast">신고를 처리했습니다.</p>
         <script>
             (() => {
-                alert("신고를 처리했습니다.");
                 const url = new URL(window.location.href);
                 url.searchParams.delete("result");
                 window.history.replaceState({}, "", url);
             })();
         </script>
     <% } else if ("fail".equals(result)) { %>
+        <p class="notice-toast is-error">신고 처리에 실패했습니다.</p>
         <script>
             (() => {
-                alert("신고 처리에 실패했습니다.");
                 const url = new URL(window.location.href);
                 url.searchParams.delete("result");
                 window.history.replaceState({}, "", url);

@@ -292,11 +292,7 @@ public class CafeCommentDAO extends BaseDAO {
         return false;
     }
 
-    public boolean updateCommentDeletedByAdmin(int commentId, boolean deleted, String adminId, String adminMemo) {
-        if (adminId == null || adminId.trim().isEmpty() || adminMemo == null || adminMemo.trim().isEmpty()) {
-            return false;
-        }
-
+    public boolean updateCommentDeletedByAdmin(int commentId, boolean deleted) {
         CafeCommentDTO comment = selectCommentById(commentId);
         String targetDeleted = deleted ? "Y" : "N";
         if (comment == null || targetDeleted.equals(comment.getIsDeleted())) {
@@ -308,12 +304,6 @@ public class CafeCommentDAO extends BaseDAO {
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
-            AdminCommunityActionLogDAO logDao = new AdminCommunityActionLogDAO();
-            if (!logDao.hasLogTable(conn)) {
-                conn.rollback();
-                return false;
-            }
-
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 pstmt.setString(1, targetDeleted);
                 pstmt.setInt(2, commentId);
@@ -323,11 +313,6 @@ public class CafeCommentDAO extends BaseDAO {
                 }
             }
             updateCommentCount(conn, comment.getPostId(), deleted ? -1 : 1);
-            String actionType = deleted ? "HIDE_COMMENT" : "RESTORE_COMMENT";
-            if (!logDao.insertLog(conn, adminId, "CAFE_COMMENT", commentId, actionType, adminMemo)) {
-                conn.rollback();
-                return false;
-            }
             conn.commit();
             return true;
         } catch (Exception e) {

@@ -384,6 +384,12 @@ button.primary {
     animation: toastFadeOut 4s ease forwards;
 }
 
+.notice-toast.is-error {
+    border-color: #ead0c6;
+    background: #fff7f3;
+    color: #9d341f;
+}
+
 @keyframes toastFadeOut {
     0%,
     72% {
@@ -865,7 +871,7 @@ button.primary {
 .inline-form {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
 }
 
