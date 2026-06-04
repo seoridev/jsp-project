@@ -4,6 +4,7 @@
 <%@ page import="com.carrot.dao.MemberDAO" %>
 <%@ page import="com.carrot.dao.FavoriteDAO" %>
 <%@ page import="com.carrot.dao.ProductDAO" %>
+<%@ page import="com.carrot.dao.PayDAO" %>
 <%@ page import="com.carrot.dto.MemberDTO" %>
 <%@ page import="com.carrot.dto.ProductDTO" %>
 <%@ include file="../common/sessionCheck.jsp" %>
@@ -22,6 +23,9 @@
         }
     }
     DecimalFormat scoreFormat = new DecimalFormat("0.0");
+    
+    int balance = new PayDAO().getBalance(currentLoginId);
+    DecimalFormat df = new DecimalFormat("#,###");
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -45,6 +49,14 @@
     </div>
 
     <section class="admin-summary">
+    	<a href="<%= contextPath %>/pay/payInOut.jsp" style="border-top-color: #ff5a5f;">
+            <span>동네페이 잔액</span>
+            <strong style="color: #ff5a5f;"><%= df.format(balance) %>원</strong>
+            <span style="font-size: 11px; color: #d95c00; margin-top: 4px; text-decoration: underline;">
+                충전/출금 센터 바로가기 ↗
+            </span>
+        </a>
+    
         <a href="<%= contextPath %>/mypage/myProductList.jsp?status=active">
             <span>판매중 상품</span><strong><%= saleCount %></strong>
         </a>

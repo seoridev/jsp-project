@@ -11,7 +11,7 @@
 
 <%
     //파일 저장 경로 설정
-    String savePath = request.getServletContext().getRealPath("/upload/product");
+    String savePath = request.getServletContext().getRealPath("/upload/product/");
 
     int maxSize = 1024 * 1024 * 10; //최대 10MB
     String encoding = "UTF-8";
@@ -70,7 +70,7 @@
                         .productId(productId)
                         .originName(originName)
                         .saveName(saveName)
-                        .imagePath("/upload/")
+                        .imagePath("/upload/product/")
                         .isMain(isMain)
                         .build();
 
