@@ -1,69 +1,16 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.MemberDAO" %>
 <%@ page import="com.carrot.dto.MemberDTO" %>
+<%@ page import="com.carrot.util.AdminPageUtil" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
-<%!
-	private String statusLabel(String status) {
-	    if ("STOPPED".equalsIgnoreCase(status)) {
-	        return "이용 제한";
-	    }
-	    if ("WITHDRAWN".equalsIgnoreCase(status)) {
-	        return "탈퇴";
-	    }
-	    return "정상";
-	}
-
-	private String statusClass(String status) {
-	    if ("STOPPED".equalsIgnoreCase(status)) {
-	        return " is-stopped";
-	    }
-	    if ("WITHDRAWN".equalsIgnoreCase(status)) {
-	        return " is-withdrawn";
-	    }
-	    return " is-active";
-	}
-
-	private String selected(String current, String expected) {
-	    return expected.equalsIgnoreCase(current) ? "selected" : "";
-	}
-
-	private int parsePage(String value) {
-	    try {
-	        return Math.max(Integer.parseInt(value), 1);
-	    } catch (Exception e) {
-	        return 1;
-	    }
-	}
-
-	private boolean isAllowedSearchType(String searchType) {
-	    return "loginId".equals(searchType) || "nickname".equals(searchType)
-	        || "phone".equals(searchType) || "region".equals(searchType);
-	}
-
-	private String encodeParam(String value) {
-	    try {
-	        return URLEncoder.encode(value == null ? "" : value, "UTF-8");
-	    } catch (Exception e) {
-	        return "";
-	    }
-	}
-
-	private String buildListQuery(String searchType, String keyword, String status, int page) {
-	    return "searchType=" + encodeParam(searchType)
-	        + "&keyword=" + encodeParam(keyword)
-	        + "&status=" + encodeParam(status)
-	        + "&page=" + page;
-	}
-%>
 <%
 	request.setCharacterEncoding("UTF-8");
 
 	//화면에 다시 채울 검색 조건 정리
 	String searchType = request.getParameter("searchType") == null ? "loginId" : request.getParameter("searchType").trim();
-	if (!isAllowedSearchType(searchType)) {
+	if (!AdminPageUtil.isMemberSearchType(searchType)) {
 	    searchType = "loginId";
 	}
 	String keyword = request.getParameter("keyword") == null ? "" : request.getParameter("keyword").trim();
@@ -90,7 +37,7 @@
 	    statusFilter = "ALL";
 	}
 
-	int pageNumber = parsePage(request.getParameter("page"));
+	int pageNumber = AdminPageUtil.parsePage(request.getParameter("page"));
 	int pageSize = 10;
 	int totalCount = 0;
 	int totalPages = 1;
@@ -159,10 +106,10 @@
 	        <div class="field">
 	            <label for="searchType">검색 기준</label>
 	            <select id="searchType" name="searchType">
-	                <option value="loginId" <%= selected(searchType, "loginId") %>>아이디</option>
-	                <option value="nickname" <%= selected(searchType, "nickname") %>>닉네임</option>
-	                <option value="phone" <%= selected(searchType, "phone") %>>연락처</option>
-	                <option value="region" <%= selected(searchType, "region") %>>동네</option>
+	                <option value="loginId" <%= AdminPageUtil.selected(searchType, "loginId") %>>아이디</option>
+	                <option value="nickname" <%= AdminPageUtil.selected(searchType, "nickname") %>>닉네임</option>
+	                <option value="phone" <%= AdminPageUtil.selected(searchType, "phone") %>>연락처</option>
+	                <option value="region" <%= AdminPageUtil.selected(searchType, "region") %>>동네</option>
 	            </select>
 	        </div>
 	        <div class="field">
@@ -172,9 +119,9 @@
 	        <div class="field">
 	            <label for="status">상태</label>
 	            <select id="status" name="status">
-	                <option value="ALL" <%= selected(statusFilter, "ALL") %>>전체</option>
-	                <option value="ACTIVE" <%= selected(statusFilter, "ACTIVE") %>>정상</option>
-	                <option value="STOPPED" <%= selected(statusFilter, "STOPPED") %>>이용 제한</option>
+	                <option value="ALL" <%= AdminPageUtil.selected(statusFilter, "ALL") %>>전체</option>
+	                <option value="ACTIVE" <%= AdminPageUtil.selected(statusFilter, "ACTIVE") %>>정상</option>
+	                <option value="STOPPED" <%= AdminPageUtil.selected(statusFilter, "STOPPED") %>>이용 제한</option>
 	            </select>
 	        </div>
 	        <button class="primary" type="submit">검색</button>
@@ -214,14 +161,14 @@
 	                        <% for (MemberDTO member : members) { %>
 	                            <tr>
 	                                <td>
-	                                    <a class="table-link" href="<%= contextPath %>/admin/adminMemberDetail.jsp?loginId=<%= encodeParam(member.getLoginId()) %>&<%= buildListQuery(searchType, keyword, statusFilter, pageNumber) %>">
+	                                    <a class="table-link" href="<%= contextPath %>/admin/adminMemberDetail.jsp?loginId=<%= AdminPageUtil.encode(member.getLoginId()) %>&<%= AdminPageUtil.memberListQuery(searchType, keyword, statusFilter, pageNumber) %>">
 	                                        <%= escapeHtml(member.getLoginId()) %>
 	                                    </a>
 	                                </td>
 	                                <td><%= escapeHtml(member.getNickname()) %></td>
 	                                <td><%= escapeHtml(member.getPhone()) %></td>
 	                                <td><%= escapeHtml(member.getRegion()) %></td>
-	                                <td><span class="status-badge<%= statusClass(member.getStatus()) %>"><%= statusLabel(member.getStatus()) %></span></td>
+	                                <td><span class="status-badge<%= AdminPageUtil.memberStatusClass(member.getStatus()) %>"><%= AdminPageUtil.memberStatusLabel(member.getStatus()) %></span></td>
 	                                <td><%= member.getCreatedAt() == null ? "-" : dateFormat.format(member.getCreatedAt()) %></td>
 	                                <td>
 	                                    <% if ("WITHDRAWN".equalsIgnoreCase(member.getStatus())) { %>
@@ -252,13 +199,13 @@
 	        <% if (totalPages > 1) { %>
 	            <nav class="pagination" aria-label="회원 목록 페이지">
 	                <% if (pageNumber > 1) { %>
-	                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(searchType, keyword, statusFilter, pageNumber - 1) %>">이전</a>
+	                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= AdminPageUtil.memberListQuery(searchType, keyword, statusFilter, pageNumber - 1) %>">이전</a>
 	                <% } %>
 	                <% for (int i = 1; i <= totalPages; i++) { %>
-	                    <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(searchType, keyword, statusFilter, i) %>"><%= i %></a>
+	                    <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= AdminPageUtil.memberListQuery(searchType, keyword, statusFilter, i) %>"><%= i %></a>
 	                <% } %>
 	                <% if (pageNumber < totalPages) { %>
-	                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(searchType, keyword, statusFilter, pageNumber + 1) %>">다음</a>
+	                    <a href="<%= contextPath %>/admin/adminMemberList.jsp?<%= AdminPageUtil.memberListQuery(searchType, keyword, statusFilter, pageNumber + 1) %>">다음</a>
 	                <% } %>
 	            </nav>
 	        <% } %>

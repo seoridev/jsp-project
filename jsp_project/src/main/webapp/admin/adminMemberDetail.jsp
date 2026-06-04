@@ -1,57 +1,16 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="com.carrot.dao.MemberDAO" %>
 <%@ page import="com.carrot.dto.MemberDTO" %>
+<%@ page import="com.carrot.util.AdminPageUtil" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
-<%!
-	private String statusLabel(String status) {
-	    if ("STOPPED".equalsIgnoreCase(status)) {
-	        return "이용 제한";
-	    }
-	    if ("WITHDRAWN".equalsIgnoreCase(status)) {
-	        return "탈퇴";
-	    }
-	    return "정상";
-	}
-
-	private String statusClass(String status) {
-	    if ("STOPPED".equalsIgnoreCase(status)) {
-	        return " is-stopped";
-	    }
-	    if ("WITHDRAWN".equalsIgnoreCase(status)) {
-	        return " is-withdrawn";
-	    }
-	    return " is-active";
-	}
-
-	private boolean isAllowedSearchType(String searchType) {
-	    return "loginId".equals(searchType) || "nickname".equals(searchType)
-	        || "phone".equals(searchType) || "region".equals(searchType);
-	}
-
-	private String encodeParam(String value) {
-	    try {
-	        return URLEncoder.encode(value == null ? "" : value, "UTF-8");
-	    } catch (Exception e) {
-	        return "";
-	    }
-	}
-
-	private String buildListQuery(String searchType, String keyword, String status, String page) {
-	    return "searchType=" + encodeParam(searchType)
-	        + "&keyword=" + encodeParam(keyword)
-	        + "&status=" + encodeParam(status == null || status.isEmpty() ? "ALL" : status)
-	        + "&page=" + encodeParam(page == null || page.isEmpty() ? "1" : page);
-	}
-%>
 <%
 	request.setCharacterEncoding("UTF-8");
 
 	//목록으로 돌아갈 때 쓸 검색 조건 보관
 	String loginIdParam = request.getParameter("loginId") == null ? "" : request.getParameter("loginId").trim();
 	String searchType = request.getParameter("searchType") == null ? "loginId" : request.getParameter("searchType").trim();
-	if (!isAllowedSearchType(searchType)) {
+	if (!AdminPageUtil.isMemberSearchType(searchType)) {
 	    searchType = "loginId";
 	}
 	String keyword = request.getParameter("keyword") == null ? "" : request.getParameter("keyword").trim();
@@ -92,7 +51,7 @@
 	            <h1>회원 상세</h1>
 	        </div>
 	        <div class="admin-actions">
-	            <a class="button" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= buildListQuery(searchType, keyword, statusFilter, pageNumber) %>">목록</a>
+	            <a class="button" href="<%= contextPath %>/admin/adminMemberList.jsp?<%= AdminPageUtil.memberListQuery(searchType, keyword, statusFilter, pageNumber) %>">목록</a>
 	            <a class="button" href="<%= contextPath %>/admin/adminMain.jsp">대시보드</a>
 	        </div>
 	    </div>
@@ -125,7 +84,7 @@
 	        <section class="detail-panel">
 	            <div class="detail-header">
 	                <div>
-	                    <span class="status-badge<%= statusClass(member.getStatus()) %>"><%= statusLabel(member.getStatus()) %></span>
+	                    <span class="status-badge<%= AdminPageUtil.memberStatusClass(member.getStatus()) %>"><%= AdminPageUtil.memberStatusLabel(member.getStatus()) %></span>
 	                    <h2><%= escapeHtml(member.getNickname()) %></h2>
 	                    <p><%= escapeHtml(member.getLoginId()) %></p>
 	                </div>

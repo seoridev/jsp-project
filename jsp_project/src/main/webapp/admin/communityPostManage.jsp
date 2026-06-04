@@ -1,66 +1,30 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.AdminCommunityActionLogDAO" %>
 <%@ page import="com.carrot.dao.CafePostDAO" %>
 <%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.AdminPageUtil" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    private int parsePage(String value) {
-        return Math.max(parseIntParam(value), 1);
-    }
-
-    private String requestValue(String value) {
-        return value == null ? "" : value.trim();
-    }
-
-    private String selectedAttr(String current, String expected) {
-        return expected.equalsIgnoreCase(current) ? "selected" : "";
-    }
-
-    private String encodeParam(String value) {
-        try {
-            return URLEncoder.encode(value == null ? "" : value, "UTF-8");
-        } catch (Exception e) {
-            return "";
-        }
-    }
-
-    private String buildListQuery(String searchType, String keyword, String status, int page) {
-        return "searchType=" + encodeParam(searchType)
-            + "&keyword=" + encodeParam(keyword)
-            + "&status=" + encodeParam(status)
-            + "&page=" + page;
-    }
-%>
 <%
     request.setCharacterEncoding("UTF-8");
 
-    String searchType = requestValue(request.getParameter("searchType")).toUpperCase();
+    String searchType = AdminPageUtil.requestValue(request.getParameter("searchType")).toUpperCase();
     if (!"CONTENT".equals(searchType) && !"WRITER".equals(searchType) && !"CAFE".equals(searchType)) {
         searchType = "TITLE";
     }
-    String keyword = requestValue(request.getParameter("keyword"));
-    String statusFilter = requestValue(request.getParameter("status")).toUpperCase();
+    String keyword = AdminPageUtil.requestValue(request.getParameter("keyword"));
+    String statusFilter = AdminPageUtil.requestValue(request.getParameter("status")).toUpperCase();
     if (!"VISIBLE".equals(statusFilter) && !"HIDDEN".equals(statusFilter)) {
         statusFilter = "ALL";
     }
-    int pageNumber = parsePage(request.getParameter("page"));
+    int pageNumber = AdminPageUtil.parsePage(request.getParameter("page"));
     int pageSize = 10;
-    String listQuery = buildListQuery(searchType, keyword, statusFilter, pageNumber);
+    String listQuery = AdminPageUtil.communityListQuery(searchType, keyword, statusFilter, pageNumber);
 
     CafePostDAO postDao = new CafePostDAO();
     boolean logReady = new AdminCommunityActionLogDAO().hasLogTable();
-    String action = requestValue(request.getParameter("action"));
-    int postId = parseIntParam(request.getParameter("postId"));
+    String action = AdminPageUtil.requestValue(request.getParameter("action"));
+    int postId = AdminPageUtil.parseInt(request.getParameter("postId"));
     if (postId > 0 && ("hide".equals(action) || "restore".equals(action))) {
         String adminMemo = request.getParameter("adminMemo");
         String adminId = (String) session.getAttribute("adminLoginId");
@@ -80,7 +44,7 @@
     int totalPages = Math.max(1, (int) Math.ceil(totalCount / (double) pageSize));
     if (pageNumber > totalPages) {
         pageNumber = totalPages;
-        listQuery = buildListQuery(searchType, keyword, statusFilter, pageNumber);
+        listQuery = AdminPageUtil.communityListQuery(searchType, keyword, statusFilter, pageNumber);
     }
     int pageBlockSize = 10;
     int blockStartPage = ((pageNumber - 1) / pageBlockSize) * pageBlockSize + 1;
@@ -128,10 +92,10 @@
         <div class="field">
             <label for="searchType">검색 기준</label>
             <select id="searchType" name="searchType">
-                <option value="TITLE" <%= selectedAttr(searchType, "TITLE") %>>제목</option>
-                <option value="CONTENT" <%= selectedAttr(searchType, "CONTENT") %>>내용</option>
-                <option value="WRITER" <%= selectedAttr(searchType, "WRITER") %>>작성자</option>
-                <option value="CAFE" <%= selectedAttr(searchType, "CAFE") %>>카페명</option>
+                <option value="TITLE" <%= AdminPageUtil.selected(searchType, "TITLE") %>>제목</option>
+                <option value="CONTENT" <%= AdminPageUtil.selected(searchType, "CONTENT") %>>내용</option>
+                <option value="WRITER" <%= AdminPageUtil.selected(searchType, "WRITER") %>>작성자</option>
+                <option value="CAFE" <%= AdminPageUtil.selected(searchType, "CAFE") %>>카페명</option>
             </select>
         </div>
         <div class="field">
@@ -141,9 +105,9 @@
         <div class="field">
             <label for="status">상태</label>
             <select id="status" name="status">
-                <option value="ALL" <%= selectedAttr(statusFilter, "ALL") %>>전체</option>
-                <option value="VISIBLE" <%= selectedAttr(statusFilter, "VISIBLE") %>>노출</option>
-                <option value="HIDDEN" <%= selectedAttr(statusFilter, "HIDDEN") %>>숨김</option>
+                <option value="ALL" <%= AdminPageUtil.selected(statusFilter, "ALL") %>>전체</option>
+                <option value="VISIBLE" <%= AdminPageUtil.selected(statusFilter, "VISIBLE") %>>노출</option>
+                <option value="HIDDEN" <%= AdminPageUtil.selected(statusFilter, "HIDDEN") %>>숨김</option>
             </select>
         </div>
         <div class="form-actions">
@@ -210,13 +174,13 @@
     <% if (totalPages > 1) { %>
         <nav class="pagination" aria-label="게시글 목록 페이지">
             <% if (blockStartPage > 1) { %>
-                <a href="<%= contextPath %>/admin/communityPostManage.jsp?<%= buildListQuery(searchType, keyword, statusFilter, blockStartPage - pageBlockSize) %>">이전</a>
+                <a href="<%= contextPath %>/admin/communityPostManage.jsp?<%= AdminPageUtil.communityListQuery(searchType, keyword, statusFilter, blockStartPage - pageBlockSize) %>">이전</a>
             <% } %>
             <% for (int i = blockStartPage; i <= blockEndPage; i++) { %>
-                <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/communityPostManage.jsp?<%= buildListQuery(searchType, keyword, statusFilter, i) %>"><%= i %></a>
+                <a class="<%= i == pageNumber ? "is-current" : "" %>" href="<%= contextPath %>/admin/communityPostManage.jsp?<%= AdminPageUtil.communityListQuery(searchType, keyword, statusFilter, i) %>"><%= i %></a>
             <% } %>
             <% if (blockEndPage < totalPages) { %>
-                <a href="<%= contextPath %>/admin/communityPostManage.jsp?<%= buildListQuery(searchType, keyword, statusFilter, blockEndPage + 1) %>">다음</a>
+                <a href="<%= contextPath %>/admin/communityPostManage.jsp?<%= AdminPageUtil.communityListQuery(searchType, keyword, statusFilter, blockEndPage + 1) %>">다음</a>
             <% } %>
         </nav>
     <% } %>

@@ -1,60 +1,20 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carrot.dao.ReportDAO" %>
 <%@ page import="com.carrot.dto.ReportDTO" %>
+<%@ page import="com.carrot.util.AdminPageUtil" %>
 <%@ include file="../common/adminSessionCheck.jsp" %>
-<%!
-    private String statusText(String status) {
-        if ("ALL".equalsIgnoreCase(status)) return "전체";
-        if ("DONE".equalsIgnoreCase(status)) return "처리완료";
-        if ("REJECTED".equalsIgnoreCase(status)) return "반려";
-        return "대기";
-    }
-
-    private String statusClass(String status) {
-        if ("DONE".equalsIgnoreCase(status)) return " is-active";
-        if ("REJECTED".equalsIgnoreCase(status)) return " is-withdrawn";
-        return " is-stopped";
-    }
-
-    private String selected(String current, String expected) {
-        return expected.equalsIgnoreCase(current) ? "selected" : "";
-    }
-
-    private boolean isAllowedSearchType(String searchType) {
-        return "product".equals(searchType) || "reporter".equals(searchType);
-    }
-
-    private boolean isAllowedStatus(String status) {
-        return "ALL".equals(status) || "WAITING".equals(status) || "DONE".equals(status) || "REJECTED".equals(status);
-    }
-
-    private String encodeParam(String value) {
-        try {
-            return URLEncoder.encode(value == null ? "" : value, "UTF-8");
-        } catch (Exception e) {
-            return "";
-        }
-    }
-
-    private String buildListQuery(String searchType, String keyword, String status) {
-        return "searchType=" + encodeParam(searchType)
-            + "&keyword=" + encodeParam(keyword)
-            + "&status=" + encodeParam(status);
-    }
-%>
 <%
     request.setCharacterEncoding("UTF-8");
 
     String searchType = request.getParameter("searchType") == null ? "product" : request.getParameter("searchType").trim();
-    if (!isAllowedSearchType(searchType)) {
+    if (!AdminPageUtil.isProductReportSearchType(searchType)) {
         searchType = "product";
     }
     String keyword = request.getParameter("keyword") == null ? "" : request.getParameter("keyword").trim();
     String statusFilter = request.getParameter("status") == null ? "ALL" : request.getParameter("status").trim().toUpperCase();
-    if (!isAllowedStatus(statusFilter)) {
+    if (!AdminPageUtil.isProductReportStatus(statusFilter)) {
         statusFilter = "ALL";
     }
 
@@ -113,8 +73,8 @@
         <div class="field">
             <label for="searchType">검색 기준</label>
             <select id="searchType" name="searchType">
-                <option value="product" <%= selected(searchType, "product") %>>상품명</option>
-                <option value="reporter" <%= selected(searchType, "reporter") %>>신고자</option>
+                <option value="product" <%= AdminPageUtil.selected(searchType, "product") %>>상품명</option>
+                <option value="reporter" <%= AdminPageUtil.selected(searchType, "reporter") %>>신고자</option>
             </select>
         </div>
         <div class="field">
@@ -124,10 +84,10 @@
         <div class="field">
             <label for="status">상태</label>
             <select id="status" name="status">
-                <option value="ALL" <%= selected(statusFilter, "ALL") %>>전체</option>
-                <option value="WAITING" <%= selected(statusFilter, "WAITING") %>>대기</option>
-                <option value="DONE" <%= selected(statusFilter, "DONE") %>>처리완료</option>
-                <option value="REJECTED" <%= selected(statusFilter, "REJECTED") %>>반려</option>
+                <option value="ALL" <%= AdminPageUtil.selected(statusFilter, "ALL") %>>전체</option>
+                <option value="WAITING" <%= AdminPageUtil.selected(statusFilter, "WAITING") %>>대기</option>
+                <option value="DONE" <%= AdminPageUtil.selected(statusFilter, "DONE") %>>처리완료</option>
+                <option value="REJECTED" <%= AdminPageUtil.selected(statusFilter, "REJECTED") %>>반려</option>
             </select>
         </div>
         <button class="primary" type="submit">검색</button>
@@ -135,7 +95,7 @@
     </form>
     <div class="admin-list-meta">
         <span>총 <strong><%= totalCount %></strong>건</span>
-        <span><%= statusText(statusFilter) %></span>
+        <span><%= AdminPageUtil.reportStatusText(statusFilter) %></span>
     </div>
     <div class="admin-table-wrap">
         <table class="admin-table">
@@ -172,7 +132,7 @@
                         </td>
                         <td><%= escapeHtml(report.getReason()) %></td>
                         <td><%= escapeHtml(report.getDetail()) %></td>
-                        <td><span class="status-badge<%= statusClass(report.getStatus()) %>"><%= statusText(report.getStatus()) %></span></td>
+                        <td><span class="status-badge<%= AdminPageUtil.reportStatusClass(report.getStatus()) %>"><%= AdminPageUtil.reportStatusText(report.getStatus()) %></span></td>
                         <td><%= report.getCreatedAt() == null ? "-" : dateFormat.format(report.getCreatedAt()) %></td>
                         <td>
                             <% if (waiting) { %>
