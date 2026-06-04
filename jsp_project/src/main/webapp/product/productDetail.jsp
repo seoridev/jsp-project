@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="com.carrot.dao.ProductDAO"%>
 <%@ page import="com.carrot.dao.ProductImageDAO"%>
+<%@ page import="com.carrot.dao.FavoriteDAO"%>
 <%@ page import="com.carrot.dto.ProductDTO"%>
 <%@ page import="com.carrot.dto.ProductImageDTO"%>
 <%@ page import="com.carrot.dao.CategoryDAO"%>
@@ -30,7 +31,11 @@
         return;
     }
 
-    boolean isSeller = (session.getAttribute("loginId").equals(p.getSellerId()));
+    String currentLoginId = (String) session.getAttribute("loginId");
+    boolean isSeller = currentLoginId.equals(p.getSellerId());
+    FavoriteDAO favoriteDao = new FavoriteDAO();
+    boolean isFavorite = !isSeller && favoriteDao.isFavorite(currentLoginId, p.getProductId());
+    int favoriteCount = favoriteDao.countFavoritesByProductId(p.getProductId());
 %>
 
 <!DOCTYPE html>
@@ -111,6 +116,21 @@
 <body>
 <%@ include file="../common/header.jsp" %>
 <main class="page-shell">
+    <%
+        String favoriteResult = request.getParameter("favorite");
+        String reportResult = request.getParameter("report");
+    %>
+    <% if ("insert".equals(favoriteResult)) { %>
+        <p class="notice-toast">관심 상품에 추가했습니다.</p>
+    <% } else if ("delete".equals(favoriteResult)) { %>
+        <p class="notice-toast">관심 상품에서 해제했습니다.</p>
+    <% } else if ("own".equals(favoriteResult)) { %>
+        <p class="notice-toast">내 상품은 관심 상품에 추가할 수 없습니다.</p>
+    <% } else if ("fail".equals(favoriteResult)) { %>
+        <p class="notice-toast">관심 상품 처리에 실패했습니다.</p>
+    <% } else if ("success".equals(reportResult)) { %>
+        <p class="notice-toast">신고가 접수되었습니다.</p>
+    <% } %>
     <div class="home-layout">
         
         <!-- 좌측: 상품 이미지 및 상세 정보 영역 -->
@@ -183,11 +203,16 @@
                         <button type="button" onclick="deleteConfirm(<%= p.getProductId() %>)" style="border-color: #d93025; background: #fffafa; color: #d93025;">삭제하기</button>
                     <% } else { %>
                         <!-- 내가 올린 상품이 아닐 때 -->
+                        <form action="<%= request.getContextPath() %>/favorite/favoriteProcess.jsp" method="post" style="display: contents;">
+                            <input type="hidden" name="productId" value="<%= p.getProductId() %>">
+                            <button type="submit" class="button"><%= isFavorite ? "관심 상품 해제" : "관심 상품 추가" %></button>
+                        </form>
                         <form action="<%= request.getContextPath() %>/chat/chatCreateProcess.jsp" method="POST" style="display: contents;">
                             <input type="hidden" name="productId" value="<%= p.getProductId() %>">
                             <input type="hidden" name="sellerId" value="<%= p.getSellerId() %>">
                             <button type="submit" class="button primary">판매자와 채팅하기</button>
                         </form>
+                        <a class="button" href="<%= request.getContextPath() %>/report/report.jsp?targetType=PRODUCT&targetId=<%= p.getProductId() %>">신고하기</a>
                     <% } %>
                 </div>
             </div>
@@ -209,6 +234,10 @@
                     <li>
                         <span>판매자</span>
                         <strong><%= p.getSellerId() %> <% if(isSeller) { %><small style="color:#ff6f0f;">(나)</small><% } %></strong>
+                    </li>
+                    <li>
+                        <span>관심</span>
+                        <strong><%= favoriteCount %>명</strong>
                     </li>
                 </ul>
                 
