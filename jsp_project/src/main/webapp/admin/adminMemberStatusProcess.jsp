@@ -4,7 +4,7 @@
 <%@ include file="../common/adminSessionCheck.jsp" %>
 <%!
 	private boolean isAllowedStatus(String status) {
-	    return "ACTIVE".equals(status) || "STOPPED".equals(status) || "WITHDRAWN".equals(status);
+	    return "ACTIVE".equals(status) || "STOPPED".equals(status);
 	}
 
 	private boolean isAllowedSearchType(String searchType) {

@@ -10,7 +10,7 @@
 	        return "이용 제한";
 	    }
 	    if ("WITHDRAWN".equalsIgnoreCase(status)) {
-	        return "탈퇴 처리";
+	        return "탈퇴";
 	    }
 	    return "정상";
 	}
@@ -129,21 +129,24 @@
 	                    <h2><%= escapeHtml(member.getNickname()) %></h2>
 	                    <p><%= escapeHtml(member.getLoginId()) %></p>
 	                </div>
-	                <%-- 상태 변경 후 돌아올 위치 정보 함께 전달 --%>
-	                <form class="inline-form detail-status-form" action="<%= contextPath %>/admin/adminMemberStatusProcess.jsp" method="post">
-	                    <input type="hidden" name="origin" value="detail">
-	                    <input type="hidden" name="loginId" value="<%= escapeHtml(member.getLoginId()) %>">
-	                    <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
-	                    <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
-	                    <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
-	                    <input type="hidden" name="page" value="<%= escapeHtml(pageNumber) %>">
-	                    <select name="status" aria-label="회원 상태">
-	                        <option value="ACTIVE" <%= "ACTIVE".equalsIgnoreCase(member.getStatus()) || member.getStatus() == null ? "selected" : "" %>>정상</option>
-	                        <option value="STOPPED" <%= "STOPPED".equalsIgnoreCase(member.getStatus()) ? "selected" : "" %>>이용 제한</option>
-	                        <option value="WITHDRAWN" <%= "WITHDRAWN".equalsIgnoreCase(member.getStatus()) ? "selected" : "" %>>탈퇴 처리</option>
-	                    </select>
-	                    <button class="primary" type="submit">상태 저장</button>
-	                </form>
+	                <% if ("WITHDRAWN".equalsIgnoreCase(member.getStatus())) { %>
+	                    <span class="muted-text">탈퇴 회원은 상태를 변경할 수 없습니다.</span>
+	                <% } else { %>
+	                    <%-- 상태 변경 후 돌아올 위치 정보 함께 전달 --%>
+	                    <form class="inline-form detail-status-form" action="<%= contextPath %>/admin/adminMemberStatusProcess.jsp" method="post">
+	                        <input type="hidden" name="origin" value="detail">
+	                        <input type="hidden" name="loginId" value="<%= escapeHtml(member.getLoginId()) %>">
+	                        <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
+	                        <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
+	                        <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
+	                        <input type="hidden" name="page" value="<%= escapeHtml(pageNumber) %>">
+	                        <select name="status" aria-label="회원 상태">
+	                            <option value="ACTIVE" <%= "ACTIVE".equalsIgnoreCase(member.getStatus()) || member.getStatus() == null ? "selected" : "" %>>정상</option>
+	                            <option value="STOPPED" <%= "STOPPED".equalsIgnoreCase(member.getStatus()) ? "selected" : "" %>>이용 제한</option>
+	                        </select>
+	                        <button class="primary" type="submit">상태 저장</button>
+	                    </form>
+	                <% } %>
 	            </div>
 
 	            <%-- 비어 있는 항목은 '-'로 표시 --%>

@@ -1,0 +1,288 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="java.util.List" %>
+<%@ page import="com.carrot.dao.CafeBoardDAO" %>
+<%@ page import="com.carrot.dao.CafeCommentDAO" %>
+<%@ page import="com.carrot.dao.CafeDAO" %>
+<%@ page import="com.carrot.dao.CafeMemberDAO" %>
+<%@ page import="com.carrot.dao.CafePostDAO" %>
+<%@ page import="com.carrot.dao.CafePostLikeDAO" %>
+<%@ page import="com.carrot.dto.CafeBoardDTO" %>
+<%@ page import="com.carrot.dto.CafeCommentDTO" %>
+<%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.dto.CafeMemberDTO" %>
+<%@ page import="com.carrot.dto.CafePostDTO" %>
+<%@ page import="com.carrot.util.CafeRoleUtil" %>
+<%@ page import="com.carrot.util.ParamParser" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="java.util.Collections" %>
+<%
+    // 게시글 조회 권한, 좋아요, 댓글 데이터 조회
+    int postId = ParamParser.parseInt(request.getParameter("postId"));
+    CafePostDAO postDao = new CafePostDAO();
+    CafePostDTO post = postDao.selectPostById(postId);
+    DateTimeFormatter commentDateFormat = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+    int cafeId = post == null ? 0 : post.getCafeId();
+    Object skipViewPostId = session.getAttribute("skipPostViewIncrementPostId");
+    boolean skipViewIncrease = skipViewPostId instanceof Integer && ((Integer) skipViewPostId).intValue() == postId;
+    if (skipViewIncrease) {
+        session.removeAttribute("skipPostViewIncrementPostId");
+    }
+    int displayViewCount = 0;
+    boolean deletedPostFail = post == null && "deleteFail".equals(request.getParameter("error"));
+    if (post == null && !deletedPostFail) {
+        response.sendRedirect(request.getContextPath() + "/community/communityHome.jsp?error=noPost");
+        return;
+    }
+
+    String currentLoginId = (String) session.getAttribute("loginId");
+    CafeMemberDAO memberDao = new CafeMemberDAO();
+    CafeDTO cafe = null;
+    CafeBoardDTO currentBoard = null;
+    List<CafeBoardDTO> boards = Collections.emptyList();
+    boolean activeMember = false;
+    boolean manager = false;
+    boolean isWriter = false;
+    boolean likedPost = false;
+    boolean canReadPost = false;
+    String readBlockedTitle = "게시글을 볼 수 없습니다.";
+    String readBlockedMessage = "이 게시글을 볼 수 있는 권한이 없습니다.";
+    int likeCount = 0;
+    List<CafeCommentDTO> comments = Collections.emptyList();
+    if (post != null) {
+        cafe = new CafeDAO().selectCafeById(post.getCafeId());
+        CafeBoardDAO boardDao = new CafeBoardDAO();
+        boards = boardDao.selectBoardsByCafeId(post.getCafeId());
+        currentBoard = boardDao.selectBoardById(post.getBoardId());
+        CafeMemberDTO currentMember = currentLoginId == null ? null : memberDao.selectCafeMember(post.getCafeId(), currentLoginId);
+        activeMember = currentMember != null && "ACTIVE".equals(currentMember.getStatus());
+        String currentRole = activeMember ? currentMember.getRole() : null;
+        manager = CafeRoleUtil.canManageCafe(currentRole);
+        isWriter = currentLoginId != null && currentLoginId.equals(post.getWriterId());
+        boolean canEnterCafe = cafe != null && ("PUBLIC".equals(cafe.getVisibility()) || activeMember);
+        canReadPost = canEnterCafe
+                && currentBoard != null
+                && currentBoard.getCafeId() == post.getCafeId()
+                && CafeRoleUtil.canReadBoard(currentBoard.getReadPermission(), activeMember);
+        if (!canEnterCafe) {
+            readBlockedTitle = "비공개 카페입니다.";
+            readBlockedMessage = "카페에 가입해야 글을 볼 수 있습니다.";
+        } else if (!canReadPost) {
+            readBlockedTitle = "게시판 읽기 권한이 없습니다.";
+            readBlockedMessage = "이 게시판은 카페 회원만 볼 수 있습니다. 카페에 가입하면 게시글을 확인할 수 있습니다.";
+        }
+
+        if (canReadPost) {
+            if (!skipViewIncrease) {
+                postDao.increaseViewCount(postId);
+            }
+            displayViewCount = post.getViewCount() + (skipViewIncrease ? 0 : 1);
+            CafePostLikeDAO likeDao = new CafePostLikeDAO();
+            likedPost = currentLoginId != null && likeDao.existsLike(postId, currentLoginId);
+            likeCount = likeDao.countLike(postId);
+            comments = new CafeCommentDAO().selectCommentsByPostId(postId);
+        } else {
+            displayViewCount = post.getViewCount();
+        }
+    }
+%>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= deletedPostFail ? "게시글 삭제 실패" : (canReadPost ? escapeHtml(post.getTitle()) : "권한 안내") %> | 커뮤니티</title>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css">
+</head>
+<body>
+<%@ include file="../../common/header.jsp" %>
+<main class="page-shell community-shell">
+    <% if (deletedPostFail) { %>
+        <section class="cafe-box">
+            <div class="cafe-box-body">
+                <p class="field-message is-error">게시글을 삭제할 수 없습니다.</p>
+                <a class="button btn-main" href="<%= contextPath %>/community/communityHome.jsp">커뮤니티 홈</a>
+            </div>
+        </section>
+    <% } else { %>
+    <%
+        request.setAttribute("cafeIncludeCafe", cafe);
+        request.setAttribute("cafeIncludeCafeId", Integer.valueOf(cafeId));
+        request.setAttribute("cafeIncludeCurrentBoardId", Integer.valueOf(post.getBoardId()));
+    %>
+    <%@ include file="../includes/cafeHero.jsp" %>
+
+    <section class="cafe-layout cafe-detail-layout">
+        <aside class="cafe-left">
+            <%@ include file="../includes/cafeSideProfile.jsp" %>
+
+            <div class="cafe-box">
+                <div class="cafe-section-title">게시판 목록</div>
+                <nav class="cafe-menu-list" aria-label="카페 메뉴">
+                    <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>">카페 홈</a>
+                    <% if (!boards.isEmpty()) { %>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=0">전체글 보기</a>
+                    <% } %>
+                    <% for (CafeBoardDTO board : boards) { %>
+                        <a class="cafe-menu-item <%= board.getBoardId() == post.getBoardId() ? "active" : "" %>" href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= board.getBoardId() %>">
+                            <span><%= escapeHtml(board.getBoardName()) %></span>
+                            <span><%= board.getPostCount() %></span>
+                        </a>
+                    <% } %>
+                </nav>
+            </div>
+            <div class="cafe-box cafe-info-box">
+                <div class="cafe-section-title">카페 통계</div>
+                <div class="cafe-box-body">
+                    <ul class="cafe-stat-list">
+                        <li><span>회원</span><strong><%= cafe.getMemberCount() %></strong></li>
+                        <li><span>게시글</span><strong><%= cafe.getPostCount() %></strong></li>
+                        <li><span>조회</span><strong><%= cafe.getViewCount() %></strong></li>
+                    </ul>
+                </div>
+            </div>
+            <% if (manager) { %>
+                <div class="cafe-box">
+                    <div class="cafe-section-title">관리 메뉴</div>
+                    <nav class="cafe-menu-list">
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/cafe/cafeManage.jsp?cafeId=<%= post.getCafeId() %>">카페 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/board/cafeBoardManage.jsp?cafeId=<%= post.getCafeId() %>">게시판 관리</a>
+                        <a class="cafe-menu-item" href="<%= contextPath %>/community/member/cafeMemberManage.jsp?cafeId=<%= post.getCafeId() %>">회원 관리</a>
+                    </nav>
+                </div>
+            <% } %>
+            <%@ include file="../includes/cafeLeaveAction.jsp" %>
+        </aside>
+
+        <article class="cafe-main">
+            <section class="cafe-box post-read-panel">
+                <% if (request.getParameter("error") != null) { %>
+                    <p class="field-message is-error">요청을 처리하지 못했습니다.</p>
+                <% } else if ("success".equals(request.getParameter("update"))) { %>
+                    <p class="notice-toast">게시글이 수정되었습니다.</p>
+                <% } else if ("success".equals(request.getParameter("commentDelete"))) { %>
+                    <p class="notice-toast">댓글이 삭제되었습니다.</p>
+                <% } else if ("success".equals(request.getParameter("report"))) { %>
+                    <p class="notice-toast">신고가 접수되었습니다.</p>
+                <% } %>
+                <% if (!canReadPost) { %>
+                    <div class="cafe-private-guide">
+                        <strong><%= readBlockedTitle %></strong>
+                        <p><%= readBlockedMessage %></p>
+                    </div>
+                <% } else { %>
+                <div class="post-read-header">
+                    <p class="breadcrumb">
+                        <a href="<%= contextPath %>/community/cafe/cafeDetail.jsp?cafeId=<%= post.getCafeId() %>"><%= escapeHtml(post.getCafeName()) %></a>
+                        <span>&gt;</span>
+                        <a href="<%= contextPath %>/community/post/postList.jsp?cafeId=<%= post.getCafeId() %>&boardId=<%= post.getBoardId() %>"><%= escapeHtml(post.getBoardName()) %></a>
+                    </p>
+                    <% if ("Y".equals(post.getIsNotice())) { %><span class="notice-badge">공지</span><% } %>
+                    <h1><%= escapeHtml(post.getTitle()) %></h1>
+                    <div class="post-meta-line">
+                        <%
+                            String postWriterRoleText = CafeRoleUtil.badgeText(post.getWriterRole());
+                        %>
+                        <span class="post-author-line">
+                            <% if (!postWriterRoleText.isEmpty()) { %>
+                                <span class="writer-role-badge <%= CafeRoleUtil.badgeClass(post.getWriterRole()) %>"><%= postWriterRoleText %></span>
+                            <% } %>
+                            <span><%= escapeHtml(post.getWriterNickname()) %></span>
+                        </span>
+                        <span>조회 <%= displayViewCount %></span>
+                        <span>댓글 <%= comments.size() %></span>
+                        <span>좋아요 <%= likeCount %></span>
+                    </div>
+                    <% if (isWriter || manager) { %>
+                        <div class="post-action-bar">
+                            <a class="button btn-sub btn-small" href="<%= contextPath %>/community/post/postUpdate.jsp?postId=<%= postId %>">수정</a>
+                            <button class="btn-danger btn-small" type="button" onclick="deletePost(<%= postId %>)">삭제</button>
+                        </div>
+                    <% } %>
+                </div>
+                <div class="post-body"><%= escapeHtml(post.getContent()) %></div>
+                <div class="post-action-bar">
+                    <% if (activeMember) { %>
+                        <form action="<%= contextPath %>/community/post/postLikeProcess.jsp" method="post">
+                            <input type="hidden" name="postId" value="<%= postId %>">
+                            <button class="btn-sub btn-small" type="submit"><%= likedPost ? "좋아요 취소" : "좋아요" %></button>
+                        </form>
+                    <% } %>
+                    <% if (loggedIn) { %>
+                        <a class="button btn-text" href="<%= contextPath %>/community/report/communityReport.jsp?targetType=CAFE_POST&targetId=<%= postId %>">신고</a>
+                    <% } %>
+                </div>
+                <% } %>
+            </section>
+
+            <% if (canReadPost) { %>
+            <section class="cafe-box">
+                <div class="cafe-section-title">댓글 <%= comments.size() %>개</div>
+                <div class="cafe-box-body">
+                    <div class="comment-list">
+                        <% if (comments.isEmpty()) { %>
+                            <p class="empty-cell">아직 댓글이 없습니다.</p>
+                        <% } %>
+                        <% for (CafeCommentDTO comment : comments) { %>
+                            <%
+                                String commentWriterRoleText = CafeRoleUtil.badgeText(comment.getWriterRole());
+                            %>
+                            <div class="comment-item">
+                                <div class="comment-avatar"><%= escapeHtml(comment.getWriterNickname()).isEmpty() ? "U" : escapeHtml(comment.getWriterNickname()).substring(0, 1) %></div>
+                                <div class="comment-body">
+                                    <div class="comment-meta">
+                                        <div class="comment-author-line">
+                                            <% if (!commentWriterRoleText.isEmpty()) { %>
+                                                <span class="writer-role-badge <%= CafeRoleUtil.badgeClass(comment.getWriterRole()) %>"><%= commentWriterRoleText %></span>
+                                            <% } %>
+                                            <strong><%= escapeHtml(comment.getWriterNickname()) %></strong>
+                                        </div>
+                                        <span><%= comment.getCreatedAt() == null ? "" : comment.getCreatedAt().format(commentDateFormat) %></span>
+                                    </div>
+                                    <p><%= escapeHtml(comment.getContent()) %></p>
+                                    <div class="comment-actions">
+                                        <% if (loggedIn) { %>
+                                            <a class="button btn-text" href="<%= contextPath %>/community/report/communityReport.jsp?targetType=CAFE_COMMENT&targetId=<%= comment.getCommentId() %>">신고</a>
+                                        <% } %>
+                                        <% if (currentLoginId != null && (currentLoginId.equals(comment.getWriterId()) || manager)) { %>
+                                            <button class="btn-danger btn-small" type="button" onclick="deleteComment(<%= comment.getCommentId() %>)">삭제</button>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                    <% if (activeMember) { %>
+                        <form class="comment-form" action="<%= contextPath %>/community/post/commentWriteProcess.jsp" method="post">
+                            <input type="hidden" name="postId" value="<%= postId %>">
+                            <label class="visually-hidden" for="commentContent">댓글 작성</label>
+                            <textarea id="commentContent" name="content" maxlength="1000" placeholder="댓글을 입력하세요." required></textarea>
+                            <button class="btn-main btn-small" type="submit">등록</button>
+                        </form>
+                    <% } else if (!loggedIn) { %>
+                        <p class="community-meta">댓글은 로그인 후 작성할 수 있습니다.</p>
+                    <% } else { %>
+                        <p class="community-meta">댓글은 카페 가입 후 작성할 수 있습니다.</p>
+                    <% } %>
+                </div>
+            </section>
+            <% } %>
+        </article>
+    </section>
+    <% } %>
+</main>
+<script>
+    function deletePost(postId) {
+        if (confirm("게시글을 삭제하시겠습니까?")) {
+            location.href = "<%= request.getContextPath() %>/community/post/postDeleteProcess.jsp?postId=" + postId;
+        }
+    }
+
+    function deleteComment(commentId) {
+        if (confirm("댓글을 삭제하시겠습니까?")) {
+            location.href = "<%= request.getContextPath() %>/community/post/commentDeleteProcess.jsp?commentId=" + commentId;
+        }
+    }
+</script>
+<%@ include file="../../common/footer.jsp" %>
+</body>
+</html>

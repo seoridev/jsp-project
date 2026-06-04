@@ -8,7 +8,11 @@ CREATE TABLE report (
     status VARCHAR2(20) DEFAULT 'WAITING' NOT NULL,
     created_at TIMESTAMP DEFAULT SYSTIMESTAMP,
     processed_at TIMESTAMP,
+    processed_by VARCHAR2(50),
+    action_type VARCHAR2(30),
+    admin_memo VARCHAR2(1000),
     CONSTRAINT fk_report_reporter FOREIGN KEY (reporter_id) REFERENCES member(login_id),
-    CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT')),
+    CONSTRAINT fk_report_processed_by FOREIGN KEY (processed_by) REFERENCES admin(login_id),
+    CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT', 'CAFE', 'CAFE_POST', 'CAFE_COMMENT')),
     CONSTRAINT chk_report_status CHECK (status IN ('WAITING', 'DONE', 'REJECTED'))
 );

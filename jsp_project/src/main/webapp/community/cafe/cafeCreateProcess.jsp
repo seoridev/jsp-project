@@ -1,0 +1,51 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.carrot.dao.CafeCategoryDAO" %>
+<%@ page import="com.carrot.dao.CafeDAO" %>
+<%@ page import="com.carrot.dto.CafeDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
+<%@ include file="../../common/sessionCheck.jsp" %>
+<%
+    // 카페 생성 요청값 검증 및 기본 게시판 생성
+    request.setCharacterEncoding("UTF-8");
+
+    String currentLoginId = (String) session.getAttribute("loginId");
+    String cafeName = request.getParameter("cafeName") == null ? "" : request.getParameter("cafeName").trim();
+    String description = request.getParameter("description") == null ? "" : request.getParameter("description").trim();
+    String region = request.getParameter("region") == null ? "" : request.getParameter("region").trim();
+    int cafeCategoryId = ParamParser.parseInt(request.getParameter("cafeCategoryId"));
+    String visibility = "PRIVATE".equals(request.getParameter("visibility")) ? "PRIVATE" : "PUBLIC";
+    String joinType = "APPROVAL".equals(request.getParameter("joinType")) ? "APPROVAL" : "DIRECT";
+
+    if (cafeName.isEmpty() || region.isEmpty() || cafeCategoryId <= 0) {
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=empty");
+        return;
+    }
+
+    if (!new CafeCategoryDAO().existsActiveCategory(cafeCategoryId)) {
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=invalid");
+        return;
+    }
+
+    CafeDAO cafeDao = new CafeDAO();
+    if (cafeDao.isDuplicateCafeName(cafeName)) {
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=duplicate");
+        return;
+    }
+
+    int cafeId = cafeDao.createCafeWithOwnerAndDefaultBoards(CafeDTO.builder()
+            .cafeName(cafeName)
+            .description(description)
+            .region(region)
+            .cafeCategoryId(cafeCategoryId)
+            .visibility(visibility)
+            .joinType(joinType)
+            .ownerId(currentLoginId)
+            .build());
+
+    if (cafeId <= 0) {
+        response.sendRedirect(request.getContextPath() + "/community/cafe/cafeCreate.jsp?error=fail");
+        return;
+    }
+
+    response.sendRedirect(request.getContextPath() + "/community/cafe/cafeDetail.jsp?cafeId=" + cafeId + "&created=success");
+%>

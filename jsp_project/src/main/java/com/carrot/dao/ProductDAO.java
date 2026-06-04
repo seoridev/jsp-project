@@ -7,6 +7,36 @@ import java.util.List;
 import com.carrot.dto.ProductDTO;
 
 public class ProductDAO extends BaseDAO{
+	public static class AdminProductFilter {
+		private String searchType;
+		private String keyword;
+		private String status;
+
+		public String getSearchType() {
+			return searchType;
+		}
+
+		public void setSearchType(String searchType) {
+			this.searchType = searchType;
+		}
+
+		public String getKeyword() {
+			return keyword;
+		}
+
+		public void setKeyword(String keyword) {
+			this.keyword = keyword;
+		}
+
+		public String getStatus() {
+			return status;
+		}
+
+		public void setStatus(String status) {
+			this.status = status;
+		}
+	}
+
 	// 상품 등록
 	public int insertProduct(ProductDTO product) {
 		String sql = "INSERT INTO PRODUCT (PRODUCT_ID, SELLER_ID, CATEGORY_ID, TITLE, CONTENT, PRICE, REGION, STATUS, VIEW_COUNT, IS_DELETED, CREATED_AT) "
@@ -175,21 +205,45 @@ public class ProductDAO extends BaseDAO{
 
 	// [추가] 관리자 상품 관리에서 삭제 여부와 상관없이 전체 상품 조회
 	public List<ProductDTO> getAllProductsForAdmin() {
-		List<ProductDTO> list = new ArrayList<>();
-		String sql = "SELECT p.*, c.CATEGORY_NAME FROM PRODUCT p "
-				+ "LEFT JOIN CATEGORY c ON p.CATEGORY_ID = c.CATEGORY_ID "
-				+ "ORDER BY p.CREATED_AT DESC";
+		return selectProductsForAdmin(new AdminProductFilter());
+	}
 
-		try (Connection conn = getConnection();
-				PreparedStatement pstmt = conn.prepareStatement(sql);
-				ResultSet rs = pstmt.executeQuery()) {
-			while (rs.next()) {
-				list.add(mapProductWithCategory(rs));
+	public List<ProductDTO> selectProductsForAdmin(AdminProductFilter filter) {
+		List<ProductDTO> list = new ArrayList<>();
+		List<Object> params = new ArrayList<>();
+		StringBuilder sql = new StringBuilder("SELECT p.*, c.CATEGORY_NAME FROM PRODUCT p "
+				+ "LEFT JOIN CATEGORY c ON p.CATEGORY_ID = c.CATEGORY_ID "
+				+ "WHERE NVL(p.IS_DELETED, 'N') = 'N' ");
+		appendAdminProductWhere(sql, params, filter);
+		sql.append("ORDER BY p.CREATED_AT DESC");
+
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+			bindParams(pstmt, params);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					list.add(mapProductWithCategory(rs));
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return list;
+	}
+
+	public int countProductsForAdmin(AdminProductFilter filter) {
+		List<Object> params = new ArrayList<>();
+		StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM PRODUCT p WHERE NVL(p.IS_DELETED, 'N') = 'N' ");
+		appendAdminProductWhere(sql, params, filter);
+
+		try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+			bindParams(pstmt, params);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				return rs.next() ? rs.getInt(1) : 0;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return 0;
 	}
 
 	// [추가] 관리자 상품 관리 화면에서 상품 상태만 변경
@@ -226,6 +280,57 @@ public class ProductDAO extends BaseDAO{
 				.updatedAt(updatedAt == null ? null : updatedAt.toLocalDateTime())
 				.categoryName(rs.getString("CATEGORY_NAME"))
 				.build();
+	}
+
+	private void appendAdminProductWhere(StringBuilder sql, List<Object> params, AdminProductFilter filter) {
+		String keyword = clean(filter == null ? null : filter.getKeyword());
+		String searchType = clean(filter == null ? null : filter.getSearchType());
+		if (keyword != null) {
+			String value = "%" + keyword.toLowerCase() + "%";
+			if ("seller".equalsIgnoreCase(searchType)) {
+				sql.append("AND LOWER(p.SELLER_ID) LIKE ? ");
+				params.add(value);
+			} else {
+				sql.append("AND LOWER(p.TITLE) LIKE ? ");
+				params.add(value);
+			}
+		}
+
+		String status = cleanUpper(filter == null ? null : filter.getStatus());
+		if (isValidProductStatus(status)) {
+			sql.append("AND p.STATUS = ? ");
+			params.add(status);
+		}
+	}
+
+	private void bindParams(PreparedStatement pstmt, List<?> params) throws Exception {
+		for (int i = 0; i < params.size(); i++) {
+			Object param = params.get(i);
+			if (param instanceof Integer) {
+				pstmt.setInt(i + 1, (Integer) param);
+			} else if (param instanceof Long) {
+				pstmt.setLong(i + 1, (Long) param);
+			} else {
+				pstmt.setString(i + 1, String.valueOf(param));
+			}
+		}
+	}
+
+	private String clean(String value) {
+		if (value == null) {
+			return null;
+		}
+		String trimmed = value.trim();
+		return trimmed.isEmpty() || "ALL".equalsIgnoreCase(trimmed) ? null : trimmed;
+	}
+
+	private String cleanUpper(String value) {
+		String cleaned = clean(value);
+		return cleaned == null ? null : cleaned.toUpperCase();
+	}
+
+	private boolean isValidProductStatus(String status) {
+		return "SALE".equals(status) || "RESERVED".equals(status) || "SOLD".equals(status) || "HIDDEN".equals(status);
 	}
 
 	// ID로 상품 조회
