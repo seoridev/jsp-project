@@ -1,19 +1,11 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.ProductDAO" %>
 <%@ page import="com.carrot.dto.ProductDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
     String targetType = request.getParameter("targetType") == null ? "PRODUCT" : request.getParameter("targetType").trim().toUpperCase();
-    int targetId = parseIntParam(request.getParameter("targetId"));
+    int targetId = ParamParser.parseInt(request.getParameter("targetId"));
     ProductDTO product = null;
     if ("PRODUCT".equals(targetType) && targetId > 0) {
         product = new ProductDAO().selectProductById(targetId);

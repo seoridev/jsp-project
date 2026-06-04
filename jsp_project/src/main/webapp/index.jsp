@@ -3,7 +3,6 @@
 <%@ page import="com.carrot.dto.CategoryDTO" %>
 <%@ page import="java.util.List" %>
 <%
-    // 추가됨: 메인 카테고리 링크를 실제 활성 카테고리 기준으로 출력
     CategoryDAO categoryDao = new CategoryDAO();
     List<CategoryDTO> categoryList = categoryDao.selectAllCategories();
     String[] categoryMarkClasses = {"mark-red", "mark-yellow", "mark-brown", "mark-yellow", "mark-blue", "mark-green", "mark-orange", "mark-yellow"};
@@ -57,7 +56,6 @@
                 <span class="category-mark mark-green">커</span>
                 <strong>동네마켓 커뮤니티</strong>
             </a>
-            <%-- 추가됨: 활성 카테고리를 CATEGORY_ID 링크로 출력 --%>
             <% for (int i = 0; i < categoryList.size(); i++) {
                 CategoryDTO category = categoryList.get(i);
                 String markClass = categoryMarkClasses[i % categoryMarkClasses.length];

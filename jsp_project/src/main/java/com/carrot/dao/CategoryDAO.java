@@ -33,7 +33,6 @@ public class CategoryDAO extends BaseDAO{
 	}
 	
 	// 카테고리 이름 조회
-	// 추가됨: 정상 메서드명으로 카테고리 이름 조회
 	public String selectCategoryName(int id) {
 	    String sql = "SELECT CATEGORY_NAME FROM CATEGORY WHERE IS_ACTIVE = 'Y' AND CATEGORY_ID = ?";
 
@@ -55,7 +54,6 @@ public class CategoryDAO extends BaseDAO{
 	    return null;
 	}
 	
-	// 추가됨: 기존 오타 메서드는 호환용으로 유지하고 새 메서드에 위임
 	public String selectCategorieName(int id) {
 	    return selectCategoryName(id);
 	}
