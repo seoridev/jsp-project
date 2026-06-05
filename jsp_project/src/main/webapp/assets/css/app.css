@@ -569,6 +569,43 @@ button.primary {
     overflow-wrap: anywhere;
 }
 
+.report-group-table {
+    min-width: 980px;
+}
+
+.report-detail-panel {
+    margin-top: 8px;
+}
+
+.report-detail-panel summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid #ded6ca;
+    border-radius: 8px;
+    background: #fffaf3;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.report-detail-panel[open] summary {
+    margin-bottom: 10px;
+}
+
+.report-detail-table {
+    min-width: 720px;
+    border: 1px solid #eee7dc;
+}
+
+.report-detail-table th,
+.report-detail-table td {
+    padding: 10px;
+    font-size: 13px;
+    vertical-align: top;
+}
+
 .admin-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

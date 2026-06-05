@@ -188,26 +188,3 @@ ALTER TABLE cafe_activity_log ADD CONSTRAINT fk_cafe_activity_log_actor FOREIGN 
 
 CREATE SEQUENCE seq_cafe_activity_log START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
 CREATE INDEX idx_cafe_activity_log_cafe ON cafe_activity_log(cafe_id);
-
-CREATE TABLE admin_community_action_log (
-    log_id NUMBER,
-    admin_id VARCHAR2(50 BYTE) NOT NULL,
-    target_type VARCHAR2(30 BYTE) NOT NULL,
-    target_id NUMBER NOT NULL,
-    action_type VARCHAR2(30 BYTE) NOT NULL,
-    admin_memo VARCHAR2(1000 BYTE) NOT NULL,
-    created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP NOT NULL
-);
-
-ALTER TABLE admin_community_action_log ADD CONSTRAINT admin_community_action_log_pk PRIMARY KEY (log_id);
-ALTER TABLE admin_community_action_log ADD CONSTRAINT fk_admin_comm_log_admin FOREIGN KEY (admin_id) REFERENCES admin(login_id);
-ALTER TABLE admin_community_action_log ADD CONSTRAINT chk_admin_comm_log_target CHECK (target_type IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT'));
-ALTER TABLE admin_community_action_log ADD CONSTRAINT chk_admin_comm_log_action CHECK (action_type IN (
-    'HIDE_CAFE', 'RESTORE_CAFE',
-    'HIDE_POST', 'RESTORE_POST',
-    'HIDE_COMMENT', 'RESTORE_COMMENT'
-));
-
-CREATE SEQUENCE seq_admin_community_action_log START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
-CREATE INDEX idx_admin_comm_log_target ON admin_community_action_log(target_type, target_id);
-CREATE INDEX idx_admin_comm_log_admin ON admin_community_action_log(admin_id);

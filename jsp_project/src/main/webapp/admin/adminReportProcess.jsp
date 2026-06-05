@@ -5,7 +5,6 @@
 <%
     request.setCharacterEncoding("UTF-8");
     int reportId = AdminPageUtil.parseInt(request.getParameter("reportId"));
-    int targetId = AdminPageUtil.parseInt(request.getParameter("targetId"));
     String action = request.getParameter("action") == null ? "" : request.getParameter("action").trim();
     String searchType = request.getParameter("searchType");
     String keyword = request.getParameter("keyword");
@@ -14,12 +13,10 @@
 
     ReportDAO reportDAO = new ReportDAO();
     boolean success = false;
-    if (reportId > 0 && "hide".equals(action) && targetId > 0) {
-        success = reportDAO.processReportAndHideProduct(reportId, targetId);
-    } else if (reportId > 0 && "done".equals(action)) {
-        success = reportDAO.processReport(reportId, "DONE");
+    if (reportId > 0 && "hide".equals(action)) {
+        success = reportDAO.processProductReport(reportId, "HIDE_PRODUCT");
     } else if (reportId > 0 && "reject".equals(action)) {
-        success = reportDAO.processReport(reportId, "REJECTED");
+        success = reportDAO.processProductReport(reportId, "REJECT");
     }
 
     response.sendRedirect(request.getContextPath() + "/admin/adminReportList.jsp?" + listQuery + "&result=" + (success ? "success" : "fail"));

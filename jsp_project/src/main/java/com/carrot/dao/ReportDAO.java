@@ -187,15 +187,11 @@ public class ReportDAO extends BaseDAO {
     public List<ReportDTO> getReportList(ProductReportFilter filter) {
         List<ReportDTO> reports = new ArrayList<>();
         List<Object> params = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT r.report_id, r.reporter_id, r.target_type, r.target_id, "
-            + "r.reason, r.detail, r.status, r.created_at, r.processed_at, "
-            + "m.nickname AS reporter_nickname, p.title AS product_title "
-            + "FROM report r "
-            + "LEFT JOIN member m ON r.reporter_id = m.login_id "
-            + "LEFT JOIN product p ON r.target_type = 'PRODUCT' AND r.target_id = p.product_id "
-            + "WHERE r.target_type NOT IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') ");
-        appendProductReportWhere(sql, params, filter);
-        sql.append("ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC");
+        StringBuilder sql = new StringBuilder("SELECT * FROM ("
+            + buildProductReportSelectSql(params, filter)
+            + ") WHERE target_row_num = 1 "
+            + "ORDER BY CASE WHEN status = 'WAITING' THEN 0 ELSE 1 END, "
+            + "target_waiting_report_count DESC, created_at DESC");
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             bindParams(pstmt, params);
@@ -211,12 +207,62 @@ public class ReportDAO extends BaseDAO {
         return reports;
     }
 
+    public List<ReportDTO> getProductReportsByTarget(String targetType, int targetId) {
+        List<ReportDTO> reports = new ArrayList<>();
+        String sql = productReportBaseSelect()
+            + "WHERE r.target_type = ? AND r.target_id = ? "
+            + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, targetType);
+            pstmt.setInt(2, targetId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    reports.add(mapReport(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return reports;
+    }
+
+    private String buildProductReportSelectSql(List<Object> params, ProductReportFilter filter) {
+        StringBuilder sql = new StringBuilder(productReportBaseSelect())
+            .append("WHERE r.target_type = 'PRODUCT' ");
+        appendProductReportWhere(sql, params, filter);
+        sql.append(" ");
+        return sql.toString();
+    }
+
+    private String productReportBaseSelect() {
+        return "SELECT r.report_id, r.reporter_id, r.target_type, r.target_id, "
+            + "r.reason, r.detail, r.status, r.created_at, r.processed_at, "
+            + "m.nickname AS reporter_nickname, p.title AS product_title, "
+            + "p.title AS target_title, DBMS_LOB.SUBSTR(p.content, 300, 1) AS target_content, "
+            + "p.seller_id AS target_writer_id, 0 AS target_post_id, 0 AS target_cafe_id, "
+            + "CAST(NULL AS VARCHAR2(200)) AS target_cafe_name, "
+            + "(SELECT COUNT(*) FROM report rr WHERE rr.target_type = r.target_type "
+            + "AND rr.target_id = r.target_id AND rr.status = 'WAITING') AS target_waiting_report_count, "
+            + "(SELECT COUNT(*) FROM report rr WHERE rr.target_type = r.target_type "
+            + "AND rr.target_id = r.target_id) AS target_total_report_count, "
+            + "(SELECT LISTAGG(rr.reason || '/' || rr.reporter_id, ', ') WITHIN GROUP (ORDER BY rr.created_at DESC) "
+            + "FROM report rr WHERE rr.target_type = r.target_type AND rr.target_id = r.target_id) AS target_recent_report_summary, "
+            + "ROW_NUMBER() OVER (PARTITION BY r.target_type, r.target_id "
+            + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC) AS target_row_num "
+            + "FROM report r "
+            + "LEFT JOIN member m ON r.reporter_id = m.login_id "
+            + "LEFT JOIN product p ON r.target_type = 'PRODUCT' AND r.target_id = p.product_id ";
+    }
+
     public int countProductReports(ProductReportFilter filter) {
         List<Object> params = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM report r "
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM (SELECT r.target_type, r.target_id FROM report r "
             + "LEFT JOIN product p ON r.target_type = 'PRODUCT' AND r.target_id = p.product_id "
-            + "WHERE r.target_type NOT IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') ");
+            + "WHERE r.target_type = 'PRODUCT' ");
         appendProductReportWhere(sql, params, filter);
+        sql.append("GROUP BY r.target_type, r.target_id) grouped_reports");
 
         try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
             bindParams(pstmt, params);
@@ -259,7 +305,7 @@ public class ReportDAO extends BaseDAO {
         try (Connection conn = getConnection()) {
             List<Object> params = new ArrayList<>();
             String sql = "SELECT * FROM ("
-                    + buildCommunityReportSelectSql(conn, filter, params)
+                    + buildCommunityReportSelectSql(filter, params)
                     + ") WHERE target_row_num = 1 "
                     + "ORDER BY CASE WHEN status = 'WAITING' THEN 0 ELSE 1 END, "
                     + "target_waiting_report_count DESC, created_at DESC "
@@ -301,17 +347,50 @@ public class ReportDAO extends BaseDAO {
         return 0;
     }
 
-    private String buildCommunityReportSelectSql(Connection conn, CommunityReportFilter filter, List<Object> params)
-            throws Exception {
-        boolean hasProcessColumns = hasReportModerationColumns(conn);
-        String processColumns = hasProcessColumns
-                ? "r.processed_by, r.action_type, r.admin_memo, "
-                : "CAST(NULL AS VARCHAR2(50)) AS processed_by, CAST(NULL AS VARCHAR2(50)) AS action_type, CAST(NULL AS VARCHAR2(1000)) AS admin_memo, ";
+    public List<ReportDTO> getCommunityReportsByTarget(String targetType, int targetId) {
+        List<ReportDTO> reports = new ArrayList<>();
+        if (!isCommunityTarget(targetType)) {
+            return reports;
+        }
+        String sql = communityReportBaseSelect()
+            + communityReportBaseFromWhere()
+            + "AND r.target_type = ? AND r.target_id = ? "
+            + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC";
 
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, targetType);
+            pstmt.setInt(2, targetId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    reports.add(mapReport(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return reports;
+    }
+
+    private String buildCommunityReportSelectSql(CommunityReportFilter filter, List<Object> params) {
         return "SELECT r.report_id, r.reporter_id, r.target_type, r.target_id, "
             + "r.reason, r.detail, r.status, r.created_at, r.processed_at, "
-            + processColumns
             + "m.nickname AS reporter_nickname, CAST(NULL AS VARCHAR2(200)) AS product_title, "
+            + communityReportTargetColumns()
+            + ", ROW_NUMBER() OVER (PARTITION BY r.target_type, r.target_id "
+            + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC) AS target_row_num "
+            + communityReportFromWhereSql(filter, params);
+    }
+
+    private String communityReportBaseSelect() {
+        return "SELECT r.report_id, r.reporter_id, r.target_type, r.target_id, "
+            + "r.reason, r.detail, r.status, r.created_at, r.processed_at, "
+            + "m.nickname AS reporter_nickname, CAST(NULL AS VARCHAR2(200)) AS product_title, "
+            + communityReportTargetColumns();
+    }
+
+    private String communityReportTargetColumns() {
+        return ""
             + "CASE "
             + "WHEN r.target_type = 'CAFE' THEN rc.cafe_name "
             + "WHEN r.target_type = 'CAFE_POST' THEN rp.title "
@@ -346,23 +425,11 @@ public class ReportDAO extends BaseDAO {
             + "(SELECT COUNT(*) FROM report rr WHERE rr.target_type = r.target_type "
             + "AND rr.target_id = r.target_id) AS target_total_report_count, "
             + "(SELECT LISTAGG(rr.reason || '/' || rr.reporter_id, ', ') WITHIN GROUP (ORDER BY rr.created_at DESC) "
-            + "FROM report rr WHERE rr.target_type = r.target_type AND rr.target_id = r.target_id) AS target_recent_report_summary, "
-            + "ROW_NUMBER() OVER (PARTITION BY r.target_type, r.target_id "
-            + "ORDER BY CASE WHEN r.status = 'WAITING' THEN 0 ELSE 1 END, r.created_at DESC) AS target_row_num "
-            + communityReportFromWhereSql(filter, params);
+            + "FROM report rr WHERE rr.target_type = r.target_type AND rr.target_id = r.target_id) AS target_recent_report_summary ";
     }
 
     private String communityReportFromWhereSql(CommunityReportFilter filter, List<Object> params) {
-        StringBuilder sql = new StringBuilder()
-            .append("FROM report r ")
-            .append("LEFT JOIN member m ON r.reporter_id = m.login_id ")
-            .append("LEFT JOIN cafe rc ON r.target_type = 'CAFE' AND r.target_id = rc.cafe_id ")
-            .append("LEFT JOIN cafe_post rp ON r.target_type = 'CAFE_POST' AND r.target_id = rp.post_id ")
-            .append("LEFT JOIN cafe post_cafe ON rp.cafe_id = post_cafe.cafe_id ")
-            .append("LEFT JOIN cafe_comment rcc ON r.target_type = 'CAFE_COMMENT' AND r.target_id = rcc.comment_id ")
-            .append("LEFT JOIN cafe_post comment_post ON rcc.post_id = comment_post.post_id ")
-            .append("LEFT JOIN cafe comment_cafe ON comment_post.cafe_id = comment_cafe.cafe_id ")
-            .append("WHERE r.target_type IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') ");
+        StringBuilder sql = new StringBuilder(communityReportBaseFromWhere());
 
         String status = clean(filter == null ? null : filter.getStatus());
         if (isReportStatus(status)) {
@@ -444,6 +511,18 @@ public class ReportDAO extends BaseDAO {
         return sql.toString();
     }
 
+    private String communityReportBaseFromWhere() {
+        return "FROM report r "
+            + "LEFT JOIN member m ON r.reporter_id = m.login_id "
+            + "LEFT JOIN cafe rc ON r.target_type = 'CAFE' AND r.target_id = rc.cafe_id "
+            + "LEFT JOIN cafe_post rp ON r.target_type = 'CAFE_POST' AND r.target_id = rp.post_id "
+            + "LEFT JOIN cafe post_cafe ON rp.cafe_id = post_cafe.cafe_id "
+            + "LEFT JOIN cafe_comment rcc ON r.target_type = 'CAFE_COMMENT' AND r.target_id = rcc.comment_id "
+            + "LEFT JOIN cafe_post comment_post ON rcc.post_id = comment_post.post_id "
+            + "LEFT JOIN cafe comment_cafe ON comment_post.cafe_id = comment_cafe.cafe_id "
+            + "WHERE r.target_type IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT') ";
+    }
+
     public int countCommunityWaitingReports() {
         String sql = "SELECT COUNT(*) FROM report "
             + "WHERE status = 'WAITING' AND target_type IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT')";
@@ -461,9 +540,8 @@ public class ReportDAO extends BaseDAO {
         return 0;
     }
 
-    public boolean processCommunityReport(int reportId, String actionType, String adminId, String adminMemo) {
-        if (!"DONE".equals(actionType) && !"REJECT".equals(actionType)
-                && !"HIDE_CAFE".equals(actionType) && !"HIDE_POST".equals(actionType)
+    public boolean processCommunityReport(int reportId, String actionType) {
+        if (!"REJECT".equals(actionType) && !"HIDE_CAFE".equals(actionType) && !"HIDE_POST".equals(actionType)
                 && !"HIDE_COMMENT".equals(actionType)) {
             return false;
         }
@@ -472,11 +550,6 @@ public class ReportDAO extends BaseDAO {
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
-            if (!hasReportModerationColumns(conn)) {
-                conn.rollback();
-                return false;
-            }
-
             ReportTarget target = selectWaitingReportTarget(conn, reportId);
             if (target == null || !isCommunityTarget(target.targetType)) {
                 conn.rollback();
@@ -493,7 +566,7 @@ public class ReportDAO extends BaseDAO {
                 actionSuccess = "CAFE_COMMENT".equals(target.targetType) && hideComment(conn, target.targetId);
             }
 
-            if (!actionSuccess || !updateRelatedReportProcess(conn, target, status, actionType, adminId, adminMemo)) {
+            if (!actionSuccess || !updateRelatedReportProcess(conn, target, status)) {
                 conn.rollback();
                 return false;
             }
@@ -510,55 +583,38 @@ public class ReportDAO extends BaseDAO {
         return false;
     }
 
-    public boolean processReport(int reportId, String status) {
-        if (!"DONE".equals(status) && !"REJECTED".equals(status)) {
+    public boolean processProductReport(int reportId, String actionType) {
+        if (!"HIDE_PRODUCT".equals(actionType) && !"REJECT".equals(actionType)) {
             return false;
         }
-        String sql = "UPDATE report SET status = ?, processed_at = SYSTIMESTAMP "
-            + "WHERE report_id = ? AND status = 'WAITING'";
 
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, status);
-            pstmt.setInt(2, reportId);
-            return pstmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-    public boolean processReportAndHideProduct(int reportId, int productId) {
-        String hideSql = "UPDATE product SET status = 'HIDDEN', updated_at = SYSTIMESTAMP WHERE product_id = ?";
-        String reportSql = "UPDATE report SET status = 'DONE', processed_at = SYSTIMESTAMP "
-            + "WHERE report_id = ? AND target_type = 'PRODUCT' AND target_id = ? AND status = 'WAITING'";
-
-        try (Connection conn = getConnection()) {
+        Connection conn = null;
+        try {
+            conn = getConnection();
             conn.setAutoCommit(false);
-
-            try (PreparedStatement hideStmt = conn.prepareStatement(hideSql);
-                 PreparedStatement reportStmt = conn.prepareStatement(reportSql)) {
-                hideStmt.setInt(1, productId);
-                int hidden = hideStmt.executeUpdate();
-
-                reportStmt.setInt(1, reportId);
-                reportStmt.setInt(2, productId);
-                int processed = reportStmt.executeUpdate();
-
-                if (hidden > 0 && processed > 0) {
-                    conn.commit();
-                    return true;
-                }
+            ReportTarget target = selectWaitingReportTarget(conn, reportId);
+            if (target == null || !"PRODUCT".equals(target.targetType)) {
                 conn.rollback();
-            } catch (Exception e) {
-                conn.rollback();
-                throw e;
-            } finally {
-                conn.setAutoCommit(true);
+                return false;
             }
+
+            String status = "REJECT".equals(actionType) ? "REJECTED" : "DONE";
+            boolean actionSuccess = true;
+            if ("HIDE_PRODUCT".equals(actionType)) {
+                actionSuccess = hideProduct(conn, target.targetId);
+            }
+            if (!actionSuccess || !updateRelatedReportProcess(conn, target, status)) {
+                conn.rollback();
+                return false;
+            }
+
+            conn.commit();
+            return true;
         } catch (Exception e) {
+            rollbackQuietly(conn);
             e.printStackTrace();
+        } finally {
+            closeQuietly(conn);
         }
 
         return false;
@@ -579,21 +635,6 @@ public class ReportDAO extends BaseDAO {
         }
 
         return 0;
-    }
-
-    public boolean hasReportModerationColumns() {
-        try (Connection conn = getConnection()) {
-            return hasReportModerationColumns(conn);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private boolean hasReportModerationColumns(Connection conn) throws Exception {
-        return hasColumn(conn, "REPORT", "PROCESSED_BY")
-                && hasColumn(conn, "REPORT", "ACTION_TYPE")
-                && hasColumn(conn, "REPORT", "ADMIN_MEMO");
     }
 
     private void bindParams(PreparedStatement pstmt, List<?> params) throws Exception {
@@ -634,6 +675,14 @@ public class ReportDAO extends BaseDAO {
 
     private boolean isCommunityTarget(String targetType) {
         return "CAFE".equals(targetType) || "CAFE_POST".equals(targetType) || "CAFE_COMMENT".equals(targetType);
+    }
+
+    private boolean hideProduct(Connection conn, int productId) throws Exception {
+        String sql = "UPDATE product SET status = 'HIDDEN', updated_at = SYSTIMESTAMP WHERE product_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, productId);
+            return pstmt.executeUpdate() > 0;
+        }
     }
 
     private boolean hideCafe(Connection conn, int cafeId) throws Exception {
@@ -709,36 +758,15 @@ public class ReportDAO extends BaseDAO {
         return true;
     }
 
-    private boolean updateRelatedReportProcess(Connection conn, ReportTarget target, String status, String actionType,
-            String adminId, String adminMemo) throws Exception {
-        String memo = adminMemo == null ? "" : adminMemo.trim();
-        if (memo.length() > 1000) {
-            memo = memo.substring(0, 1000);
-        }
-
-        String sql = "UPDATE report SET status = ?, processed_at = SYSTIMESTAMP, "
-                + "processed_by = ?, action_type = ?, admin_memo = ? "
+    private boolean updateRelatedReportProcess(Connection conn, ReportTarget target, String status) throws Exception {
+        String sql = "UPDATE report SET status = ?, processed_at = SYSTIMESTAMP "
                 + "WHERE target_type = ? AND target_id = ? AND status = 'WAITING'";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, status);
-            pstmt.setString(2, adminId);
-            pstmt.setString(3, actionType);
-            pstmt.setString(4, memo);
-            pstmt.setString(5, target.targetType);
-            pstmt.setInt(6, target.targetId);
+            pstmt.setString(2, target.targetType);
+            pstmt.setInt(3, target.targetId);
             return pstmt.executeUpdate() > 0;
-        }
-    }
-
-    private boolean hasColumn(Connection conn, String tableName, String columnName) throws Exception {
-        String sql = "SELECT COUNT(*) FROM user_tab_columns WHERE table_name = ? AND column_name = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, tableName);
-            pstmt.setString(2, columnName);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next() && rs.getInt(1) > 0;
-            }
         }
     }
 
@@ -756,9 +784,6 @@ public class ReportDAO extends BaseDAO {
             .status(rs.getString("status"))
             .createdAt(createdAt)
             .processedAt(processedAt)
-            .processedBy(getOptionalString(rs, "processed_by"))
-            .actionType(getOptionalString(rs, "action_type"))
-            .adminMemo(getOptionalString(rs, "admin_memo"))
             .reporterNickname(rs.getString("reporter_nickname"))
             .productTitle(getOptionalString(rs, "product_title"))
             .targetTitle(getOptionalString(rs, "target_title"))
