@@ -37,16 +37,6 @@
             <button type="submit" aria-label="검색">→</button>
         </form>
 
-        <div class="home-keyword-row" aria-label="인기 검색어">
-            <strong>인기 검색어</strong>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=에어컨">에어컨</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=노트북">노트북</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=원룸">원룸</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=자전거">자전거</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=책상">책상</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=의자">의자</a>
-        </div>
-
         <nav class="home-category-select" aria-label="카테고리 선택">
             <a href="<%= contextPath %>/product/productList.jsp">
                 <span class="category-mark mark-orange">중</span>
