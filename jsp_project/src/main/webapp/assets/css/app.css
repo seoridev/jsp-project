@@ -1073,7 +1073,7 @@ button.primary {
     align-items: center;
     width: min(760px, 100%);
     min-height: 50px;
-    margin: 0 auto;
+    margin: 0 auto 88px;
     padding: 0 11px 0 20px;
     border: 1px solid #ded6ca;
     border-radius: 999px;
@@ -1218,6 +1218,7 @@ button.primary {
 
     .home-main-search {
         grid-template-columns: 96px 1px minmax(0, 1fr) 34px;
+        margin-bottom: 68px;
         padding-left: 15px;
     }
 
