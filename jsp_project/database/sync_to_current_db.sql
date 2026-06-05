@@ -762,6 +762,60 @@ USING (
            TO_TIMESTAMP('2026-05-16 20:39:29.390000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at,
            TO_TIMESTAMP('2026-05-16 20:42:56.173000', 'YYYY-MM-DD HH24:MI:SS.FF6') processed_at
     FROM dual
+    UNION ALL
+    SELECT 2, 'user01', 'PRODUCT', 48,
+           '허위 매물', '사진과 실제 상태가 다르고 가격 안내도 계속 바뀝니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-18 09:12:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 3, 'user02', 'PRODUCT', 47,
+           '부적절한 상품', '정품 여부가 불확실하고 보증서 사진을 보내지 않습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-18 10:25:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 4, 'user03', 'PRODUCT', 51,
+           '거래 비매너', '약속 시간을 여러 번 바꾸고 채팅에서 무례한 표현을 사용했습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-18 11:40:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 5, 'aaa123', 'PRODUCT', 50,
+           '기타', '이미 숨김 처리된 상품이지만 같은 내용으로 다시 올라올 가능성이 있어 확인이 필요합니다.', 'DONE',
+           TO_TIMESTAMP('2026-05-18 13:05:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-18 13:22:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 6, 'asdasd', 'PRODUCT', 52,
+           '허위 매물', '상품 설명에는 새 제품처럼 적혀 있지만 사용감이 크다는 제보가 있었습니다.', 'REJECTED',
+           TO_TIMESTAMP('2026-05-18 14:30:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-18 14:48:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 7, 'user01', 'PRODUCT', 49,
+           '거래 비매너', '예약 후 연락이 끊겼다는 신고입니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-19 08:45:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 8, 'user02', 'PRODUCT', 51,
+           '부적절한 상품', '상품 설명에 위험한 사용 방법이 포함되어 있어 검토가 필요합니다.', 'DONE',
+           TO_TIMESTAMP('2026-05-19 12:10:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-19 12:35:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 9, 'user03', 'PRODUCT', 48,
+           '기타', '동일 상품으로 의심되는 게시글이 반복해서 올라옵니다.', 'REJECTED',
+           TO_TIMESTAMP('2026-05-20 15:18:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-20 15:44:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 10, 'aaa123', 'PRODUCT', 47,
+           '허위 매물', '직거래 장소 확정 후 추가 입금을 요구했습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-21 17:02:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
 ) s
 ON (r.report_id = s.report_id)
 WHEN MATCHED THEN UPDATE SET
@@ -872,7 +926,7 @@ COMMIT;
 -- 정말 내 DB와 같은 행만 남기려면 아래 주석을 해제해서 실행하세요.
 -- 주의: 상대방의 추가 테스트 데이터가 삭제됩니다.
 --------------------------------------------------------
--- DELETE FROM report WHERE report_id NOT IN (1);
+-- DELETE FROM report WHERE report_id NOT BETWEEN 1 AND 10;
 -- DELETE FROM product_image WHERE image_id NOT IN (1, 2);
 -- DELETE FROM product WHERE product_id NOT IN (47, 48, 49, 50, 51, 52);
 -- DELETE FROM member WHERE login_id NOT IN ('aaa', 'aaa123', 'asdasd', 'user01', 'user02', 'user03');

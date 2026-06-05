@@ -553,95 +553,8 @@ button.primary {
     color: #1f1b16;
 }
 
-.community-report-shell {
-    width: min(1280px, calc(100% - 32px));
-}
-
-.community-report-filter {
-    grid-template-columns: 116px minmax(440px, 1fr) 96px 112px 140px 132px;
-    align-items: end;
-    gap: 12px;
-    margin: 0 0 16px;
-    padding: 14px;
-    border: 1px solid #e5ded3;
-    border-radius: 8px;
-    background: #fff;
-}
-
-.community-report-filter .field {
-    grid-column: auto;
-    gap: 6px;
-    min-width: 0;
-}
-
-.community-report-filter .field:nth-of-type(2) {
-    grid-column: auto;
-}
-
-.community-report-filter .field input,
-.community-report-filter .field select {
-    min-height: 40px;
-    padding: 0 10px;
-    font-size: 14px;
-}
-
-.community-report-filter .form-actions {
-    display: flex;
-    grid-column: auto;
-    gap: 8px;
-    margin: 0;
-}
-
-.community-report-filter .form-actions .button,
-.community-report-filter .form-actions button {
-    flex: 1 0 0;
-    min-width: 70px;
-    min-height: 40px;
-    white-space: nowrap;
-}
-
-.community-report-shell .admin-table {
-    min-width: 1180px;
-    table-layout: fixed;
-}
-
-.community-report-shell .admin-table th,
-.community-report-shell .admin-table td {
-    word-break: keep-all;
-    overflow-wrap: normal;
-}
-
-.community-report-shell .admin-table th:nth-child(3),
-.community-report-shell .admin-table td:nth-child(3) {
-    width: 360px;
-}
-
-.community-report-shell .admin-table th:nth-child(1),
-.community-report-shell .admin-table td:nth-child(1) {
-    width: 150px;
-}
-
-.community-report-shell .admin-table th:nth-child(2),
-.community-report-shell .admin-table td:nth-child(2) {
-    width: 300px;
-}
-
-.community-report-shell .admin-table th:nth-child(4),
-.community-report-shell .admin-table td:nth-child(4) {
-    width: 150px;
-}
-
-.community-report-shell .admin-table th:nth-child(5),
-.community-report-shell .admin-table td:nth-child(5) {
-    width: 180px;
-}
-
-.community-report-shell .admin-table p {
-    margin: 6px 0 0;
-}
-
-.community-report-shell .admin-table p:first-child {
-    margin-top: 0;
+.admin-report-filter {
+    grid-template-columns: 150px minmax(220px, 1fr) 120px 120px 140px auto;
 }
 
 .report-info-cell,
@@ -654,31 +567,6 @@ button.primary {
     line-height: 1.55;
     word-break: normal;
     overflow-wrap: anywhere;
-}
-
-.community-report-shell .admin-table .inline-form {
-    display: grid;
-    grid-template-columns: 160px;
-    gap: 6px;
-    align-items: center;
-}
-
-.community-report-shell .admin-table .inline-form textarea {
-    width: 160px;
-    min-height: 40px;
-    resize: vertical;
-}
-
-.report-action-buttons {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 5px;
-}
-
-.report-action-buttons button {
-    min-height: 32px;
-    padding: 0 8px;
-    white-space: nowrap;
 }
 
 .admin-summary {
@@ -1045,7 +933,6 @@ button.primary {
     .admin-summary,
     .admin-menu,
     .admin-filter,
-    .community-report-filter,
     .admin-community-tabs,
     .detail-grid {
         grid-template-columns: 1fr;
@@ -1067,12 +954,6 @@ button.primary {
 
     .admin-community-tabs a:last-child {
         border-bottom: 0;
-    }
-
-    .community-report-filter .field,
-    .community-report-filter .field:nth-of-type(2),
-    .community-report-filter .form-actions {
-        grid-column: auto;
     }
 
     .admin-list-meta,

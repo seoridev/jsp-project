@@ -93,11 +93,8 @@
                 : ("hideCafe".equals(action) ? "HIDE_CAFE"
                 : ("hidePost".equals(action) ? "HIDE_POST" : "HIDE_COMMENT")));
         String adminId = (String) session.getAttribute("adminLoginId");
-        String adminMemo = request.getParameter("adminMemo");
         boolean success = moderationColumnsReady
-                && adminMemo != null
-                && !adminMemo.trim().isEmpty()
-                && reportDao.processCommunityReport(reportId, actionType, adminId, adminMemo);
+                && reportDao.processCommunityReport(reportId, actionType, adminId, "");
         response.sendRedirect(request.getContextPath() + "/admin/communityReportManage.jsp?result=" + (success ? "success" : "fail"));
         return;
     }
@@ -153,7 +150,7 @@
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
-<main class="admin-shell community-report-shell">
+<main class="admin-shell">
     <div class="admin-heading">
         <div>
             <p class="eyebrow">관리자</p>
@@ -173,7 +170,7 @@
         <p class="notice-toast is-error">신고 처리에 실패했습니다.</p>
     <% } %>
 
-    <form class="form-grid community-report-filter" action="<%= contextPath %>/admin/communityReportManage.jsp" method="get">
+    <form class="admin-filter admin-report-filter" action="<%= contextPath %>/admin/communityReportManage.jsp" method="get">
         <input type="hidden" name="page" value="1">
         <div class="field">
             <label for="searchType">검색 기준</label>
@@ -223,7 +220,10 @@
         </div>
     </form>
 
-    <p class="community-meta">총 <%= totalCount %>개 대상 / <%= pageNo %>페이지</p>
+    <div class="admin-list-meta">
+        <span>총 <strong><%= totalCount %></strong>개 대상</span>
+        <span><%= pageNo %> / <%= totalPages %> 페이지</span>
+    </div>
     <div class="admin-table-wrap">
         <table class="admin-table">
             <thead>
@@ -288,22 +288,21 @@
                         </td>
                         <td class="report-process-cell">
                             <% if (waiting) { %>
-                                <form class="inline-form report-action-form" action="<%= contextPath %>/admin/communityReportManage.jsp" method="post" data-waiting-count="<%= waitingCount %>"
-                                      onsubmit="return confirmReportAction(this, event);">
+                                <form class="inline-form admin-status-form report-action-form" action="<%= contextPath %>/admin/communityReportManage.jsp" method="post" data-waiting-count="<%= waitingCount %>"
+                                      onsubmit="return confirmReportAction(this);">
                                     <input type="hidden" name="reportId" value="<%= report.getReportId() %>">
-                                    <input type="hidden" name="action" value="">
-                                    <textarea name="adminMemo" rows="2" maxlength="1000" placeholder="처리 메모" required <%= moderationColumnsReady ? "" : "disabled" %>></textarea>
-                                    <div class="report-action-buttons">
-                                        <button class="btn-sub" type="button" data-action="done" <%= moderationColumnsReady ? "" : "disabled" %>>신고만 완료</button>
+                                    <select name="action" aria-label="신고 처리" <%= moderationColumnsReady ? "" : "disabled" %>>
+                                        <option value="done">신고만 완료</option>
                                         <% if ("CAFE".equals(report.getTargetType())) { %>
-                                            <button class="btn-danger" type="button" data-action="hideCafe" <%= moderationColumnsReady ? "" : "disabled" %>>카페 숨김</button>
+                                            <option value="hideCafe">카페 숨김</option>
                                         <% } else if ("CAFE_POST".equals(report.getTargetType())) { %>
-                                            <button class="btn-danger" type="button" data-action="hidePost" <%= moderationColumnsReady ? "" : "disabled" %>>게시글 숨김</button>
+                                            <option value="hidePost">게시글 숨김</option>
                                         <% } else if ("CAFE_COMMENT".equals(report.getTargetType())) { %>
-                                            <button class="btn-danger" type="button" data-action="hideComment" <%= moderationColumnsReady ? "" : "disabled" %>>댓글 숨김</button>
+                                            <option value="hideComment">댓글 숨김</option>
                                         <% } %>
-                                        <button class="btn-sub" type="button" data-action="reject" <%= moderationColumnsReady ? "" : "disabled" %>>반려</button>
-                                    </div>
+                                        <option value="reject">반려</option>
+                                    </select>
+                                    <button type="submit" <%= moderationColumnsReady ? "" : "disabled" %>>변경</button>
                                 </form>
                             <% } else { %>
                                 <span class="muted-text">처리됨</span>
@@ -331,83 +330,12 @@
     </div>
 </main>
 <script>
-    function showNoticeToast(message, error) {
-        var current = document.querySelector(".notice-toast.is-script-toast");
-        if (current) {
-            current.remove();
-        }
-        var toast = document.createElement("p");
-        toast.className = "notice-toast is-script-toast" + (error ? " is-error" : "");
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        window.setTimeout(function() {
-            toast.remove();
-        }, 4200);
-    }
-
-    function submitReportAction(form, action, actionName) {
-        var memo = form.querySelector("textarea[name='adminMemo']");
-        if (!memo || memo.value.trim().length === 0) {
-            showNoticeToast("처리 메모를 입력해 주세요.", true);
-            if (memo) {
-                memo.focus();
-            }
-            return;
-        }
-        var waitingCount = form.getAttribute("data-waiting-count") || "1";
-        if (!confirm(actionName + " 처리할까요?\n같은 대상의 대기 신고 " + waitingCount + "건이 함께 처리됩니다.")) {
-            return;
-        }
-
-        form.querySelector("input[name='action']").value = action;
-        form.submit();
-    }
-
-    function confirmReportAction(form, event) {
-        var actionInput = form.querySelector("input[name='action']");
-        if (!actionInput || actionInput.value.length === 0) {
-            if (event) {
-                event.preventDefault();
-            }
-            return false;
-        }
-        var memo = form.querySelector("textarea[name='adminMemo']");
-        if (!memo || memo.value.trim().length === 0) {
-            showNoticeToast("처리 메모를 입력해 주세요.", true);
-            if (memo) {
-                memo.focus();
-            }
-            return false;
-        }
-        var button = event && event.submitter ? event.submitter : null;
-        var actionName = button ? button.textContent.trim() : "처리";
+    function confirmReportAction(form) {
+        var actionSelect = form.querySelector("select[name='action']");
+        var actionName = actionSelect ? actionSelect.options[actionSelect.selectedIndex].text : "처리";
         var waitingCount = form.getAttribute("data-waiting-count") || "1";
         return confirm(actionName + " 처리할까요?\n같은 대상의 대기 신고 " + waitingCount + "건이 함께 처리됩니다.");
     }
-
-    document.querySelectorAll(".report-action-form").forEach(function(form) {
-        form.querySelectorAll("button[data-action]").forEach(function(button) {
-            button.addEventListener("click", function() {
-                if (button.disabled) {
-                    return;
-                }
-                submitReportAction(form, button.getAttribute("data-action"), button.textContent.trim());
-            });
-        });
-    });
-
-    document.querySelectorAll(".report-action-form textarea").forEach(function(memo) {
-        memo.addEventListener("keydown", function(event) {
-            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-                var form = memo.closest("form");
-                var button = form ? form.querySelector("button[data-action='done']") : null;
-                if (!form || !button || button.disabled) {
-                    return;
-                }
-                submitReportAction(form, "done", button.textContent.trim());
-            }
-        });
-    });
 </script>
 <%@ include file="../common/footer.jsp" %>
 </body>
