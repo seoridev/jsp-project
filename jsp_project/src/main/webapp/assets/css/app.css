@@ -727,6 +727,10 @@ button.primary {
     white-space: nowrap;
 }
 
+.admin-filter.community-report-filter {
+    grid-template-columns: 150px minmax(220px, 1fr) 120px 120px 140px auto;
+}
+
 /* 회원 목록 표는 모바일에서도 깨지지 않게 가로 스크롤을 허용 */
 .admin-list-meta {
     display: flex;
@@ -1003,6 +1007,10 @@ button.primary {
     .admin-filter,
     .admin-community-tabs,
     .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-filter.community-report-filter {
         grid-template-columns: 1fr;
     }
 

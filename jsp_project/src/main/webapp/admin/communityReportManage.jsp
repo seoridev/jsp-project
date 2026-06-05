@@ -153,7 +153,7 @@
         <p class="notice-toast is-error">신고 처리에 실패했습니다.</p>
     <% } %>
 
-    <form class="admin-filter admin-report-filter" action="<%= contextPath %>/admin/communityReportManage.jsp" method="get">
+    <form class="admin-filter admin-report-filter community-report-filter" action="<%= contextPath %>/admin/communityReportManage.jsp" method="get">
         <input type="hidden" name="page" value="1">
         <div class="field">
             <label for="searchType">검색 기준</label>
