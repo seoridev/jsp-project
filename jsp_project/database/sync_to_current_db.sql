@@ -812,6 +812,66 @@ USING (
            TO_TIMESTAMP('2026-05-21 17:02:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
            NULL
     FROM dual
+    UNION ALL
+    SELECT 11, 'user02', 'CAFE', 1,
+           'SPAM', '카페 소개와 맞지 않는 홍보성 글이 반복해서 보입니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-22 09:10:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 12, 'user03', 'CAFE', 1,
+           'ABUSE', '카페 내 일부 안내 문구가 이용자를 비방하는 것처럼 보입니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-22 10:20:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 13, 'aaa123', 'CAFE_POST', 1,
+           'FRAUD', '나눔 글인데 실제로는 다른 거래를 유도하는 내용이 있습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-22 11:30:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 14, 'user01', 'CAFE_POST', 1,
+           'ETC', '같은 내용이 여러 카페에 반복해서 올라온 것으로 보입니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-22 12:40:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 15, 'user02', 'CAFE_COMMENT', 1,
+           'ABUSE', '댓글에 불쾌한 표현이 포함되어 있습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-22 13:50:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 16, 'user03', 'CAFE_COMMENT', 1,
+           'PRIVACY', '댓글에 개인 연락처로 보이는 정보가 포함되어 있습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-22 14:20:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 17, 'aaa123', 'CAFE_POST', 6,
+           'ETC', '거래 팁 글의 일부 내용이 오해를 줄 수 있어 신고되었습니다.', 'REJECTED',
+           TO_TIMESTAMP('2026-05-22 15:05:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-22 15:40:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 18, 'user01', 'CAFE', 3,
+           'SPAM', '중고거래 카페에 외부 링크 홍보가 많다는 신고입니다.', 'DONE',
+           TO_TIMESTAMP('2026-05-22 16:15:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-22 16:45:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 19, 'user02', 'CAFE_POST', 8,
+           'ABUSE', '초보자 질문 글에 조롱성 표현이 포함되어 있다는 신고입니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-23 09:25:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 20, 'aaa123', 'CAFE_COMMENT', 3,
+           'ETC', '댓글 내용이 게시글 주제와 맞지 않아 확인 요청이 들어왔습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-23 10:35:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
 ) s
 ON (r.report_id = s.report_id)
 WHEN MATCHED THEN UPDATE SET
@@ -872,7 +932,7 @@ COMMIT;
 -- 정말 내 DB와 같은 행만 남기려면 아래 주석을 해제해서 실행하세요.
 -- 주의: 상대방의 추가 테스트 데이터가 삭제됩니다.
 --------------------------------------------------------
--- DELETE FROM report WHERE report_id NOT BETWEEN 1 AND 10;
+-- DELETE FROM report WHERE report_id NOT BETWEEN 1 AND 20;
 -- DELETE FROM product_image WHERE image_id NOT IN (1, 2);
 -- DELETE FROM product WHERE product_id NOT IN (47, 48, 49, 50, 51, 52);
 -- DELETE FROM member WHERE login_id NOT IN ('aaa', 'aaa123', 'asdasd', 'user01', 'user02', 'user03');
