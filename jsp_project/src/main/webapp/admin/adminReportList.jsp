@@ -35,7 +35,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>상품 신고 관리 | 동네마켓</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-report-3">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-report-4">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
@@ -106,6 +106,7 @@
                         boolean waiting = "WAITING".equalsIgnoreCase(report.getStatus());
                         int waitingCount = Math.max(report.getTargetWaitingReportCount(), waiting ? 1 : 0);
                         List<ReportDTO> detailReports = reportDao.getProductReportsByTarget(report.getTargetType(), report.getTargetId());
+                        String dialogId = "product-report-dialog-" + report.getReportId();
                 %>
                     <tr>
                         <td class="report-target-cell">
@@ -119,51 +120,65 @@
                         <td class="report-summary-cell">
                             <p><strong>대기 <%= waitingCount %>건 / 누적 <%= report.getTargetTotalReportCount() %>건</strong></p>
                             <p><span class="status-badge is-stopped"><%= escapeHtml(report.getReason()) %></span></p>
-                            <details class="report-detail-panel">
-                                <summary>상세 보기</summary>
-                                <p class="community-meta">상품 내용: <%= escapeHtml(report.getTargetContent() == null ? "-" : report.getTargetContent()) %></p>
-                                <table class="admin-table report-detail-table">
-                                    <thead>
-                                        <tr>
-                                            <th>신고자</th>
-                                            <th>사유</th>
-                                            <th>내용</th>
-                                            <th>신고일</th>
-                                            <th>상태</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% for (ReportDTO detail : detailReports) { %>
-                                            <tr>
-                                                <td><%= escapeHtml(detail.getReporterNickname() == null ? detail.getReporterId() : detail.getReporterNickname()) %></td>
-                                                <td><%= escapeHtml(detail.getReason()) %></td>
-                                                <td><%= escapeHtml(detail.getDetail()) %></td>
-                                                <td><%= detail.getCreatedAt() == null ? "-" : dateFormat.format(detail.getCreatedAt()) %></td>
-                                                <td><span class="status-badge<%= AdminPageUtil.reportStatusClass(detail.getStatus()) %>"><%= AdminPageUtil.reportStatusText(detail.getStatus()) %></span></td>
-                                            </tr>
-                                        <% } %>
-                                    </tbody>
-                                </table>
-                            </details>
                         </td>
                         <td><%= report.getCreatedAt() == null ? "-" : dateFormat.format(report.getCreatedAt()) %></td>
                         <td><span class="status-badge<%= AdminPageUtil.reportStatusClass(report.getStatus()) %>"><%= AdminPageUtil.reportStatusText(report.getStatus()) %></span></td>
-                        <td>
-                            <% if (waiting) { %>
-                                <form class="inline-form admin-status-form report-action-form" action="<%= contextPath %>/admin/adminReportProcess.jsp" method="post" data-waiting-count="<%= waitingCount %>" onsubmit="return confirmReportAction(this);">
-                                    <input type="hidden" name="reportId" value="<%= report.getReportId() %>">
-                                    <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
-                                    <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
-                                    <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
-                                    <select name="action" aria-label="신고 처리">
-                                        <option value="hide">숨김</option>
-                                        <option value="reject">반려</option>
-                                    </select>
-                                    <button type="submit">처리</button>
-                                </form>
-                            <% } else { %>
-                                <span class="muted-text">처리됨</span>
-                            <% } %>
+                        <td class="report-process-cell">
+                            <button type="button" data-open-report-dialog="<%= dialogId %>">상세 보기</button>
+                            <dialog class="report-modal" id="<%= dialogId %>">
+                                <div class="report-modal-header">
+                                    <div>
+                                        <p class="eyebrow">상품 신고 상세</p>
+                                        <h2><%= escapeHtml(report.getProductTitle() == null ? "상품 #" + report.getTargetId() : report.getProductTitle()) %></h2>
+                                        <p class="community-meta">판매자: <%= escapeHtml(report.getTargetWriterId() == null ? "-" : report.getTargetWriterId()) %></p>
+                                    </div>
+                                    <button type="button" class="report-modal-close" data-close-report-dialog>닫기</button>
+                                </div>
+                                <div class="report-modal-body">
+                                    <p class="community-meta">상품 내용: <%= escapeHtml(report.getTargetContent() == null ? "-" : report.getTargetContent()) %></p>
+                                    <div class="report-modal-scroll">
+                                        <table class="admin-table report-detail-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>신고자</th>
+                                                    <th>사유</th>
+                                                    <th>내용</th>
+                                                    <th>신고일</th>
+                                                    <th>상태</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% for (ReportDTO detail : detailReports) { %>
+                                                    <tr>
+                                                        <td><%= escapeHtml(detail.getReporterNickname() == null ? detail.getReporterId() : detail.getReporterNickname()) %></td>
+                                                        <td><%= escapeHtml(detail.getReason()) %></td>
+                                                        <td><%= escapeHtml(detail.getDetail()) %></td>
+                                                        <td><%= detail.getCreatedAt() == null ? "-" : dateFormat.format(detail.getCreatedAt()) %></td>
+                                                        <td><span class="status-badge<%= AdminPageUtil.reportStatusClass(detail.getStatus()) %>"><%= AdminPageUtil.reportStatusText(detail.getStatus()) %></span></td>
+                                                    </tr>
+                                                <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="report-modal-actions">
+                                    <% if (waiting) { %>
+                                        <form class="inline-form admin-status-form report-action-form" action="<%= contextPath %>/admin/adminReportProcess.jsp" method="post" data-waiting-count="<%= waitingCount %>" onsubmit="return confirmReportAction(this);">
+                                            <input type="hidden" name="reportId" value="<%= report.getReportId() %>">
+                                            <input type="hidden" name="searchType" value="<%= escapeHtml(searchType) %>">
+                                            <input type="hidden" name="keyword" value="<%= escapeHtml(keyword) %>">
+                                            <input type="hidden" name="statusFilter" value="<%= escapeHtml(statusFilter) %>">
+                                            <select name="action" aria-label="신고 처리">
+                                                <option value="hide">숨김</option>
+                                                <option value="reject">반려</option>
+                                            </select>
+                                            <button type="submit">처리</button>
+                                        </form>
+                                    <% } else { %>
+                                        <span class="muted-text">처리됨</span>
+                                    <% } %>
+                                </div>
+                            </dialog>
                         </td>
                     </tr>
                 <%  }
@@ -179,6 +194,24 @@
         var waitingCount = form.getAttribute("data-waiting-count") || "1";
         return confirm(actionName + " 처리할까요?\n같은 상품의 대기 신고 " + waitingCount + "건이 함께 처리됩니다.");
     }
+
+    document.querySelectorAll("[data-open-report-dialog]").forEach(function(button) {
+        button.addEventListener("click", function() {
+            var dialog = document.getElementById(button.getAttribute("data-open-report-dialog"));
+            if (dialog && typeof dialog.showModal === "function") {
+                dialog.showModal();
+            }
+        });
+    });
+
+    document.querySelectorAll("[data-close-report-dialog]").forEach(function(button) {
+        button.addEventListener("click", function() {
+            var dialog = button.closest("dialog");
+            if (dialog) {
+                dialog.close();
+            }
+        });
+    });
 </script>
 <%@ include file="../common/footer.jsp" %>
 </body>
