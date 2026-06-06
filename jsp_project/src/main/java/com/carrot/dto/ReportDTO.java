@@ -23,9 +23,6 @@ public class ReportDTO {
     private String status;
     private Timestamp createdAt;
     private Timestamp processedAt;
-    private String processedBy;
-    private String actionType;
-    private String adminMemo;
 
     private String reporterNickname;
     private String productTitle;

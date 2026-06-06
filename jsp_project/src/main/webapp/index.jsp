@@ -3,7 +3,6 @@
 <%@ page import="com.carrot.dto.CategoryDTO" %>
 <%@ page import="java.util.List" %>
 <%
-    // 추가됨: 메인 카테고리 링크를 실제 활성 카테고리 기준으로 출력
     CategoryDAO categoryDao = new CategoryDAO();
     List<CategoryDTO> categoryList = categoryDao.selectAllCategories();
     String[] categoryMarkClasses = {"mark-red", "mark-yellow", "mark-brown", "mark-yellow", "mark-blue", "mark-green", "mark-orange", "mark-yellow"};
@@ -38,16 +37,6 @@
             <button type="submit" aria-label="검색">→</button>
         </form>
 
-        <div class="home-keyword-row" aria-label="인기 검색어">
-            <strong>인기 검색어</strong>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=에어컨">에어컨</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=노트북">노트북</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=원룸">원룸</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=자전거">자전거</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=책상">책상</a>
-            <a href="<%= contextPath %>/product/productList.jsp?type=all&keyword=의자">의자</a>
-        </div>
-
         <nav class="home-category-select" aria-label="카테고리 선택">
             <a href="<%= contextPath %>/product/productList.jsp">
                 <span class="category-mark mark-orange">중</span>
@@ -57,7 +46,6 @@
                 <span class="category-mark mark-green">커</span>
                 <strong>동네마켓 커뮤니티</strong>
             </a>
-            <%-- 추가됨: 활성 카테고리를 CATEGORY_ID 링크로 출력 --%>
             <% for (int i = 0; i < categoryList.size(); i++) {
                 CategoryDTO category = categoryList.get(i);
                 String markClass = categoryMarkClasses[i % categoryMarkClasses.length];

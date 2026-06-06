@@ -51,15 +51,6 @@
         return reason;
     }
 
-    private String actionText(String actionType) {
-        if ("HIDE_CAFE".equals(actionType)) return "카페 숨김";
-        if ("HIDE_POST".equals(actionType)) return "게시글 숨김";
-        if ("HIDE_COMMENT".equals(actionType)) return "댓글 숨김";
-        if ("DONE".equals(actionType)) return "신고만 완료";
-        if ("REJECT".equals(actionType)) return "반려";
-        return actionType == null || actionType.isEmpty() ? "-" : actionType;
-    }
-
     private String targetUrl(String contextPath, ReportDTO report) {
         if ("CAFE".equals(report.getTargetType())) {
             return contextPath + "/community/cafe/cafeDetail.jsp?cafeId=" + report.getTargetId();
@@ -83,21 +74,13 @@
 <%
     request.setCharacterEncoding("UTF-8");
     ReportDAO reportDao = new ReportDAO();
-    boolean moderationColumnsReady = reportDao.hasReportModerationColumns();
     String action = request.getParameter("action") == null ? "" : request.getParameter("action").trim();
     int reportId = parseIntParam(request.getParameter("reportId"));
-    if (reportId > 0 && ("done".equals(action) || "reject".equals(action)
-            || "hideCafe".equals(action) || "hidePost".equals(action) || "hideComment".equals(action))) {
-        String actionType = "done".equals(action) ? "DONE"
-                : ("reject".equals(action) ? "REJECT"
+    if (reportId > 0 && ("reject".equals(action) || "hideCafe".equals(action) || "hidePost".equals(action) || "hideComment".equals(action))) {
+        String actionType = "reject".equals(action) ? "REJECT"
                 : ("hideCafe".equals(action) ? "HIDE_CAFE"
-                : ("hidePost".equals(action) ? "HIDE_POST" : "HIDE_COMMENT")));
-        String adminId = (String) session.getAttribute("adminLoginId");
-        String adminMemo = request.getParameter("adminMemo");
-        boolean success = moderationColumnsReady
-                && adminMemo != null
-                && !adminMemo.trim().isEmpty()
-                && reportDao.processCommunityReport(reportId, actionType, adminId, adminMemo);
+                : ("hidePost".equals(action) ? "HIDE_POST" : "HIDE_COMMENT"));
+        boolean success = reportDao.processCommunityReport(reportId, actionType);
         response.sendRedirect(request.getContextPath() + "/admin/communityReportManage.jsp?result=" + (success ? "success" : "fail"));
         return;
     }
@@ -149,11 +132,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>커뮤니티 신고 관리 | 동네마켓</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-community-report-7">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/app.css?v=admin-community-report-9">
 </head>
 <body>
 <%@ include file="../common/header.jsp" %>
-<main class="admin-shell community-report-shell">
+<main class="admin-shell">
     <div class="admin-heading">
         <div>
             <p class="eyebrow">관리자</p>
@@ -164,16 +147,13 @@
             <a class="button" href="<%= contextPath %>/admin/communityCafeManage.jsp">커뮤니티 관리</a>
         </div>
     </div>
-    <% if (!moderationColumnsReady) { %>
-        <p class="field-message is-error">신고 처리 이력 컬럼이 없습니다. 먼저 database/report_moderation_migration.sql을 실행해야 처리 메모와 일괄 처리가 저장됩니다.</p>
-    <% } %>
     <% if ("success".equals(result)) { %>
-        <p class="field-message is-success">신고를 처리했습니다. 같은 대상의 대기 신고도 함께 처리되었습니다.</p>
+        <p class="notice-toast">신고를 처리했습니다. 같은 대상의 대기 신고가 함께 처리되었습니다.</p>
     <% } else if ("fail".equals(result)) { %>
-        <p class="field-message is-error">신고 처리에 실패했습니다.</p>
+        <p class="notice-toast is-error">신고 처리에 실패했습니다.</p>
     <% } %>
 
-    <form class="form-grid community-report-filter" action="<%= contextPath %>/admin/communityReportManage.jsp" method="get">
+    <form class="admin-filter admin-report-filter community-report-filter" action="<%= contextPath %>/admin/communityReportManage.jsp" method="get">
         <input type="hidden" name="page" value="1">
         <div class="field">
             <label for="searchType">검색 기준</label>
@@ -223,16 +203,19 @@
         </div>
     </form>
 
-    <p class="community-meta">총 <%= totalCount %>개 대상 / <%= pageNo %>페이지</p>
+    <div class="admin-list-meta">
+        <span>총 <strong><%= totalCount %></strong>개 대상</span>
+        <span><%= pageNo %> / <%= totalPages %> 페이지</span>
+    </div>
     <div class="admin-table-wrap">
-        <table class="admin-table">
+        <table class="admin-table report-group-table">
             <thead>
                 <tr>
-                    <th>신고 정보</th>
                     <th>대상</th>
                     <th>신고 요약</th>
+                    <th>최근 신고일</th>
                     <th>상태</th>
-                    <th>처리</th>
+                    <th>관리</th>
                 </tr>
             </thead>
             <tbody>
@@ -245,17 +228,10 @@
                             ? targetText(report.getTargetType()) + " #" + report.getTargetId()
                             : report.getTargetTitle();
                     int waitingCount = Math.max(report.getTargetWaitingReportCount(), waiting ? 1 : 0);
+                    List<ReportDTO> detailReports = reportDao.getCommunityReportsByTarget(report.getTargetType(), report.getTargetId());
+                    String dialogId = "community-report-dialog-" + report.getReportId();
                 %>
                     <tr>
-                        <td class="report-info-cell">
-                            <strong>#<%= report.getReportId() %></strong>
-                            <p class="community-meta">
-                                최근 신고자:
-                                <%= escapeHtml(report.getReporterNickname() == null ? report.getReporterId() : report.getReporterNickname()) %>
-                            </p>
-                            <p class="community-meta"><%= escapeHtml(report.getReporterId()) %></p>
-                            <p class="community-meta">신고일: <%= report.getCreatedAt() == null ? "-" : dateFormat.format(report.getCreatedAt()) %></p>
-                        </td>
                         <td class="report-target-cell">
                             <strong><%= escapeHtml(targetText(report.getTargetType())) %></strong>
                             <p><a class="table-link" href="<%= targetUrl(contextPath, report) %>"><%= escapeHtml(targetTitle) %></a></p>
@@ -267,47 +243,78 @@
                         <td class="report-summary-cell">
                             <p><strong>대기 <%= waitingCount %>건 / 누적 <%= report.getTargetTotalReportCount() %>건</strong></p>
                             <p><span class="status-badge is-stopped"><%= escapeHtml(reasonText(report.getReason())) %></span></p>
-                            <p><%= escapeHtml(report.getDetail()) %></p>
-                            <% if (report.getTargetContent() != null && !report.getTargetContent().trim().isEmpty()) { %>
-                                <p class="community-meta">대상 내용: <%= escapeHtml(report.getTargetContent()) %></p>
-                            <% } %>
-                            <% if (report.getTargetRecentReportSummary() != null && !report.getTargetRecentReportSummary().trim().isEmpty()) { %>
-                                <p class="community-meta">최근 신고: <%= escapeHtml(report.getTargetRecentReportSummary()) %></p>
-                            <% } %>
                         </td>
-                        <td class="report-status-cell">
-                            <span class="status-badge<%= statusClass(report.getStatus()) %>"><%= statusText(report.getStatus()) %></span>
-                            <% if (!waiting) { %>
-                                <p class="community-meta"><%= escapeHtml(actionText(report.getActionType())) %></p>
-                                <p class="community-meta">처리자: <%= escapeHtml(report.getProcessedBy() == null ? "-" : report.getProcessedBy()) %></p>
-                                <p class="community-meta">처리일: <%= report.getProcessedAt() == null ? "-" : dateFormat.format(report.getProcessedAt()) %></p>
-                                <% if (report.getAdminMemo() != null && !report.getAdminMemo().trim().isEmpty()) { %>
-                                    <p class="community-meta">메모: <%= escapeHtml(report.getAdminMemo()) %></p>
-                                <% } %>
-                            <% } %>
-                        </td>
+                        <td><%= report.getCreatedAt() == null ? "-" : dateFormat.format(report.getCreatedAt()) %></td>
+                        <td><span class="status-badge<%= statusClass(report.getStatus()) %>"><%= statusText(report.getStatus()) %></span></td>
                         <td class="report-process-cell">
-                            <% if (waiting) { %>
-                                <form class="inline-form report-action-form" action="<%= contextPath %>/admin/communityReportManage.jsp" method="post" data-waiting-count="<%= waitingCount %>"
-                                      onsubmit="return confirmReportAction(this, event);">
-                                    <input type="hidden" name="reportId" value="<%= report.getReportId() %>">
-                                    <input type="hidden" name="action" value="">
-                                    <textarea name="adminMemo" rows="2" maxlength="1000" placeholder="처리 메모" required <%= moderationColumnsReady ? "" : "disabled" %>></textarea>
-                                    <div class="report-action-buttons">
-                                        <button class="btn-sub" type="button" data-action="done" <%= moderationColumnsReady ? "" : "disabled" %>>신고만 완료</button>
-                                        <% if ("CAFE".equals(report.getTargetType())) { %>
-                                            <button class="btn-danger" type="button" data-action="hideCafe" <%= moderationColumnsReady ? "" : "disabled" %>>카페 숨김</button>
-                                        <% } else if ("CAFE_POST".equals(report.getTargetType())) { %>
-                                            <button class="btn-danger" type="button" data-action="hidePost" <%= moderationColumnsReady ? "" : "disabled" %>>게시글 숨김</button>
-                                        <% } else if ("CAFE_COMMENT".equals(report.getTargetType())) { %>
-                                            <button class="btn-danger" type="button" data-action="hideComment" <%= moderationColumnsReady ? "" : "disabled" %>>댓글 숨김</button>
-                                        <% } %>
-                                        <button class="btn-sub" type="button" data-action="reject" <%= moderationColumnsReady ? "" : "disabled" %>>반려</button>
+                            <button type="button" data-open-report-dialog="<%= dialogId %>">상세 보기</button>
+                            <dialog class="report-modal" id="<%= dialogId %>">
+                                <div class="report-modal-header">
+                                    <div>
+                                        <p class="eyebrow">커뮤니티 신고 상세</p>
+                                        <h2><%= escapeHtml(targetTitle) %></h2>
+                                        <p class="community-meta">
+                                            <%= escapeHtml(targetText(report.getTargetType())) %>
+                                            / 카페: <%= escapeHtml(report.getTargetCafeName() == null ? "-" : report.getTargetCafeName()) %>
+                                            / 작성자: <%= escapeHtml(report.getTargetWriterId() == null ? "-" : report.getTargetWriterId()) %>
+                                        </p>
                                     </div>
-                                </form>
-                            <% } else { %>
-                                <span class="muted-text">처리됨</span>
-                            <% } %>
+                                    <button type="button" class="report-modal-close" data-close-report-dialog>닫기</button>
+                                </div>
+                                <div class="report-modal-body">
+                                    <% if (report.getTargetContent() != null && !report.getTargetContent().trim().isEmpty()) { %>
+                                        <p class="community-meta">대상 내용: <%= escapeHtml(report.getTargetContent()) %></p>
+                                    <% } %>
+                                    <div class="report-modal-scroll">
+                                        <table class="admin-table report-detail-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>신고자</th>
+                                                    <th>사유</th>
+                                                    <th>내용</th>
+                                                    <th>신고일</th>
+                                                    <th>상태</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% for (ReportDTO detail : detailReports) { %>
+                                                    <tr>
+                                                        <td>
+                                                            <%= escapeHtml(detail.getReporterNickname() == null ? detail.getReporterId() : detail.getReporterNickname()) %>
+                                                            <p class="community-meta"><%= escapeHtml(detail.getReporterId()) %></p>
+                                                        </td>
+                                                        <td><%= escapeHtml(reasonText(detail.getReason())) %></td>
+                                                        <td><%= escapeHtml(detail.getDetail()) %></td>
+                                                        <td><%= detail.getCreatedAt() == null ? "-" : dateFormat.format(detail.getCreatedAt()) %></td>
+                                                        <td><span class="status-badge<%= statusClass(detail.getStatus()) %>"><%= statusText(detail.getStatus()) %></span></td>
+                                                    </tr>
+                                                <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="report-modal-actions">
+                                    <% if (waiting) { %>
+                                        <form class="inline-form admin-status-form report-action-form" action="<%= contextPath %>/admin/communityReportManage.jsp" method="post" data-waiting-count="<%= waitingCount %>"
+                                              onsubmit="return confirmReportAction(this);">
+                                            <input type="hidden" name="reportId" value="<%= report.getReportId() %>">
+                                            <select name="action" aria-label="신고 처리">
+                                                <% if ("CAFE".equals(report.getTargetType())) { %>
+                                                    <option value="hideCafe">숨김</option>
+                                                <% } else if ("CAFE_POST".equals(report.getTargetType())) { %>
+                                                    <option value="hidePost">숨김</option>
+                                                <% } else if ("CAFE_COMMENT".equals(report.getTargetType())) { %>
+                                                    <option value="hideComment">숨김</option>
+                                                <% } %>
+                                                <option value="reject">반려</option>
+                                            </select>
+                                            <button type="submit">처리</button>
+                                        </form>
+                                    <% } else { %>
+                                        <span class="muted-text">처리됨</span>
+                                    <% } %>
+                                </div>
+                            </dialog>
                         </td>
                     </tr>
                 <% } %>
@@ -331,66 +338,27 @@
     </div>
 </main>
 <script>
-    function submitReportAction(form, action, actionName) {
-        var memo = form.querySelector("textarea[name='adminMemo']");
-        if (!memo || memo.value.trim().length === 0) {
-            alert("처리 메모를 입력해 주세요.");
-            if (memo) {
-                memo.focus();
-            }
-            return;
-        }
-        var waitingCount = form.getAttribute("data-waiting-count") || "1";
-        if (!confirm(actionName + " 처리할까요?\n같은 대상의 대기 신고 " + waitingCount + "건이 함께 처리됩니다.")) {
-            return;
-        }
-
-        form.querySelector("input[name='action']").value = action;
-        form.submit();
-    }
-
-    function confirmReportAction(form, event) {
-        var actionInput = form.querySelector("input[name='action']");
-        if (!actionInput || actionInput.value.length === 0) {
-            if (event) {
-                event.preventDefault();
-            }
-            return false;
-        }
-        var memo = form.querySelector("textarea[name='adminMemo']");
-        if (!memo || memo.value.trim().length === 0) {
-            alert("처리 메모를 입력해 주세요.");
-            if (memo) {
-                memo.focus();
-            }
-            return false;
-        }
-        var button = event && event.submitter ? event.submitter : null;
-        var actionName = button ? button.textContent.trim() : "처리";
+    function confirmReportAction(form) {
+        var actionSelect = form.querySelector("select[name='action']");
+        var actionName = actionSelect ? actionSelect.options[actionSelect.selectedIndex].text : "처리";
         var waitingCount = form.getAttribute("data-waiting-count") || "1";
         return confirm(actionName + " 처리할까요?\n같은 대상의 대기 신고 " + waitingCount + "건이 함께 처리됩니다.");
     }
 
-    document.querySelectorAll(".report-action-form").forEach(function(form) {
-        form.querySelectorAll("button[data-action]").forEach(function(button) {
-            button.addEventListener("click", function() {
-                if (button.disabled) {
-                    return;
-                }
-                submitReportAction(form, button.getAttribute("data-action"), button.textContent.trim());
-            });
+    document.querySelectorAll("[data-open-report-dialog]").forEach(function(button) {
+        button.addEventListener("click", function() {
+            var dialog = document.getElementById(button.getAttribute("data-open-report-dialog"));
+            if (dialog && typeof dialog.showModal === "function") {
+                dialog.showModal();
+            }
         });
     });
 
-    document.querySelectorAll(".report-action-form textarea").forEach(function(memo) {
-        memo.addEventListener("keydown", function(event) {
-            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-                var form = memo.closest("form");
-                var button = form ? form.querySelector("button[data-action='done']") : null;
-                if (!form || !button || button.disabled) {
-                    return;
-                }
-                submitReportAction(form, "done", button.textContent.trim());
+    document.querySelectorAll("[data-close-report-dialog]").forEach(function(button) {
+        button.addEventListener("click", function() {
+            var dialog = button.closest("dialog");
+            if (dialog) {
+                dialog.close();
             }
         });
     });

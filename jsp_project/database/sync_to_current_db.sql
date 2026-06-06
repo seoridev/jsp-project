@@ -69,12 +69,8 @@ BEGIN
             status VARCHAR2(20 BYTE) DEFAULT 'WAITING' NOT NULL,
             created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP,
             processed_at TIMESTAMP(6),
-            processed_by VARCHAR2(50 BYTE),
-            action_type VARCHAR2(30 BYTE),
-            admin_memo VARCHAR2(1000 BYTE),
             CONSTRAINT report_pk PRIMARY KEY (report_id),
             CONSTRAINT fk_report_reporter FOREIGN KEY (reporter_id) REFERENCES member(login_id),
-            CONSTRAINT fk_report_processed_by FOREIGN KEY (processed_by) REFERENCES admin(login_id),
             CONSTRAINT chk_report_target_type CHECK (target_type IN ('PRODUCT', 'MEMBER', 'CHAT', 'CAFE', 'CAFE_POST', 'CAFE_COMMENT')),
             CONSTRAINT chk_report_status CHECK (status IN ('WAITING', 'DONE', 'REJECTED'))
         )
@@ -762,6 +758,120 @@ USING (
            TO_TIMESTAMP('2026-05-16 20:39:29.390000', 'YYYY-MM-DD HH24:MI:SS.FF6') created_at,
            TO_TIMESTAMP('2026-05-16 20:42:56.173000', 'YYYY-MM-DD HH24:MI:SS.FF6') processed_at
     FROM dual
+    UNION ALL
+    SELECT 2, 'user01', 'PRODUCT', 48,
+           '허위 매물', '사진과 실제 상태가 다르고 가격 안내도 계속 바뀝니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-18 09:12:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 3, 'user02', 'PRODUCT', 47,
+           '부적절한 상품', '정품 여부가 불확실하고 보증서 사진을 보내지 않습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-18 10:25:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 4, 'user03', 'PRODUCT', 51,
+           '거래 비매너', '약속 시간을 여러 번 바꾸고 채팅에서 무례한 표현을 사용했습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-18 11:40:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 5, 'aaa123', 'PRODUCT', 50,
+           '기타', '이미 숨김 처리된 상품이지만 같은 내용으로 다시 올라올 가능성이 있어 확인이 필요합니다.', 'DONE',
+           TO_TIMESTAMP('2026-05-18 13:05:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-18 13:22:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 6, 'asdasd', 'PRODUCT', 52,
+           '허위 매물', '상품 설명에는 새 제품처럼 적혀 있지만 사용감이 크다는 제보가 있었습니다.', 'REJECTED',
+           TO_TIMESTAMP('2026-05-18 14:30:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-18 14:48:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 7, 'user01', 'PRODUCT', 49,
+           '거래 비매너', '예약 후 연락이 끊겼다는 신고입니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-19 08:45:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 8, 'user02', 'PRODUCT', 51,
+           '부적절한 상품', '상품 설명에 위험한 사용 방법이 포함되어 있어 검토가 필요합니다.', 'DONE',
+           TO_TIMESTAMP('2026-05-19 12:10:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-19 12:35:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 9, 'user03', 'PRODUCT', 48,
+           '기타', '동일 상품으로 의심되는 게시글이 반복해서 올라옵니다.', 'REJECTED',
+           TO_TIMESTAMP('2026-05-20 15:18:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-20 15:44:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 10, 'aaa123', 'PRODUCT', 47,
+           '허위 매물', '직거래 장소 확정 후 추가 입금을 요구했습니다.', 'WAITING',
+           TO_TIMESTAMP('2026-05-21 17:02:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 11, 'user02', 'CAFE', 1,
+           'SPAM', UNISTR('\CE74\D398\0020\C18C\AC1C\C640\0020\B9DE\C9C0\0020\C54A\B294\0020\D64D\BCF4\C131\0020\AE00\C774\0020\BC18\BCF5\D574\C11C\0020\BCF4\C785\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-22 09:10:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 12, 'user03', 'CAFE', 1,
+           'ABUSE', UNISTR('\CE74\D398\0020\B0B4\0020\C77C\BD80\0020\C548\B0B4\0020\BB38\AD6C\AC00\0020\C774\C6A9\C790\B97C\0020\BE44\BC29\D558\B294\0020\AC83\CC98\B7FC\0020\BCF4\C785\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-22 10:20:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 13, 'aaa123', 'CAFE_POST', 1,
+           'FRAUD', UNISTR('\B098\B214\0020\AE00\C778\B370\0020\C2E4\C81C\B85C\B294\0020\B2E4\B978\0020\AC70\B798\B97C\0020\C720\B3C4\D558\B294\0020\B0B4\C6A9\C774\0020\C788\C2B5\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-22 11:30:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 14, 'user01', 'CAFE_POST', 1,
+           'ETC', UNISTR('\AC19\C740\0020\B0B4\C6A9\C774\0020\C5EC\B7EC\0020\CE74\D398\C5D0\0020\BC18\BCF5\D574\C11C\0020\C62C\B77C\C628\0020\AC83\C73C\B85C\0020\BCF4\C785\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-22 12:40:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 15, 'user02', 'CAFE_COMMENT', 1,
+           'ABUSE', UNISTR('\B313\AE00\C5D0\0020\BD88\CF8C\D55C\0020\D45C\D604\C774\0020\D3EC\D568\B418\C5B4\0020\C788\C2B5\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-22 13:50:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 16, 'user03', 'CAFE_COMMENT', 1,
+           'PRIVACY', UNISTR('\B313\AE00\C5D0\0020\AC1C\C778\0020\C5F0\B77D\CC98\B85C\0020\BCF4\C774\B294\0020\C815\BCF4\AC00\0020\D3EC\D568\B418\C5B4\0020\C788\C2B5\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-22 14:20:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 17, 'aaa123', 'CAFE_POST', 6,
+           'ETC', UNISTR('\AC70\B798\0020\D301\0020\AE00\C758\0020\C77C\BD80\0020\B0B4\C6A9\C774\0020\C624\D574\B97C\0020\C904\0020\C218\0020\C788\C5B4\0020\C2E0\ACE0\B418\C5C8\C2B5\B2C8\B2E4\002E'), 'REJECTED',
+           TO_TIMESTAMP('2026-05-22 15:05:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-22 15:40:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 18, 'user01', 'CAFE', 3,
+           'SPAM', UNISTR('\C911\ACE0\AC70\B798\0020\CE74\D398\C5D0\0020\C678\BD80\0020\B9C1\D06C\0020\D64D\BCF4\AC00\0020\B9CE\B2E4\B294\0020\C2E0\ACE0\C785\B2C8\B2E4\002E'), 'DONE',
+           TO_TIMESTAMP('2026-05-22 16:15:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           TO_TIMESTAMP('2026-05-22 16:45:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6')
+    FROM dual
+    UNION ALL
+    SELECT 19, 'user02', 'CAFE_POST', 8,
+           'ABUSE', UNISTR('\CD08\BCF4\C790\0020\C9C8\BB38\0020\AE00\C5D0\0020\C870\B871\C131\0020\D45C\D604\C774\0020\D3EC\D568\B418\C5B4\0020\C788\B2E4\B294\0020\C2E0\ACE0\C785\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-23 09:25:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
+    UNION ALL
+    SELECT 20, 'aaa123', 'CAFE_COMMENT', 3,
+           'ETC', UNISTR('\B313\AE00\0020\B0B4\C6A9\C774\0020\AC8C\C2DC\AE00\0020\C8FC\C81C\C640\0020\B9DE\C9C0\0020\C54A\C544\0020\D655\C778\0020\C694\CCAD\C774\0020\B4E4\C5B4\C654\C2B5\B2C8\B2E4\002E'), 'WAITING',
+           TO_TIMESTAMP('2026-05-23 10:35:00.000000', 'YYYY-MM-DD HH24:MI:SS.FF6'),
+           NULL
+    FROM dual
 ) s
 ON (r.report_id = s.report_id)
 WHEN MATCHED THEN UPDATE SET
@@ -815,56 +925,6 @@ WHEN NOT MATCHED THEN INSERT
 -- 6. 어드민 커뮤니티 직접 조치 이력
 --------------------------------------------------------
 
-BEGIN
-    EXECUTE IMMEDIATE q'[
-        CREATE TABLE admin_community_action_log (
-            log_id NUMBER,
-            admin_id VARCHAR2(50 BYTE) NOT NULL,
-            target_type VARCHAR2(30 BYTE) NOT NULL,
-            target_id NUMBER NOT NULL,
-            action_type VARCHAR2(30 BYTE) NOT NULL,
-            admin_memo VARCHAR2(1000 BYTE) NOT NULL,
-            created_at TIMESTAMP(6) DEFAULT SYSTIMESTAMP NOT NULL,
-            CONSTRAINT admin_community_action_log_pk PRIMARY KEY (log_id),
-            CONSTRAINT fk_admin_comm_log_admin FOREIGN KEY (admin_id) REFERENCES admin(login_id),
-            CONSTRAINT chk_admin_comm_log_target CHECK (target_type IN ('CAFE', 'CAFE_POST', 'CAFE_COMMENT')),
-            CONSTRAINT chk_admin_comm_log_action CHECK (action_type IN (
-                'HIDE_CAFE', 'RESTORE_CAFE',
-                'HIDE_POST', 'RESTORE_POST',
-                'HIDE_COMMENT', 'RESTORE_COMMENT'
-            ))
-        )
-    ]';
-EXCEPTION
-    WHEN OTHERS THEN
-        IF SQLCODE != -955 THEN RAISE; END IF;
-END;
-/
-
-BEGIN
-    EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_admin_community_action_log START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
-EXCEPTION
-    WHEN OTHERS THEN
-        IF SQLCODE != -955 THEN RAISE; END IF;
-END;
-/
-
-BEGIN
-    EXECUTE IMMEDIATE 'CREATE INDEX idx_admin_comm_log_target ON admin_community_action_log(target_type, target_id)';
-EXCEPTION
-    WHEN OTHERS THEN
-        IF SQLCODE != -955 THEN RAISE; END IF;
-END;
-/
-
-BEGIN
-    EXECUTE IMMEDIATE 'CREATE INDEX idx_admin_comm_log_admin ON admin_community_action_log(admin_id)';
-EXCEPTION
-    WHEN OTHERS THEN
-        IF SQLCODE != -955 THEN RAISE; END IF;
-END;
-/
-
 COMMIT;
 
 --------------------------------------------------------
@@ -872,7 +932,7 @@ COMMIT;
 -- 정말 내 DB와 같은 행만 남기려면 아래 주석을 해제해서 실행하세요.
 -- 주의: 상대방의 추가 테스트 데이터가 삭제됩니다.
 --------------------------------------------------------
--- DELETE FROM report WHERE report_id NOT IN (1);
+-- DELETE FROM report WHERE report_id NOT BETWEEN 1 AND 20;
 -- DELETE FROM product_image WHERE image_id NOT IN (1, 2);
 -- DELETE FROM product WHERE product_id NOT IN (47, 48, 49, 50, 51, 52);
 -- DELETE FROM member WHERE login_id NOT IN ('aaa', 'aaa123', 'asdasd', 'user01', 'user02', 'user03');

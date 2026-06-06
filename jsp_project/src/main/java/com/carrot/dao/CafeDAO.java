@@ -354,66 +354,6 @@ public class CafeDAO extends BaseDAO {
         return false;
     }
 
-    public boolean updateCafeStatusByAdmin(int cafeId, String status, String adminId, String adminMemo) {
-        if (!"ACTIVE".equals(status) && !"HIDDEN".equals(status)) {
-            return false;
-        }
-        if (adminId == null || adminId.trim().isEmpty() || adminMemo == null || adminMemo.trim().isEmpty()) {
-            return false;
-        }
-
-        Connection conn = null;
-        try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
-            AdminCommunityActionLogDAO logDao = new AdminCommunityActionLogDAO();
-            if (!logDao.hasLogTable(conn)) {
-                conn.rollback();
-                return false;
-            }
-
-            String currentStatus = null;
-            String selectSql = "SELECT status FROM cafe WHERE cafe_id = ? AND status <> 'DELETED'";
-            try (PreparedStatement pstmt = conn.prepareStatement(selectSql)) {
-                pstmt.setInt(1, cafeId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        currentStatus = rs.getString("status");
-                    }
-                }
-            }
-            if (currentStatus == null || status.equals(currentStatus)) {
-                conn.rollback();
-                return false;
-            }
-
-            String updateSql = "UPDATE cafe SET status = ?, updated_at = SYSTIMESTAMP "
-                    + "WHERE cafe_id = ? AND status <> 'DELETED'";
-            try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
-                pstmt.setString(1, status);
-                pstmt.setInt(2, cafeId);
-                if (pstmt.executeUpdate() <= 0) {
-                    conn.rollback();
-                    return false;
-                }
-            }
-
-            String actionType = "HIDDEN".equals(status) ? "HIDE_CAFE" : "RESTORE_CAFE";
-            if (!logDao.insertLog(conn, adminId, "CAFE", cafeId, actionType, adminMemo)) {
-                conn.rollback();
-                return false;
-            }
-            conn.commit();
-            return true;
-        } catch (Exception e) {
-            rollbackQuietly(conn);
-            e.printStackTrace();
-        } finally {
-            closeQuietly(conn);
-        }
-        return false;
-    }
-
     public boolean updateCafeSettings(CafeDTO cafe) {
         String sql = "UPDATE cafe SET description = ?, region = ?, "
                 + "category = (SELECT category_name FROM cafe_category WHERE cafe_category_id = ?), "
@@ -570,25 +510,6 @@ public class CafeDAO extends BaseDAO {
     private String cleanOption(String value) {
         String trimmed = cleanText(value);
         return trimmed == null || "ALL".equalsIgnoreCase(trimmed) ? null : trimmed.toUpperCase();
-    }
-
-    private void rollbackQuietly(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.rollback();
-            } catch (Exception ignored) {
-            }
-        }
-    }
-
-    private void closeQuietly(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.setAutoCommit(true);
-                conn.close();
-            } catch (Exception ignored) {
-            }
-        }
     }
 
     private CafeDTO mapCafe(ResultSet rs) throws Exception {

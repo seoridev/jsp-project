@@ -1,15 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.carrot.util.HtmlEscaper" %>
 <%!
     private String escapeHtml(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&#39;");
+        return HtmlEscaper.escape(value);
     }
 
     private String escapeScript(String value) {

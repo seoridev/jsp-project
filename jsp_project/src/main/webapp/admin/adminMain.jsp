@@ -38,9 +38,7 @@
     </div>
 
     <% if (!statsError.isEmpty()) { %>
-        <script>
-            alert("<%= escapeScript(statsError) %>");
-        </script>
+        <p class="notice-toast is-error"><%= escapeHtml(statsError) %></p>
     <% } %>
 
     <section class="admin-summary">

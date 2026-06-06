@@ -1,22 +1,14 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.carrot.dao.ReportDAO" %>
 <%@ page import="com.carrot.dto.ReportDTO" %>
+<%@ page import="com.carrot.util.ParamParser" %>
 <%@ include file="../common/sessionCheck.jsp" %>
-<%!
-    private int parseIntParam(String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-%>
 <%
     request.setCharacterEncoding("UTF-8");
 
     String reporterId = (String) session.getAttribute("loginId");
     String targetType = request.getParameter("targetType") == null ? "PRODUCT" : request.getParameter("targetType").trim().toUpperCase();
-    int targetId = parseIntParam(request.getParameter("targetId"));
+    int targetId = ParamParser.parseInt(request.getParameter("targetId"));
     String reason = request.getParameter("reason") == null ? "" : request.getParameter("reason").trim();
     String detail = request.getParameter("detail") == null ? "" : request.getParameter("detail").trim();
 

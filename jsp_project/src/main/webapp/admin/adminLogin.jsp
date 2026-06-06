@@ -31,14 +31,25 @@
 
 	        <%-- 에러가 있을 때만 안내 문구 표시 --%>
 	        <% if (!errorMessage.isEmpty()) { %>
-	            <script>
-	                (() => {
-	                    alert("<%= escapeScript(errorMessage) %>");
-	                    const url = new URL(window.location.href);
-	                    url.searchParams.delete("error");
-	                    window.history.replaceState({}, "", url);
-	                })();
-	            </script>
+	            <% if ("loginRequired".equals(error)) { %>
+	                <script>
+	                    (() => {
+	                        alert("<%= escapeScript(errorMessage) %>");
+	                        const url = new URL(window.location.href);
+	                        url.searchParams.delete("error");
+	                        window.history.replaceState({}, "", url);
+	                    })();
+	                </script>
+	            <% } else { %>
+	                <p class="notice-toast is-error"><%= escapeHtml(errorMessage) %></p>
+	                <script>
+	                    (() => {
+	                        const url = new URL(window.location.href);
+	                        url.searchParams.delete("error");
+	                        window.history.replaceState({}, "", url);
+	                    })();
+	                </script>
+	            <% } %>
 	        <% } %>
 
 	        <%-- 관리자 계정 확인은 처리 페이지에서 진행 --%>
